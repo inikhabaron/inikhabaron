@@ -2,6 +2,32 @@ import { NextResponse } from 'next/server';
 import { getCollection } from '@/lib/mongodb';
 import { generateUploadSignature, deleteImage } from '@/lib/cloudinary';
 import { v4 as uuidv4 } from 'uuid';
+import Razorpay from 'razorpay';
+import crypto from 'crypto';
+import { Resend } from 'resend';
+
+// Initialize Razorpay (will work when keys are added)
+let razorpay = null;
+try {
+  if (process.env.RAZORPAY_KEY_ID && !process.env.RAZORPAY_KEY_ID.startsWith('TODO')) {
+    razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+  }
+} catch (e) {
+  console.log('Razorpay not configured');
+}
+
+// Initialize Resend (will work when key is added)
+let resend = null;
+try {
+  if (process.env.RESEND_API_KEY && !process.env.RESEND_API_KEY.startsWith('TODO')) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+} catch (e) {
+  console.log('Resend not configured');
+}
 
 // CORS Headers
 const corsHeaders = {
@@ -397,6 +423,77 @@ export async function GET(request) {
         byType,
         byPlacement,
       }, { headers: corsHeaders });
+    }
+
+    // ===== YOUTUBE LIVE STREAM =====
+    
+    // Get YouTube live stream status
+    if (path === 'youtube/live') {
+      const channelId = process.env.YOUTUBE_CHANNEL_ID;
+      const apiKey = process.env.YOUTUBE_API_KEY;
+      
+      if (!channelId || channelId.startsWith('TODO') || !apiKey || apiKey.startsWith('TODO')) {
+        return NextResponse.json({
+          isLive: false,
+          configured: false,
+          message: 'TODO: Add YOUTUBE_CHANNEL_ID and YOUTUBE_API_KEY in .env',
+          mockData: {
+            channelId: 'UCxxxxxxxx',
+            title: 'NewsDesk Live',
+            description: 'Live news coverage',
+          }
+        }, { headers: corsHeaders });
+      }
+      
+      try {
+        // Check if channel is live using YouTube Data API
+        const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&eventType=live&type=video&key=${apiKey}`;
+        const response = await fetch(searchUrl);
+        const data = await response.json();
+        
+        if (data.items && data.items.length > 0) {
+          const liveVideo = data.items[0];
+          return NextResponse.json({
+            isLive: true,
+            configured: true,
+            videoId: liveVideo.id.videoId,
+            title: liveVideo.snippet.title,
+            description: liveVideo.snippet.description,
+            thumbnail: liveVideo.snippet.thumbnails.high?.url,
+            channelTitle: liveVideo.snippet.channelTitle,
+          }, { headers: corsHeaders });
+        }
+        
+        return NextResponse.json({
+          isLive: false,
+          configured: true,
+          message: 'Channel is not currently live',
+        }, { headers: corsHeaders });
+      } catch (error) {
+        return NextResponse.json({
+          isLive: false,
+          configured: true,
+          error: error.message,
+        }, { headers: corsHeaders });
+      }
+    }
+
+    // ===== PUSH NOTIFICATION TOKENS =====
+    
+    // Get all push tokens for sending notifications
+    if (path === 'admin/push-tokens') {
+      const usersCollection = await getCollection('users');
+      const users = await usersCollection.find({ fcmToken: { $ne: null } }).toArray();
+      const tokens = users.map(u => ({ userId: u.id, token: u.fcmToken, email: u.email }));
+      return NextResponse.json({ tokens, count: tokens.length }, { headers: corsHeaders });
+    }
+
+    // ===== EMAIL SUBSCRIBERS =====
+    
+    if (path === 'subscribers') {
+      const subscribersCollection = await getCollection('email_subscribers');
+      const subscribers = await subscribersCollection.find({ isActive: true }).toArray();
+      return NextResponse.json({ subscribers, count: subscribers.length }, { headers: corsHeaders });
     }
 
     return NextResponse.json({ error: 'Not found' }, { status: 404, headers: corsHeaders });
