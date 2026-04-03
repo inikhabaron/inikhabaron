@@ -1,0 +1,1141 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { toast } from 'sonner';
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Check,
+  X,
+  Eye,
+  Clock,
+  FileText,
+  Users,
+  BarChart3,
+  Settings,
+  Newspaper,
+  Home,
+  Send,
+  AlertCircle,
+  Tag,
+  Image as ImageIcon,
+  Loader2,
+  ChevronRight,
+  CheckCircle,
+  XCircle,
+  History,
+  TrendingUp,
+  Share2,
+  Upload,
+} from 'lucide-react';
+
+// Status badge colors
+const statusColors = {
+  draft: 'bg-gray-500',
+  pending: 'bg-yellow-500',
+  published: 'bg-green-500',
+  scheduled: 'bg-blue-500',
+  rejected: 'bg-red-500',
+};
+
+export default function AdminPage() {
+  // State
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [news, setNews] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [newsStatusFilter, setNewsStatusFilter] = useState('all');
+  
+  // Edit states
+  const [editingNews, setEditingNews] = useState(null);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
+  const [isNewsDialogOpen, setIsNewsDialogOpen] = useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+  
+  // Form states
+  const [newsForm, setNewsForm] = useState({
+    title: '',
+    content: '',
+    excerpt: '',
+    category: '',
+    tags: '',
+    featuredImage: '',
+    status: 'draft',
+    isBreaking: false,
+    isFeatured: false,
+    authorName: 'Admin',
+    source: '',
+    sourceUrl: '',
+    seoTitle: '',
+    seoDescription: '',
+    seoKeywords: '',
+    scheduledAt: '',
+  });
+  
+  const [categoryForm, setCategoryForm] = useState({
+    name: '',
+    slug: '',
+    description: '',
+    color: '#3B82F6',
+    order: 0,
+    isActive: true,
+  });
+
+  const [userForm, setUserForm] = useState({
+    name: '',
+    email: '',
+    role: 'reporter',
+    isVerified: false,
+    bio: '',
+  });
+
+  // Fetch functions
+  const fetchNews = useCallback(async () => {
+    try {
+      let url = '/api/admin/news?limit=100';
+      if (newsStatusFilter !== 'all') {
+        url += `&status=${newsStatusFilter}`;
+      }
+      const res = await fetch(url);
+      const data = await res.json();
+      setNews(data.news || []);
+    } catch (error) {
+      console.error('Error fetching news:', error);
+      toast.error('Failed to fetch news');
+    }
+  }, [newsStatusFilter]);
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/categories');
+      const data = await res.json();
+      setCategories(data.categories || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  }, []);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/users');
+      const data = await res.json();
+      setUsers(data.users || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  }, []);
+
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/analytics');
+      const data = await res.json();
+      setAnalytics(data);
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+    }
+  }, []);
+
+  // Initial load and tab changes
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      await Promise.all([fetchCategories()]);
+      
+      if (activeTab === 'dashboard') {
+        await fetchAnalytics();
+      } else if (activeTab === 'news') {
+        await fetchNews();
+      } else if (activeTab === 'users') {
+        await fetchUsers();
+      }
+      
+      setLoading(false);
+    };
+    load();
+  }, [activeTab, fetchCategories, fetchAnalytics, fetchNews, fetchUsers]);
+
+  // Refetch news when filter changes
+  useEffect(() => {
+    if (activeTab === 'news') {
+      fetchNews();
+    }
+  }, [newsStatusFilter, activeTab, fetchNews]);
+
+  // News CRUD
+  const handleSaveNews = async () => {
+    try {
+      const payload = {
+        ...newsForm,
+        tags: newsForm.tags.split(',').map(t => t.trim()).filter(Boolean),
+        seoKeywords: newsForm.seoKeywords.split(',').map(t => t.trim()).filter(Boolean),
+        authorId: 'admin',
+      };
+
+      const method = editingNews ? 'PUT' : 'POST';
+      const url = editingNews ? `/api/admin/news/${editingNews.id}` : '/api/admin/news';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error('Failed to save');
+
+      toast.success(editingNews ? 'News updated successfully' : 'News created successfully');
+      setIsNewsDialogOpen(false);
+      resetNewsForm();
+      fetchNews();
+    } catch (error) {
+      toast.error('Failed to save news');
+    }
+  };
+
+  const handleDeleteNews = async (id) => {
+    if (!confirm('Are you sure you want to delete this article?')) return;
+    
+    try {
+      await fetch(`/api/admin/news/${id}`, { method: 'DELETE' });
+      toast.success('News deleted');
+      fetchNews();
+    } catch (error) {
+      toast.error('Failed to delete');
+    }
+  };
+
+  const handleApproveNews = async (id) => {
+    try {
+      await fetch(`/api/admin/news/${id}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: 'admin', userName: 'Admin' }),
+      });
+      toast.success('Article approved and published');
+      fetchNews();
+      fetchAnalytics();
+    } catch (error) {
+      toast.error('Failed to approve');
+    }
+  };
+
+  const handleRejectNews = async (id, comment) => {
+    try {
+      await fetch(`/api/admin/news/${id}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: 'admin', userName: 'Admin', comment: comment || 'Needs revision' }),
+      });
+      toast.success('Article rejected');
+      fetchNews();
+    } catch (error) {
+      toast.error('Failed to reject');
+    }
+  };
+
+  const resetNewsForm = () => {
+    setNewsForm({
+      title: '',
+      content: '',
+      excerpt: '',
+      category: '',
+      tags: '',
+      featuredImage: '',
+      status: 'draft',
+      isBreaking: false,
+      isFeatured: false,
+      authorName: 'Admin',
+      source: '',
+      sourceUrl: '',
+      seoTitle: '',
+      seoDescription: '',
+      seoKeywords: '',
+      scheduledAt: '',
+    });
+    setEditingNews(null);
+  };
+
+  const openEditNews = (item) => {
+    setEditingNews(item);
+    setNewsForm({
+      title: item.title || '',
+      content: item.content || '',
+      excerpt: item.excerpt || '',
+      category: item.category || '',
+      tags: item.tags?.join(', ') || '',
+      featuredImage: item.featuredImage || '',
+      status: item.status || 'draft',
+      isBreaking: item.isBreaking || false,
+      isFeatured: item.isFeatured || false,
+      authorName: item.authorName || 'Admin',
+      source: item.source || '',
+      sourceUrl: item.sourceUrl || '',
+      seoTitle: item.seoTitle || '',
+      seoDescription: item.seoDescription || '',
+      seoKeywords: item.seoKeywords?.join(', ') || '',
+      scheduledAt: item.scheduledAt ? new Date(item.scheduledAt).toISOString().slice(0, 16) : '',
+    });
+    setIsNewsDialogOpen(true);
+  };
+
+  // Category CRUD
+  const handleSaveCategory = async () => {
+    try {
+      const method = editingCategory ? 'PUT' : 'POST';
+      const url = editingCategory ? `/api/admin/categories/${editingCategory.id}` : '/api/admin/categories';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(categoryForm),
+      });
+
+      if (!res.ok) throw new Error('Failed to save');
+
+      toast.success(editingCategory ? 'Category updated' : 'Category created');
+      setIsCategoryDialogOpen(false);
+      setCategoryForm({ name: '', slug: '', description: '', color: '#3B82F6', order: 0, isActive: true });
+      setEditingCategory(null);
+      fetchCategories();
+    } catch (error) {
+      toast.error('Failed to save category');
+    }
+  };
+
+  const handleDeleteCategory = async (id) => {
+    if (!confirm('Are you sure?')) return;
+    
+    try {
+      await fetch(`/api/admin/categories/${id}`, { method: 'DELETE' });
+      toast.success('Category deleted');
+      fetchCategories();
+    } catch (error) {
+      toast.error('Failed to delete');
+    }
+  };
+
+  // User CRUD
+  const handleSaveUser = async () => {
+    try {
+      const method = editingUser ? 'PUT' : 'POST';
+      const url = editingUser ? `/api/admin/users/${editingUser.id}` : '/api/admin/users';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userForm),
+      });
+
+      if (!res.ok) throw new Error('Failed to save');
+
+      toast.success(editingUser ? 'User updated' : 'User created');
+      setIsUserDialogOpen(false);
+      setUserForm({ name: '', email: '', role: 'reporter', isVerified: false, bio: '' });
+      setEditingUser(null);
+      fetchUsers();
+    } catch (error) {
+      toast.error('Failed to save user');
+    }
+  };
+
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-primary text-primary-foreground border-b">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-4">
+              <Newspaper className="h-8 w-8" />
+              <span className="text-xl font-bold">NewsDesk Admin</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <a href="/" className="flex items-center gap-2 hover:opacity-80">
+                <Home className="h-4 w-4" />
+                <span className="hidden sm:inline">View Site</span>
+              </a>
+              <Badge variant="secondary">Admin</Badge>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="container mx-auto px-4 py-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-6">
+            <TabsTrigger value="dashboard" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="news" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              News
+            </TabsTrigger>
+            <TabsTrigger value="categories" className="flex items-center gap-2">
+              <Tag className="h-4 w-4" />
+              Categories
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Users
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Dashboard Tab */}
+          <TabsContent value="dashboard">
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : analytics ? (
+              <div className="space-y-6">
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Total Articles</p>
+                          <p className="text-3xl font-bold">{analytics.stats?.totalNews || 0}</p>
+                        </div>
+                        <FileText className="h-10 w-10 text-muted-foreground" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Published</p>
+                          <p className="text-3xl font-bold text-green-600">{analytics.stats?.publishedNews || 0}</p>
+                        </div>
+                        <CheckCircle className="h-10 w-10 text-green-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Pending Review</p>
+                          <p className="text-3xl font-bold text-yellow-600">{analytics.stats?.pendingNews || 0}</p>
+                        </div>
+                        <Clock className="h-10 w-10 text-yellow-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Total Views</p>
+                          <p className="text-3xl font-bold text-blue-600">
+                            {analytics.stats?.totalViews?.toLocaleString() || 0}
+                          </p>
+                        </div>
+                        <Eye className="h-10 w-10 text-blue-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Top Articles */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5" />
+                      Top Performing Articles
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Title</TableHead>
+                          <TableHead>Category</TableHead>
+                          <TableHead className="text-right">Views</TableHead>
+                          <TableHead className="text-right">Shares</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {analytics.topArticles?.map((article) => (
+                          <TableRow key={article.id}>
+                            <TableCell className="font-medium max-w-md truncate">
+                              {article.title}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{article.category}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right">{article.views?.toLocaleString() || 0}</TableCell>
+                            <TableCell className="text-right">
+                              {(article.shares?.whatsapp || 0) + (article.shares?.twitter || 0) + (article.shares?.facebook || 0)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+
+                {/* Quick Actions */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Quick Actions</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-wrap gap-3">
+                    <Button onClick={() => { resetNewsForm(); setIsNewsDialogOpen(true); }}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Article
+                    </Button>
+                    <Button variant="outline" onClick={() => setActiveTab('news')}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Manage News
+                    </Button>
+                    <Button variant="outline" onClick={() => setActiveTab('categories')}>
+                      <Tag className="h-4 w-4 mr-2" />
+                      Manage Categories
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : null}
+          </TabsContent>
+
+          {/* News Tab */}
+          <TabsContent value="news">
+            <div className="space-y-4">
+              {/* Actions Bar */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-between">
+                <div className="flex items-center gap-2">
+                  <Label>Status:</Label>
+                  <Select value={newsStatusFilter} onValueChange={setNewsStatusFilter}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="published">Published</SelectItem>
+                      <SelectItem value="scheduled">Scheduled</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={() => { resetNewsForm(); setIsNewsDialogOpen(true); }}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Article
+                </Button>
+              </div>
+
+              {/* News Table */}
+              <Card>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Author</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {news.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="max-w-xs">
+                            <div className="flex items-center gap-2">
+                              {item.isBreaking && <Badge className="bg-red-500 text-white">Breaking</Badge>}
+                              <span className="truncate">{item.title}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{item.category}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={`${statusColors[item.status]} text-white`}>
+                              {item.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{item.authorName || '-'}</TableCell>
+                          <TableCell className="text-sm">{formatDate(item.createdAt)}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              {item.status === 'pending' && (
+                                <>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="text-green-600 hover:text-green-700"
+                                    onClick={() => handleApproveNews(item.id)}
+                                    title="Approve"
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="text-red-600 hover:text-red-700"
+                                    onClick={() => handleRejectNews(item.id)}
+                                    title="Reject"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              )}
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => openEditNews(item)}
+                                title="Edit"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="text-red-600 hover:text-red-700"
+                                onClick={() => handleDeleteNews(item.id)}
+                                title="Delete"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {news.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                            No articles found
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Categories Tab */}
+          <TabsContent value="categories">
+            <div className="space-y-4">
+              <div className="flex justify-end">
+                <Button onClick={() => {
+                  setEditingCategory(null);
+                  setCategoryForm({ name: '', slug: '', description: '', color: '#3B82F6', order: 0, isActive: true });
+                  setIsCategoryDialogOpen(true);
+                }}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Category
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {categories.map((cat) => (
+                  <Card key={cat.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-4 h-4 rounded-full"
+                            style={{ backgroundColor: cat.color }}
+                          />
+                          <span className="font-semibold">{cat.name}</span>
+                        </div>
+                        <Badge variant={cat.isActive ? 'default' : 'secondary'}>
+                          {cat.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {cat.description || 'No description'}
+                      </p>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setEditingCategory(cat);
+                            setCategoryForm({
+                              name: cat.name,
+                              slug: cat.slug,
+                              description: cat.description || '',
+                              color: cat.color,
+                              order: cat.order,
+                              isActive: cat.isActive,
+                            });
+                            setIsCategoryDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600"
+                          onClick={() => handleDeleteCategory(cat.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Users Tab */}
+          <TabsContent value="users">
+            <div className="space-y-4">
+              <div className="flex justify-end">
+                <Button onClick={() => {
+                  setEditingUser(null);
+                  setUserForm({ name: '', email: '', role: 'reporter', isVerified: false, bio: '' });
+                  setIsUserDialogOpen(true);
+                }}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add User
+                </Button>
+              </div>
+
+              <Card>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Verified</TableHead>
+                        <TableHead>Joined</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {users.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell className="font-medium">{user.name}</TableCell>
+                          <TableCell>{user.email}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="capitalize">{user.role}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            {user.isVerified ? (
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                            ) : (
+                              <XCircle className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm">{formatDate(user.createdAt)}</TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => {
+                                setEditingUser(user);
+                                setUserForm({
+                                  name: user.name,
+                                  email: user.email || '',
+                                  role: user.role,
+                                  isVerified: user.isVerified,
+                                  bio: user.bio || '',
+                                });
+                                setIsUserDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {users.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                            No users found
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* News Dialog */}
+      <Dialog open={isNewsDialogOpen} onOpenChange={setIsNewsDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingNews ? 'Edit Article' : 'Create Article'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Title *</Label>
+                <Input
+                  value={newsForm.title}
+                  onChange={(e) => setNewsForm({ ...newsForm, title: e.target.value })}
+                  placeholder="Article title"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Category *</Label>
+                <Select
+                  value={newsForm.category}
+                  onValueChange={(v) => setNewsForm({ ...newsForm, category: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.slug}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Content *</Label>
+              <Textarea
+                value={newsForm.content}
+                onChange={(e) => setNewsForm({ ...newsForm, content: e.target.value })}
+                placeholder="Article content..."
+                rows={8}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Excerpt</Label>
+              <Textarea
+                value={newsForm.excerpt}
+                onChange={(e) => setNewsForm({ ...newsForm, excerpt: e.target.value })}
+                placeholder="Brief summary (auto-generated if empty)"
+                rows={2}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Featured Image URL</Label>
+                <Input
+                  value={newsForm.featuredImage}
+                  onChange={(e) => setNewsForm({ ...newsForm, featuredImage: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Tags (comma separated)</Label>
+                <Input
+                  value={newsForm.tags}
+                  onChange={(e) => setNewsForm({ ...newsForm, tags: e.target.value })}
+                  placeholder="politics, breaking, economy"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  value={newsForm.status}
+                  onValueChange={(v) => setNewsForm({ ...newsForm, status: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="pending">Pending Review</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="scheduled">Scheduled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Author Name</Label>
+                <Input
+                  value={newsForm.authorName}
+                  onChange={(e) => setNewsForm({ ...newsForm, authorName: e.target.value })}
+                />
+              </div>
+              {newsForm.status === 'scheduled' && (
+                <div className="space-y-2">
+                  <Label>Schedule Date</Label>
+                  <Input
+                    type="datetime-local"
+                    value={newsForm.scheduledAt}
+                    onChange={(e) => setNewsForm({ ...newsForm, scheduledAt: e.target.value })}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={newsForm.isBreaking}
+                  onCheckedChange={(v) => setNewsForm({ ...newsForm, isBreaking: v })}
+                />
+                <Label>Breaking News</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={newsForm.isFeatured}
+                  onCheckedChange={(v) => setNewsForm({ ...newsForm, isFeatured: v })}
+                />
+                <Label>Featured Article</Label>
+              </div>
+            </div>
+
+            <Separator />
+
+            <h4 className="font-semibold">Source Attribution</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Source Name</Label>
+                <Input
+                  value={newsForm.source}
+                  onChange={(e) => setNewsForm({ ...newsForm, source: e.target.value })}
+                  placeholder="Reuters, AP, etc."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Source URL</Label>
+                <Input
+                  value={newsForm.sourceUrl}
+                  onChange={(e) => setNewsForm({ ...newsForm, sourceUrl: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
+            </div>
+
+            <Separator />
+
+            <h4 className="font-semibold">SEO Settings</h4>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>SEO Title</Label>
+                <Input
+                  value={newsForm.seoTitle}
+                  onChange={(e) => setNewsForm({ ...newsForm, seoTitle: e.target.value })}
+                  placeholder="SEO optimized title (defaults to article title)"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>SEO Description</Label>
+                <Textarea
+                  value={newsForm.seoDescription}
+                  onChange={(e) => setNewsForm({ ...newsForm, seoDescription: e.target.value })}
+                  placeholder="Meta description for search engines"
+                  rows={2}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>SEO Keywords (comma separated)</Label>
+                <Input
+                  value={newsForm.seoKeywords}
+                  onChange={(e) => setNewsForm({ ...newsForm, seoKeywords: e.target.value })}
+                  placeholder="keyword1, keyword2, keyword3"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsNewsDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveNews} disabled={!newsForm.title || !newsForm.content || !newsForm.category}>
+              {editingNews ? 'Update' : 'Create'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Category Dialog */}
+      <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingCategory ? 'Edit Category' : 'Create Category'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Name *</Label>
+              <Input
+                value={categoryForm.name}
+                onChange={(e) => setCategoryForm({
+                  ...categoryForm,
+                  name: e.target.value,
+                  slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+                })}
+                placeholder="Category name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Slug</Label>
+              <Input
+                value={categoryForm.slug}
+                onChange={(e) => setCategoryForm({ ...categoryForm, slug: e.target.value })}
+                placeholder="category-slug"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                value={categoryForm.description}
+                onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                placeholder="Category description"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Color</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="color"
+                    value={categoryForm.color}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, color: e.target.value })}
+                    className="w-12 h-10 p-1"
+                  />
+                  <Input
+                    value={categoryForm.color}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, color: e.target.value })}
+                    className="flex-1"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Order</Label>
+                <Input
+                  type="number"
+                  value={categoryForm.order}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, order: parseInt(e.target.value) || 0 })}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={categoryForm.isActive}
+                onCheckedChange={(v) => setCategoryForm({ ...categoryForm, isActive: v })}
+              />
+              <Label>Active</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCategoryDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveCategory} disabled={!categoryForm.name}>
+              {editingCategory ? 'Update' : 'Create'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* User Dialog */}
+      <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingUser ? 'Edit User' : 'Create User'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Name *</Label>
+              <Input
+                value={userForm.name}
+                onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
+                placeholder="Full name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input
+                type="email"
+                value={userForm.email}
+                onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                placeholder="email@example.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Select
+                value={userForm.role}
+                onValueChange={(v) => setUserForm({ ...userForm, role: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="reader">Reader</SelectItem>
+                  <SelectItem value="reporter">Reporter</SelectItem>
+                  <SelectItem value="editor">Editor</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Bio</Label>
+              <Textarea
+                value={userForm.bio}
+                onChange={(e) => setUserForm({ ...userForm, bio: e.target.value })}
+                placeholder="User bio"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={userForm.isVerified}
+                onCheckedChange={(v) => setUserForm({ ...userForm, isVerified: v })}
+              />
+              <Label>Verified Author</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsUserDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveUser} disabled={!userForm.name}>
+              {editingUser ? 'Update' : 'Create'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
