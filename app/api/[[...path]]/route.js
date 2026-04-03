@@ -22,6 +22,74 @@ function getPath(request) {
   return pathMatch ? pathMatch[1] : '';
 }
 
+// Helper to get subscription features
+function getSubscriptionFeatures(plan) {
+  const features = {
+    free: {
+      adsEnabled: true,
+      articleLimit: 10, // per day
+      offlineAccess: false,
+      exclusiveContent: false,
+      earlyAccess: false,
+      noAds: false,
+    },
+    basic: {
+      adsEnabled: true,
+      articleLimit: 50,
+      offlineAccess: true,
+      exclusiveContent: false,
+      earlyAccess: false,
+      noAds: false,
+    },
+    premium: {
+      adsEnabled: false,
+      articleLimit: -1, // unlimited
+      offlineAccess: true,
+      exclusiveContent: true,
+      earlyAccess: true,
+      noAds: true,
+    },
+    enterprise: {
+      adsEnabled: false,
+      articleLimit: -1,
+      offlineAccess: true,
+      exclusiveContent: true,
+      earlyAccess: true,
+      noAds: true,
+      apiAccess: true,
+      multiUser: true,
+    },
+  };
+  return features[plan] || features.free;
+}
+
+// Helper to auto-publish scheduled articles
+async function autoPublishScheduledArticles() {
+  try {
+    const newsCollection = await getCollection('news');
+    const now = new Date();
+    
+    const result = await newsCollection.updateMany(
+      { 
+        status: 'scheduled', 
+        scheduledAt: { $lte: now } 
+      },
+      { 
+        $set: { 
+          status: 'published', 
+          publishedAt: now,
+          updatedAt: now 
+        } 
+      }
+    );
+    
+    return result.modifiedCount;
+  } catch (error) {
+    console.error('Auto-publish error:', error);
+    return 0;
+  }
+}
+
 // ==================== GET ROUTES ====================
 export async function GET(request) {
   const path = getPath(request);
@@ -29,6 +97,9 @@ export async function GET(request) {
   const searchParams = url.searchParams;
 
   try {
+    // Auto-publish scheduled articles on every request (lightweight check)
+    await autoPublishScheduledArticles();
+    
     // Health check
     if (path === 'health') {
       return NextResponse.json({ status: 'ok', timestamp: new Date().toISOString() }, { headers: corsHeaders });
@@ -221,6 +292,111 @@ export async function GET(request) {
         .limit(20)
         .toArray();
       return NextResponse.json({ history }, { headers: corsHeaders });
+    }
+
+    // ===== SUBSCRIPTIONS =====
+    
+    // Get subscription plans
+    if (path === 'subscriptions/plans') {
+      const plans = [
+        {
+          id: 'free',
+          name: 'Free',
+          price: 0,
+          period: 'forever',
+          features: ['10 articles per day', 'Standard news access', 'Ad-supported'],
+          popular: false,
+        },
+        {
+          id: 'basic',
+          name: 'Basic',
+          price: 99,
+          period: 'month',
+          features: ['50 articles per day', 'Offline reading', 'Reduced ads', 'Email newsletter'],
+          popular: false,
+        },
+        {
+          id: 'premium',
+          name: 'Premium',
+          price: 299,
+          period: 'month',
+          features: ['Unlimited articles', 'Ad-free experience', 'Exclusive content', 'Early access', 'Offline reading', 'Priority support'],
+          popular: true,
+        },
+        {
+          id: 'enterprise',
+          name: 'Enterprise',
+          price: 999,
+          period: 'month',
+          features: ['Everything in Premium', 'API access', 'Multi-user accounts', 'Custom integrations', 'Dedicated support'],
+          popular: false,
+        },
+      ];
+      return NextResponse.json({ plans }, { headers: corsHeaders });
+    }
+
+    // Get user subscription
+    if (path.match(/^subscriptions\/user\/[a-zA-Z0-9_-]+$/)) {
+      const userId = path.split('/')[2];
+      const subscriptionsCollection = await getCollection('subscriptions');
+      const subscription = await subscriptionsCollection.findOne({ userId, status: 'active' });
+      return NextResponse.json({ subscription: subscription || { plan: 'free', features: getSubscriptionFeatures('free') } }, { headers: corsHeaders });
+    }
+
+    // ===== ADS CONFIGURATION =====
+    
+    // Get ad placements config
+    if (path === 'ads/config') {
+      const adsConfig = {
+        placements: [
+          { id: 'header-banner', type: 'programmatic', position: 'header', size: '728x90', enabled: true },
+          { id: 'sidebar-square', type: 'programmatic', position: 'sidebar', size: '300x250', enabled: true },
+          { id: 'in-article-1', type: 'native', position: 'in-article', afterParagraph: 3, enabled: true },
+          { id: 'in-article-2', type: 'native', position: 'in-article', afterParagraph: 7, enabled: true },
+          { id: 'footer-banner', type: 'programmatic', position: 'footer', size: '728x90', enabled: true },
+          { id: 'video-preroll', type: 'video', position: 'video-player', duration: 15, enabled: true },
+        ],
+        refreshInterval: 30000, // 30 seconds
+        lazyLoad: true,
+      };
+      return NextResponse.json({ config: adsConfig }, { headers: corsHeaders });
+    }
+
+    // Get ad analytics (admin)
+    if (path === 'admin/ads/analytics') {
+      const adsCollection = await getCollection('ad_impressions');
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const [totalImpressions, todayImpressions, totalClicks, todayClicks, revenueData] = await Promise.all([
+        adsCollection.countDocuments({}),
+        adsCollection.countDocuments({ timestamp: { $gte: today } }),
+        adsCollection.countDocuments({ clicked: true }),
+        adsCollection.countDocuments({ clicked: true, timestamp: { $gte: today } }),
+        adsCollection.aggregate([{ $group: { _id: null, total: { $sum: '$revenue' } } }]).toArray(),
+      ]);
+      
+      const byType = await adsCollection.aggregate([
+        { $group: { _id: '$adType', impressions: { $sum: 1 }, clicks: { $sum: { $cond: ['$clicked', 1, 0] } } } }
+      ]).toArray();
+      
+      const byPlacement = await adsCollection.aggregate([
+        { $group: { _id: '$placement', impressions: { $sum: 1 }, clicks: { $sum: { $cond: ['$clicked', 1, 0] } } } }
+      ]).toArray();
+      
+      return NextResponse.json({
+        stats: {
+          totalImpressions,
+          todayImpressions,
+          totalClicks,
+          todayClicks,
+          ctr: totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(2) : 0,
+          totalRevenue: revenueData[0]?.total || 0,
+        },
+        byType,
+        byPlacement,
+      }, { headers: corsHeaders });
     }
 
     return NextResponse.json({ error: 'Not found' }, { status: 404, headers: corsHeaders });
@@ -496,12 +672,15 @@ export async function POST(request) {
       const historyCollection = await getCollection('reading_history');
       
       await historyCollection.updateOne(
-        { userId: body.userId, newsId: body.newsId },
+        { odellerId: body.odellerId || `${body.userId}_${body.newsId}` },
         {
           $set: {
             userId: body.userId,
             newsId: body.newsId,
             newsTitle: body.newsTitle,
+            newsExcerpt: body.newsExcerpt || '',
+            newsFeaturedImage: body.newsFeaturedImage || '',
+            newsCategory: body.newsCategory || '',
             scrollPosition: body.scrollPosition || 0,
             readPercentage: body.readPercentage || 0,
             lastRead: new Date(),
@@ -532,6 +711,79 @@ export async function POST(request) {
       
       await usersCollection.insertOne(user);
       return NextResponse.json({ success: true, user }, { status: 201, headers: corsHeaders });
+    }
+
+    // ===== SUBSCRIPTIONS =====
+    
+    // Create subscription
+    if (path === 'subscriptions') {
+      const subscriptionsCollection = await getCollection('subscriptions');
+      
+      const subscription = {
+        id: uuidv4(),
+        userId: body.userId,
+        email: body.email,
+        plan: body.plan || 'free', // free, basic, premium, enterprise
+        status: 'active', // active, cancelled, expired
+        startDate: new Date(),
+        endDate: body.plan === 'free' ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days for paid
+        features: getSubscriptionFeatures(body.plan || 'free'),
+        paymentMethod: body.paymentMethod || null,
+        autoRenew: body.autoRenew !== false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      await subscriptionsCollection.insertOne(subscription);
+      return NextResponse.json({ success: true, subscription }, { status: 201, headers: corsHeaders });
+    }
+
+    // Cancel subscription
+    if (path.match(/^subscriptions\/[a-zA-Z0-9-]+\/cancel$/)) {
+      const subscriptionId = path.split('/')[1];
+      const subscriptionsCollection = await getCollection('subscriptions');
+      
+      await subscriptionsCollection.updateOne(
+        { id: subscriptionId },
+        { $set: { status: 'cancelled', autoRenew: false, updatedAt: new Date() } }
+      );
+      
+      return NextResponse.json({ success: true }, { headers: corsHeaders });
+    }
+
+    // ===== AD IMPRESSIONS =====
+    
+    // Track ad impression
+    if (path === 'ads/impression') {
+      const adsCollection = await getCollection('ad_impressions');
+      
+      const impression = {
+        id: uuidv4(),
+        adId: body.adId,
+        adType: body.adType, // programmatic, native, video
+        placement: body.placement, // header, sidebar, in-article, footer
+        userId: body.userId || null,
+        sessionId: body.sessionId,
+        newsId: body.newsId || null,
+        timestamp: new Date(),
+        clicked: false,
+        revenue: body.estimatedRevenue || 0,
+      };
+      
+      await adsCollection.insertOne(impression);
+      return NextResponse.json({ success: true, impressionId: impression.id }, { headers: corsHeaders });
+    }
+
+    // Track ad click
+    if (path === 'ads/click') {
+      const adsCollection = await getCollection('ad_impressions');
+      
+      await adsCollection.updateOne(
+        { id: body.impressionId },
+        { $set: { clicked: true, clickedAt: new Date() } }
+      );
+      
+      return NextResponse.json({ success: true }, { headers: corsHeaders });
     }
 
     // ===== SEED DEFAULT DATA =====

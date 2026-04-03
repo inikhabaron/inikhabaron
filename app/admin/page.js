@@ -52,6 +52,134 @@ const statusColors = {
   rejected: 'bg-red-500',
 };
 
+// Image Upload Component
+const ImageUpload = ({ value, onChange, folder = 'news' }) => {
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+    
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image size must be less than 10MB');
+      return;
+    }
+    
+    setUploading(true);
+    setProgress(10);
+    
+    try {
+      // Get signature from backend
+      const sigRes = await fetch(`/api/cloudinary/signature?folder=${folder}`);
+      const sigData = await sigRes.json();
+      
+      setProgress(30);
+      
+      // Check if Cloudinary is configured
+      if (sigData.cloudName?.startsWith('TODO') || !sigData.apiKey || sigData.apiKey?.startsWith('TODO')) {
+        // Fallback: Use a placeholder or the file as data URL
+        toast.warning('Cloudinary not configured. Using local preview.');
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          onChange(e.target?.result);
+          setUploading(false);
+          setProgress(100);
+        };
+        reader.readAsDataURL(file);
+        return;
+      }
+      
+      // Upload to Cloudinary
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', sigData.apiKey);
+      formData.append('timestamp', sigData.timestamp);
+      formData.append('signature', sigData.signature);
+      formData.append('folder', sigData.folder);
+      
+      setProgress(50);
+      
+      const uploadRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${sigData.cloudName}/image/upload`,
+        { method: 'POST', body: formData }
+      );
+      
+      setProgress(80);
+      
+      const uploadData = await uploadRes.json();
+      
+      if (uploadData.secure_url) {
+        onChange(uploadData.secure_url);
+        toast.success('Image uploaded successfully!');
+      } else {
+        throw new Error(uploadData.error?.message || 'Upload failed');
+      }
+      
+      setProgress(100);
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload image: ' + error.message);
+    } finally {
+      setUploading(false);
+      setTimeout(() => setProgress(0), 1000);
+    }
+  };
+  
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Input
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          disabled={uploading}
+          className="flex-1"
+        />
+        {uploading && (
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm text-muted-foreground">{progress}%</span>
+          </div>
+        )}
+      </div>
+      
+      {value && (
+        <div className="relative w-full h-40 rounded-lg overflow-hidden border">
+          <img
+            src={value}
+            alt="Preview"
+            className="w-full h-full object-cover"
+          />
+          <Button
+            size="icon"
+            variant="destructive"
+            className="absolute top-2 right-2 h-6 w-6"
+            onClick={() => onChange('')}
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
+      
+      <Input
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Or paste image URL directly"
+        className="text-xs"
+      />
+    </div>
+  );
+};
+
 export default function AdminPage() {
   // State
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -854,11 +982,11 @@ export default function AdminPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Featured Image URL</Label>
-                <Input
+                <Label>Featured Image</Label>
+                <ImageUpload
                   value={newsForm.featuredImage}
-                  onChange={(e) => setNewsForm({ ...newsForm, featuredImage: e.target.value })}
-                  placeholder="https://..."
+                  onChange={(url) => setNewsForm({ ...newsForm, featuredImage: url })}
+                  folder="news"
                 />
               </div>
               <div className="space-y-2">

@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import {
   Search,
@@ -39,6 +40,12 @@ import {
   Loader2,
   AlertCircle,
   ExternalLink,
+  History,
+  Crown,
+  CheckCircle,
+  Play,
+  Image as ImageIcon,
+  Upload,
 } from 'lucide-react';
 
 // Category icons mapping
@@ -65,6 +72,248 @@ const categoryColors = {
   world: 'bg-indigo-600',
 };
 
+// Generate session ID for anonymous users
+const getSessionId = () => {
+  if (typeof window === 'undefined') return 'server';
+  let sessionId = localStorage.getItem('newsdesk_session');
+  if (!sessionId) {
+    sessionId = 'sess_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('newsdesk_session', sessionId);
+  }
+  return sessionId;
+};
+
+// Ad Component - Programmatic
+const ProgrammaticAd = ({ placement, size = '728x90' }) => {
+  const [loaded, setLoaded] = useState(false);
+  
+  useEffect(() => {
+    // Simulate ad loading
+    const timer = setTimeout(() => setLoaded(true), 500);
+    
+    // Track impression
+    fetch('/api/ads/impression', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adId: `prog_${placement}_${Date.now()}`,
+        adType: 'programmatic',
+        placement,
+        sessionId: getSessionId(),
+        estimatedRevenue: 0.002,
+      }),
+    }).catch(() => {});
+    
+    return () => clearTimeout(timer);
+  }, [placement]);
+  
+  const [width, height] = size.split('x').map(Number);
+  
+  return (
+    <div 
+      className={`bg-gradient-to-r from-muted to-muted/50 border border-dashed border-muted-foreground/30 rounded-lg flex items-center justify-center transition-opacity ${loaded ? 'opacity-100' : 'opacity-50'}`}
+      style={{ width: '100%', maxWidth: width, height: height }}
+    >
+      <div className="text-center text-muted-foreground text-xs">
+        <p className="font-medium">Advertisement</p>
+        <p className="text-[10px]">{size} • {placement}</p>
+        <p className="text-[10px] mt-1">TODO: Add ad network code in .env</p>
+      </div>
+    </div>
+  );
+};
+
+// Native Ad Component (looks like news)
+const NativeAd = ({ className = '' }) => {
+  useEffect(() => {
+    fetch('/api/ads/impression', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adId: `native_${Date.now()}`,
+        adType: 'native',
+        placement: 'in-article',
+        sessionId: getSessionId(),
+        estimatedRevenue: 0.005,
+      }),
+    }).catch(() => {});
+  }, []);
+  
+  return (
+    <Card className={`border-dashed border-primary/30 bg-primary/5 ${className}`}>
+      <CardContent className="p-4">
+        <Badge variant="outline" className="mb-2 text-[10px]">Sponsored</Badge>
+        <div className="flex gap-3">
+          <div className="w-20 h-20 bg-muted rounded flex items-center justify-center shrink-0">
+            <ImageIcon className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <div>
+            <h4 className="font-medium text-sm line-clamp-2">Premium Content Partner</h4>
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+              Discover exclusive offers from our trusted partners. Click to learn more.
+            </p>
+            <Button size="sm" variant="link" className="p-0 h-auto text-xs mt-1">
+              Learn More →
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Continue Reading Component
+const ContinueReading = ({ history, onSelect }) => {
+  if (!history || history.length === 0) return null;
+  
+  return (
+    <Card className="mb-6 border-primary/20 bg-primary/5">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <History className="h-5 w-5 text-primary" />
+          Continue Reading
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {history.slice(0, 3).map((item) => (
+            <div
+              key={item.newsId}
+              className="flex gap-3 cursor-pointer group p-2 rounded-lg hover:bg-background transition-colors"
+              onClick={() => onSelect(item)}
+            >
+              <div className="w-16 h-16 rounded overflow-hidden shrink-0">
+                <img
+                  src={item.newsFeaturedImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=200'}
+                  alt={item.newsTitle}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors">
+                  {item.newsTitle}
+                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <Progress value={item.readPercentage} className="h-1 flex-1" />
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {item.readPercentage}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Subscription Banner
+const SubscriptionBanner = ({ onSubscribe }) => {
+  return (
+    <Card className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground overflow-hidden">
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Crown className="h-6 w-6" />
+              <h3 className="font-bold text-lg">Go Premium</h3>
+            </div>
+            <p className="text-sm opacity-90 mb-3">
+              Unlimited articles, ad-free experience, and exclusive content
+            </p>
+            <Button variant="secondary" size="sm" onClick={onSubscribe}>
+              View Plans
+            </Button>
+          </div>
+          <div className="text-right hidden sm:block">
+            <p className="text-3xl font-bold">₹299</p>
+            <p className="text-xs opacity-80">/month</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Subscription Plans Modal
+const SubscriptionPlans = ({ open, onClose }) => {
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    if (open) {
+      fetch('/api/subscriptions/plans')
+        .then(res => res.json())
+        .then(data => {
+          setPlans(data.plans || []);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    }
+  }, [open]);
+  
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl">
+        <DialogHeader>
+          <DialogTitle className="text-2xl text-center">Choose Your Plan</DialogTitle>
+        </DialogHeader>
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 py-4">
+            {plans.map((plan) => (
+              <Card key={plan.id} className={`relative ${plan.popular ? 'border-primary shadow-lg' : ''}`}>
+                {plan.popular && (
+                  <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary">
+                    Most Popular
+                  </Badge>
+                )}
+                <CardHeader className="text-center pb-2">
+                  <CardTitle>{plan.name}</CardTitle>
+                  <div className="mt-2">
+                    <span className="text-3xl font-bold">
+                      {plan.price === 0 ? 'Free' : `₹${plan.price}`}
+                    </span>
+                    {plan.price > 0 && (
+                      <span className="text-muted-foreground text-sm">/{plan.period}</span>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <ul className="space-y-2">
+                    {plan.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+                <CardFooter>
+                  <Button 
+                    className="w-full" 
+                    variant={plan.popular ? 'default' : 'outline'}
+                    disabled={plan.id === 'free'}
+                  >
+                    {plan.id === 'free' ? 'Current Plan' : 'Subscribe'}
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        )}
+        <p className="text-xs text-center text-muted-foreground">
+          TODO: Add payment gateway (Stripe/Razorpay) credentials in .env
+        </p>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export default function HomePage() {
   const [news, setNews] = useState([]);
   const [breakingNews, setBreakingNews] = useState([]);
@@ -75,10 +324,37 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [userId, setUserId] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [readingHistory, setReadingHistory] = useState([]);
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const contentRef = useRef(null);
   
+  // Get/Create user ID
+  useEffect(() => {
+    const storedUserId = localStorage.getItem('newsdesk_user_id');
+    if (storedUserId) {
+      setUserId(storedUserId);
+    } else {
+      const newUserId = 'user_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('newsdesk_user_id', newUserId);
+      setUserId(newUserId);
+    }
+  }, []);
+  
+  // Fetch reading history
+  useEffect(() => {
+    if (userId) {
+      fetch(`/api/users/${userId}/history`)
+        .then(res => res.json())
+        .then(data => setReadingHistory(data.history || []))
+        .catch(() => {});
+    }
+  }, [userId]);
+
   // Fetch categories
   const fetchCategories = useCallback(async () => {
     try {
@@ -130,7 +406,7 @@ export default function HomePage() {
   // Seed data on first load
   const seedData = useCallback(async () => {
     try {
-      await fetch('/api/seed', { method: 'POST' });
+      await fetch('/api/seed', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
     } catch (error) {
       console.error('Seed error:', error);
     }
@@ -165,6 +441,65 @@ export default function HomePage() {
     const nextPage = page + 1;
     setPage(nextPage);
     fetchNews(selectedCategory, searchQuery, nextPage);
+  };
+
+  // Track reading progress
+  const handleScroll = useCallback(() => {
+    if (contentRef.current && selectedNews) {
+      const element = contentRef.current;
+      const scrollTop = element.scrollTop;
+      const scrollHeight = element.scrollHeight - element.clientHeight;
+      const percentage = Math.min(Math.round((scrollTop / scrollHeight) * 100), 100);
+      setScrollPosition(percentage);
+    }
+  }, [selectedNews]);
+
+  // Save reading progress when closing article
+  const saveReadingProgress = useCallback(async () => {
+    if (selectedNews && userId && scrollPosition > 0) {
+      try {
+        await fetch('/api/users/reading-history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            newsId: selectedNews.id,
+            newsTitle: selectedNews.title,
+            newsExcerpt: selectedNews.excerpt,
+            newsFeaturedImage: selectedNews.featuredImage,
+            newsCategory: selectedNews.category,
+            scrollPosition: scrollPosition,
+            readPercentage: scrollPosition,
+          }),
+        });
+        // Refresh reading history
+        const res = await fetch(`/api/users/${userId}/history`);
+        const data = await res.json();
+        setReadingHistory(data.history || []);
+      } catch (error) {
+        console.error('Error saving reading progress:', error);
+      }
+    }
+  }, [selectedNews, userId, scrollPosition]);
+
+  // Handle article close
+  const handleCloseArticle = () => {
+    saveReadingProgress();
+    setSelectedNews(null);
+    setScrollPosition(0);
+  };
+
+  // Open article from history (continue reading)
+  const handleContinueReading = async (historyItem) => {
+    try {
+      const res = await fetch(`/api/news/${historyItem.newsId}`);
+      const data = await res.json();
+      if (data.news) {
+        setSelectedNews({ ...data.news, initialScrollPosition: historyItem.scrollPosition });
+      }
+    } catch (error) {
+      toast.error('Failed to load article');
+    }
   };
 
   // Track share
@@ -285,6 +620,15 @@ export default function HomePage() {
                     {breakingNews.length}
                   </span>
                 )}
+              </Button>
+
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setSubscriptionDialogOpen(true)}
+                title="Premium"
+              >
+                <Crown className="h-5 w-5 text-yellow-500" />
               </Button>
 
               <Dialog open={authDialogOpen} onOpenChange={setAuthDialogOpen}>
@@ -411,11 +755,19 @@ export default function HomePage() {
         </div>
       )}
 
+      {/* Header Ad Banner */}
+      <div className="container mx-auto px-4 py-4 flex justify-center">
+        <ProgrammaticAd placement="header" size="728x90" />
+      </div>
+
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main News Feed */}
           <div className="lg:col-span-3">
+            {/* Continue Reading */}
+            <ContinueReading history={readingHistory} onSelect={handleContinueReading} />
+            
             {/* Category Pills for Desktop */}
             <div className="hidden md:flex items-center gap-2 mb-6 overflow-x-auto pb-2">
               <Button
@@ -490,43 +842,49 @@ export default function HomePage() {
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {news.slice(1).map((item) => (
-                    <Card
-                      key={item.id}
-                      className="overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow"
-                      onClick={() => setSelectedNews(item)}
-                    >
-                      <div className="relative aspect-video">
-                        <img
-                          src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800'}
-                          alt={item.title}
-                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                        />
-                        <Badge
-                          className={`absolute top-3 left-3 ${categoryColors[item.category] || 'bg-gray-600'} text-white border-0`}
-                        >
-                          {item.category}
-                        </Badge>
-                      </div>
-                      <CardContent className="p-4">
-                        <h3 className="font-semibold mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                          {item.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                          {item.excerpt}
-                        </p>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {formatDate(item.publishedAt)}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Eye className="h-3 w-3" />
-                            {item.views?.toLocaleString() || 0}
-                          </span>
+                  {news.slice(1).map((item, idx) => (
+                    <>
+                      <Card
+                        key={item.id}
+                        className="overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow"
+                        onClick={() => setSelectedNews(item)}
+                      >
+                        <div className="relative aspect-video">
+                          <img
+                            src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800'}
+                            alt={item.title}
+                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                          />
+                          <Badge
+                            className={`absolute top-3 left-3 ${categoryColors[item.category] || 'bg-gray-600'} text-white border-0`}
+                          >
+                            {item.category}
+                          </Badge>
                         </div>
-                      </CardContent>
-                    </Card>
+                        <CardContent className="p-4">
+                          <h3 className="font-semibold mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                            {item.title}
+                          </h3>
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                            {item.excerpt}
+                          </p>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {formatDate(item.publishedAt)}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Eye className="h-3 w-3" />
+                              {item.views?.toLocaleString() || 0}
+                            </span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      {/* Insert native ad after every 3 articles */}
+                      {(idx + 1) % 3 === 0 && idx !== news.length - 2 && (
+                        <NativeAd key={`ad-${idx}`} />
+                      )}
+                    </>
                   ))}
                 </div>
 
@@ -563,9 +921,17 @@ export default function HomePage() {
           </div>
 
           {/* Sidebar */}
-          <aside className="lg:col-span-1">
+          <aside className="lg:col-span-1 space-y-6">
+            {/* Sidebar Ad */}
+            <div className="flex justify-center">
+              <ProgrammaticAd placement="sidebar" size="300x250" />
+            </div>
+            
+            {/* Subscription Banner */}
+            <SubscriptionBanner onSubscribe={() => setSubscriptionDialogOpen(true)} />
+
             {/* Trending */}
-            <Card className="mb-6">
+            <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
@@ -596,7 +962,7 @@ export default function HomePage() {
             </Card>
 
             {/* Categories */}
-            <Card className="mb-6">
+            <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg">Categories</CardTitle>
               </CardHeader>
@@ -637,11 +1003,15 @@ export default function HomePage() {
       </main>
 
       {/* News Detail Modal */}
-      <Dialog open={!!selectedNews} onOpenChange={() => setSelectedNews(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <Dialog open={!!selectedNews} onOpenChange={handleCloseArticle}>
+        <DialogContent className="max-w-3xl max-h-[90vh] p-0 overflow-hidden">
           {selectedNews && (
-            <>
-              <div className="relative aspect-video -mx-6 -mt-6 mb-4">
+            <ScrollArea 
+              className="max-h-[90vh]" 
+              ref={contentRef}
+              onScroll={handleScroll}
+            >
+              <div className="relative aspect-video">
                 <img
                   src={selectedNews.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800'}
                   alt={selectedNews.title}
@@ -652,107 +1022,133 @@ export default function HomePage() {
                 >
                   {selectedNews.category}
                 </Badge>
+                {/* Reading progress bar */}
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20">
+                  <div 
+                    className="h-full bg-primary transition-all duration-300"
+                    style={{ width: `${scrollPosition}%` }}
+                  />
+                </div>
               </div>
-              <DialogHeader>
-                <DialogTitle className="text-2xl">{selectedNews.title}</DialogTitle>
-              </DialogHeader>
               
-              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                <span className="flex items-center gap-1">
-                  <User className="h-4 w-4" />
-                  {selectedNews.authorName || 'NewsDesk Team'}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  {formatDate(selectedNews.publishedAt)}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Eye className="h-4 w-4" />
-                  {selectedNews.views?.toLocaleString() || 0} views
-                </span>
-              </div>
-
-              {/* Source attribution */}
-              {selectedNews.source && (
-                <div className="text-sm text-muted-foreground mb-4">
-                  Source: {selectedNews.sourceUrl ? (
-                    <a href={selectedNews.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                      {selectedNews.source}
-                    </a>
-                  ) : selectedNews.source}
+              <div className="p-6">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl">{selectedNews.title}</DialogTitle>
+                </DialogHeader>
+                
+                <div className="flex items-center gap-4 text-sm text-muted-foreground my-4">
+                  <span className="flex items-center gap-1">
+                    <User className="h-4 w-4" />
+                    {selectedNews.authorName || 'NewsDesk Team'}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    {formatDate(selectedNews.publishedAt)}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Eye className="h-4 w-4" />
+                    {selectedNews.views?.toLocaleString() || 0} views
+                  </span>
                 </div>
-              )}
 
-              {/* Tags */}
-              {selectedNews.tags?.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {selectedNews.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary">
-                      #{tag}
-                    </Badge>
-                  ))}
+                {/* Source attribution */}
+                {selectedNews.source && (
+                  <div className="text-sm text-muted-foreground mb-4">
+                    Source: {selectedNews.sourceUrl ? (
+                      <a href={selectedNews.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                        {selectedNews.source}
+                      </a>
+                    ) : selectedNews.source}
+                  </div>
+                )}
+
+                {/* Tags */}
+                {selectedNews.tags?.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {selectedNews.tags.map((tag) => (
+                      <Badge key={tag} variant="secondary">
+                        #{tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                <Separator className="my-4" />
+
+                {/* In-Article Ad */}
+                <div className="my-6">
+                  <NativeAd />
                 </div>
-              )}
 
-              <Separator className="my-4" />
-
-              {/* Content */}
-              <div className="prose prose-sm max-w-none">
-                <p className="whitespace-pre-wrap">{selectedNews.content}</p>
-              </div>
-
-              {/* Corrections */}
-              {selectedNews.corrections?.length > 0 && (
-                <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                  <h4 className="font-semibold mb-2 flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4" />
-                    Corrections
-                  </h4>
-                  {selectedNews.corrections.map((correction) => (
-                    <div key={correction.id} className="text-sm mb-2">
-                      <span className="text-muted-foreground">
-                        {formatDate(correction.at)}:
-                      </span>{' '}
-                      {correction.text}
-                    </div>
-                  ))}
+                {/* Content */}
+                <div className="prose prose-sm max-w-none">
+                  <p className="whitespace-pre-wrap">{selectedNews.content}</p>
                 </div>
-              )}
 
-              <Separator className="my-4" />
+                {/* Corrections */}
+                {selectedNews.corrections?.length > 0 && (
+                  <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                    <h4 className="font-semibold mb-2 flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4" />
+                      Corrections
+                    </h4>
+                    {selectedNews.corrections.map((correction) => (
+                      <div key={correction.id} className="text-sm mb-2">
+                        <span className="text-muted-foreground">
+                          {formatDate(correction.at)}:
+                        </span>{' '}
+                        {correction.text}
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-              {/* Share buttons */}
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium">Share:</span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-green-600 border-green-600 hover:bg-green-50"
-                  onClick={() => shareOnWhatsApp(selectedNews)}
-                >
-                  WhatsApp
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-blue-400 border-blue-400 hover:bg-blue-50"
-                  onClick={() => shareOnTwitter(selectedNews)}
-                >
-                  X / Twitter
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                  onClick={() => shareOnFacebook(selectedNews)}
-                >
-                  Facebook
-                </Button>
+                <Separator className="my-4" />
+
+                {/* Share buttons */}
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium">Share:</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-green-600 border-green-600 hover:bg-green-50"
+                    onClick={() => shareOnWhatsApp(selectedNews)}
+                  >
+                    WhatsApp
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-blue-400 border-blue-400 hover:bg-blue-50"
+                    onClick={() => shareOnTwitter(selectedNews)}
+                  >
+                    X / Twitter
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                    onClick={() => shareOnFacebook(selectedNews)}
+                  >
+                    Facebook
+                  </Button>
+                </div>
+
+                {/* Footer Ad */}
+                <div className="mt-6 flex justify-center">
+                  <ProgrammaticAd placement="article-footer" size="728x90" />
+                </div>
               </div>
-            </>
+            </ScrollArea>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Subscription Plans Modal */}
+      <SubscriptionPlans 
+        open={subscriptionDialogOpen} 
+        onClose={() => setSubscriptionDialogOpen(false)} 
+      />
 
       {/* Footer */}
       <footer className="bg-muted mt-12 py-8">
