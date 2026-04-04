@@ -310,6 +310,9 @@ export async function GET(request) {
     if (path === 'cloudinary/signature') {
       const folder = searchParams.get('folder') || 'news';
       const resourceType = searchParams.get('resource_type') || 'image';
+      if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+        return NextResponse.json({ error: 'Cloudinary credentials are not configured' }, { status: 500, headers: corsHeaders });
+      }
       const signature = generateUploadSignature(folder, resourceType);
       return NextResponse.json(signature, { headers: corsHeaders });
     }

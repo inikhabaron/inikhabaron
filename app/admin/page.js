@@ -79,24 +79,17 @@ const ImageUpload = ({ value, onChange, folder = 'news' }) => {
     try {
       // Get signature from backend
       const sigRes = await fetch(`/api/cloudinary/signature?folder=${folder}`);
+      if (!sigRes.ok) {
+        const errorData = await sigRes.text();
+        throw new Error(`Signature request failed: ${sigRes.status} ${sigRes.statusText} ${errorData}`);
+      }
       const sigData = await sigRes.json();
       
-      setProgress(30);
-      
-      // Check if Cloudinary is configured
-      if (sigData.cloudName?.startsWith('TODO') || !sigData.apiKey || sigData.apiKey?.startsWith('TODO')) {
-        // Fallback: Use a placeholder or the file as data URL
-        toast.warning('Cloudinary not configured. Using local preview.');
-        
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          onChange(e.target?.result);
-          setUploading(false);
-          setProgress(100);
-        };
-        reader.readAsDataURL(file);
-        return;
+      if (sigData.error || !sigData.cloudName || !sigData.apiKey || sigData.cloudName.startsWith('TODO') || sigData.apiKey.startsWith('TODO')) {
+        throw new Error('Cloudinary is not configured correctly. Please set CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY in .env');
       }
+      
+      setProgress(30);
       
       // Upload to Cloudinary
       const formData = new FormData();
@@ -105,6 +98,7 @@ const ImageUpload = ({ value, onChange, folder = 'news' }) => {
       formData.append('timestamp', sigData.timestamp);
       formData.append('signature', sigData.signature);
       formData.append('folder', sigData.folder);
+      formData.append('resource_type', sigData.resourceType || 'image');
       
       setProgress(50);
       
@@ -116,6 +110,9 @@ const ImageUpload = ({ value, onChange, folder = 'news' }) => {
       setProgress(80);
       
       const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) {
+        throw new Error(uploadData.error?.message || 'Cloudinary upload failed');
+      }
       
       if (uploadData.secure_url) {
         onChange(uploadData.secure_url);
