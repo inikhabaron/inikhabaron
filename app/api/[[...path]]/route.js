@@ -319,7 +319,7 @@ export async function GET(request) {
 
     // ===== READING HISTORY =====
     
-    if (path.match(/^users\/[a-zA-Z0-9-]+\/history$/)) {
+    if (path.match(/^users\/[a-zA-Z0-9_-]+\/history$/)) {
       const userId = path.split('/')[1];
       const historyCollection = await getCollection('reading_history');
       const history = await historyCollection
