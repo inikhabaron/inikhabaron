@@ -224,14 +224,18 @@ export async function GET(request) {
     
     if (path === 'categories') {
       const categoriesCollection = await getCollection('categories');
-      const categories = await categoriesCollection.find({ isActive: true }).sort({ order: 1 }).toArray();
+      const allCategories = await categoriesCollection.find({ isActive: true }).sort({ order: 1 }).toArray();
+      const seen = new Set();
+      const categories = allCategories.filter(c => seen.has(c.slug) ? false : seen.add(c.slug));
       return NextResponse.json({ categories }, { headers: corsHeaders });
     }
 
     // Admin - all categories
     if (path === 'admin/categories') {
       const categoriesCollection = await getCollection('categories');
-      const categories = await categoriesCollection.find({}).sort({ order: 1 }).toArray();
+      const allCategories = await categoriesCollection.find({}).sort({ order: 1 }).toArray();
+      const seen = new Set();
+      const categories = allCategories.filter(c => seen.has(c.slug) ? false : seen.add(c.slug));
       return NextResponse.json({ categories }, { headers: corsHeaders });
     }
 
@@ -895,7 +899,7 @@ export async function POST(request) {
         return NextResponse.json({ message: 'Already seeded' }, { headers: corsHeaders });
       }
       
-      // Seed categories
+      // Seed categories (upsert by slug to avoid race condition duplicates)
       const defaultCategories = [
         { id: uuidv4(), name: 'Politics', slug: 'politics', color: '#DC2626', icon: 'Building', order: 1, isActive: true },
         { id: uuidv4(), name: 'Sports', slug: 'sports', color: '#16A34A', icon: 'Trophy', order: 2, isActive: true },
@@ -906,8 +910,10 @@ export async function POST(request) {
         { id: uuidv4(), name: 'National', slug: 'national', color: '#EA580C', icon: 'Flag', order: 7, isActive: true },
         { id: uuidv4(), name: 'World', slug: 'world', color: '#4F46E5', icon: 'Globe', order: 8, isActive: true },
       ].map(cat => ({ ...cat, createdAt: new Date(), updatedAt: new Date() }));
-      
-      await categoriesCollection.insertMany(defaultCategories);
+
+      await Promise.all(defaultCategories.map(cat =>
+        categoriesCollection.updateOne({ slug: cat.slug }, { $setOnInsert: cat }, { upsert: true })
+      ));
       
       // Seed sample news
       const sampleNews = [
