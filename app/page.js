@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -331,6 +331,9 @@ export default function HomePage() {
   const [hasMore, setHasMore] = useState(true);
   const [readingHistory, setReadingHistory] = useState([]);
   const [scrollPosition, setScrollPosition] = useState(0);
+  const [youtubeLive, setYoutubeLive] = useState(null);
+  // 'compact' = small player visible by default, 'expanded' = full 16:9, 'collapsed' = banner only
+  const [playerState, setPlayerState] = useState('compact');
   const contentRef = useRef(null);
   
   // Get/Create user ID
@@ -403,6 +406,17 @@ export default function HomePage() {
     }
   }, []);
 
+  // Fetch YouTube live status
+  const fetchYoutubeLive = useCallback(async () => {
+    try {
+      const res = await fetch('/api/youtube/live');
+      const data = await res.json();
+      if (data.configured) setYoutubeLive(data);
+    } catch (error) {
+      console.error('YouTube live fetch error:', error);
+    }
+  }, []);
+
   // Seed data on first load
   const seedData = useCallback(async () => {
     try {
@@ -419,9 +433,10 @@ export default function HomePage() {
       await fetchCategories();
       await fetchBreakingNews();
       await fetchNews();
+      fetchYoutubeLive();
     };
     init();
-  }, [seedData, fetchCategories, fetchBreakingNews, fetchNews]);
+  }, [seedData, fetchCategories, fetchBreakingNews, fetchNews, fetchYoutubeLive]);
 
   // Handle category change
   useEffect(() => {
@@ -760,6 +775,90 @@ export default function HomePage() {
         <ProgrammaticAd placement="header" size="728x90" />
       </div>
 
+      {/* YouTube Live / Latest Section */}
+      {youtubeLive && (
+        <div className="container mx-auto px-4 mb-6">
+          <div className="rounded-xl overflow-hidden border bg-black shadow-sm">
+
+            {/* Always-visible header bar */}
+            <div className="flex items-center justify-between px-4 py-2 bg-gray-900">
+              <div className="flex items-center gap-2 min-w-0">
+                {youtubeLive.isLive ? (
+                  <span className="flex items-center gap-1.5 shrink-0">
+                    <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                    <span className="text-red-400 text-xs font-bold uppercase tracking-wide">Live</span>
+                  </span>
+                ) : (
+                  <span className="text-gray-500 text-xs font-semibold uppercase tracking-wide shrink-0">Latest</span>
+                )}
+                <span className="text-white text-sm font-medium truncate">
+                  {youtubeLive.title || 'NewsDesk'}
+                </span>
+              </div>
+
+              {/* Toggle controls */}
+              <div className="flex items-center gap-1 ml-4 shrink-0">
+                {youtubeLive.videoId ? (
+                  <>
+                    {playerState === 'collapsed' && (
+                      <button
+                        onClick={() => setPlayerState('compact')}
+                        className="text-gray-400 hover:text-white text-xs px-2 py-1 rounded transition-colors"
+                        title="Show player"
+                      >▶ Watch</button>
+                    )}
+                    {playerState === 'compact' && (
+                      <button
+                        onClick={() => setPlayerState('expanded')}
+                        className="text-gray-400 hover:text-white text-xs px-2 py-1 rounded transition-colors"
+                        title="Expand"
+                      >⤢ Expand</button>
+                    )}
+                    {playerState === 'expanded' && (
+                      <button
+                        onClick={() => setPlayerState('compact')}
+                        className="text-gray-400 hover:text-white text-xs px-2 py-1 rounded transition-colors"
+                        title="Shrink"
+                      >⤡ Shrink</button>
+                    )}
+                    {playerState !== 'collapsed' && (
+                      <button
+                        onClick={() => setPlayerState('collapsed')}
+                        className="text-gray-400 hover:text-white text-xs px-2 py-1 rounded transition-colors ml-1"
+                        title="Hide player"
+                      >✕</button>
+                    )}
+                  </>
+                ) : (
+                  <a
+                    href={`https://www.youtube.com/channel/${youtubeLive.channelId}/live`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-gray-400 hover:text-white text-xs px-2 py-1 rounded transition-colors"
+                  >Watch on YouTube →</a>
+                )}
+              </div>
+            </div>
+
+            {/* Player — only shown when videoId is available and not collapsed */}
+            {youtubeLive.videoId && playerState !== 'collapsed' && (
+              <div
+                className="relative w-full overflow-hidden transition-all duration-300"
+                style={{ height: playerState === 'expanded' ? undefined : '420px', paddingBottom: playerState === 'expanded' ? '56.25%' : undefined }}
+              >
+                <iframe
+                  className="absolute inset-0 w-full h-full"
+                  src={`https://www.youtube.com/embed/${youtubeLive.videoId}?rel=0`}
+                  title={youtubeLive.title || 'NewsDesk'}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -843,9 +942,8 @@ export default function HomePage() {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {news.slice(1).map((item, idx) => (
-                    <>
+                    <React.Fragment key={item.id}>
                       <Card
-                        key={item.id}
                         className="overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow"
                         onClick={() => setSelectedNews(item)}
                       >
@@ -882,9 +980,9 @@ export default function HomePage() {
                       </Card>
                       {/* Insert native ad after every 3 articles */}
                       {(idx + 1) % 3 === 0 && idx !== news.length - 2 && (
-                        <NativeAd key={`ad-${idx}`} />
+                        <NativeAd />
                       )}
-                    </>
+                    </React.Fragment>
                   ))}
                 </div>
 
@@ -939,7 +1037,7 @@ export default function HomePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {news.slice(0, 5).map((item, idx) => (
+                {(breakingNews.length > 0 ? breakingNews : news.slice(5, 10)).slice(0, 5).map((item, idx) => (
                   <div
                     key={item.id}
                     className="flex gap-3 cursor-pointer group"

@@ -235,6 +235,9 @@ export default function AdminPage() {
     bio: '',
   });
 
+  const [ytForm, setYtForm] = useState({ videoId: '', channelId: '', title: '', isLive: false });
+  const [ytSaving, setYtSaving] = useState(false);
+
   // Fetch functions
   const fetchNews = useCallback(async () => {
     try {
@@ -281,6 +284,57 @@ export default function AdminPage() {
     }
   }, []);
 
+  const fetchYtConfig = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/youtube-config');
+      const data = await res.json();
+      if (data.config) {
+        setYtForm({
+          videoId: data.config.videoId || '',
+          channelId: data.config.channelId || '',
+          title: data.config.title || '',
+          isLive: data.config.isLive || false,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching YouTube config:', error);
+    }
+  }, []);
+
+  const saveYtConfig = async () => {
+    setYtSaving(true);
+    try {
+      const res = await fetch('/api/admin/youtube-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ytForm),
+      });
+      if (res.ok) toast.success('Live stream config saved');
+      else toast.error('Failed to save config');
+    } catch {
+      toast.error('Failed to save config');
+    } finally {
+      setYtSaving(false);
+    }
+  };
+
+  const clearYtConfig = async () => {
+    setYtForm({ videoId: '', channelId: '', title: '', isLive: false });
+    setYtSaving(true);
+    try {
+      await fetch('/api/admin/youtube-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ videoId: '', channelId: '', title: '', isLive: false }),
+      });
+      toast.success('Live stream cleared');
+    } catch {
+      toast.error('Failed to clear config');
+    } finally {
+      setYtSaving(false);
+    }
+  };
+
   // Initial load and tab changes
   useEffect(() => {
     const load = async () => {
@@ -293,12 +347,14 @@ export default function AdminPage() {
         await fetchNews();
       } else if (activeTab === 'users') {
         await fetchUsers();
+      } else if (activeTab === 'livestream') {
+        await fetchYtConfig();
       }
-      
+
       setLoading(false);
     };
     load();
-  }, [activeTab, fetchCategories, fetchAnalytics, fetchNews, fetchUsers]);
+  }, [activeTab, fetchCategories, fetchAnalytics, fetchNews, fetchUsers, fetchYtConfig]);
 
   // Refetch news when filter changes
   useEffect(() => {
@@ -534,6 +590,10 @@ export default function AdminPage() {
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Users
+            </TabsTrigger>
+            <TabsTrigger value="livestream" className="flex items-center gap-2">
+              <Send className="h-4 w-4" />
+              Live Stream
             </TabsTrigger>
           </TabsList>
 
@@ -921,6 +981,95 @@ export default function AdminPage() {
               </Card>
             </div>
           </TabsContent>
+
+          {/* Live Stream Tab */}
+          <TabsContent value="livestream">
+            <div className="max-w-2xl space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Live Stream Settings</CardTitle>
+                  <CardDescription>
+                    Paste any YouTube video ID to embed it as a live stream on the homepage. Overrides automatic channel detection.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>YouTube Video ID <span className="text-red-500">*</span></Label>
+                    <Input
+                      placeholder="e.g. dQw4w9WgXcQ"
+                      value={ytForm.videoId}
+                      onChange={(e) => setYtForm({ ...ytForm, videoId: e.target.value.trim() })}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      From any YouTube URL: youtube.com/watch?v=<strong>THIS_PART</strong> or youtu.be/<strong>THIS_PART</strong>
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Display Title <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                    <Input
+                      placeholder="e.g. BBC News Live"
+                      value={ytForm.title}
+                      onChange={(e) => setYtForm({ ...ytForm, title: e.target.value })}
+                    />
+                    <p className="text-xs text-muted-foreground">Shown in the banner on the homepage. Leave blank to use YouTube's video title.</p>
+                  </div>
+
+                  <div className="flex items-center gap-3 py-2">
+                    <Switch
+                      checked={ytForm.isLive}
+                      onCheckedChange={(v) => setYtForm({ ...ytForm, isLive: v })}
+                    />
+                    <div>
+                      <Label>Mark as Live</Label>
+                      <p className="text-xs text-muted-foreground">Shows the red pulsing LIVE badge on the banner</p>
+                    </div>
+                  </div>
+
+                  {ytForm.videoId && (
+                    <div className="rounded-lg overflow-hidden border">
+                      <p className="text-xs text-muted-foreground px-3 py-2 bg-muted">Preview</p>
+                      <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                        <iframe
+                          className="absolute inset-0 w-full h-full"
+                          src={`https://www.youtube.com/embed/${ytForm.videoId}?rel=0`}
+                          title="Preview"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 pt-2">
+                    <Button onClick={saveYtConfig} disabled={ytSaving || !ytForm.videoId}>
+                      {ytSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                      Save & Go Live
+                    </Button>
+                    <Button variant="outline" onClick={clearYtConfig} disabled={ytSaving}>
+                      Clear / Go Offline
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Fallback — Channel Auto-Detection</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-muted-foreground space-y-1">
+                  <p>When no Video ID is set above, the system falls back to:</p>
+                  <ol className="list-decimal list-inside space-y-1 mt-2">
+                    <li>Check if your configured channel is live (requires YouTube API key)</li>
+                    <li>Embed latest uploaded video from the channel</li>
+                    <li>Open YouTube channel page in a new tab (if no API key)</li>
+                  </ol>
+                  <p className="mt-3">Configure <code className="bg-muted px-1 rounded">YOUTUBE_CHANNEL_ID</code> and optionally <code className="bg-muted px-1 rounded">YOUTUBE_API_KEY</code> in your <code className="bg-muted px-1 rounded">.env</code> file for auto-detection.</p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
         </Tabs>
       </div>
 

@@ -156,11 +156,14 @@ export async function GET(request) {
         ];
       }
       
-      const [news, total] = await Promise.all([
-        newsCollection.find(query).sort({ publishedAt: -1 }).skip(skip).limit(limit).toArray(),
+      const [rawNews, total] = await Promise.all([
+        newsCollection.find(query).sort({ publishedAt: -1 }).skip(skip).limit(limit * 3).toArray(),
         newsCollection.countDocuments(query),
       ]);
-      
+
+      const seenSlugs = new Set();
+      const news = rawNews.filter(n => seenSlugs.has(n.slug) ? false : seenSlugs.add(n.slug)).slice(0, limit);
+
       return NextResponse.json({
         news,
         pagination: { page, limit, total, pages: Math.ceil(total / limit) },
@@ -430,60 +433,115 @@ export async function GET(request) {
     }
 
     // ===== YOUTUBE LIVE STREAM =====
-    
+
     // Get YouTube live stream status
     if (path === 'youtube/live') {
-      const channelId = process.env.YOUTUBE_CHANNEL_ID;
+      const configCollection = await getCollection('config');
+      const dbConfig = await configCollection.findOne({ key: 'youtube' });
+
+      // Manual video ID set by admin — highest priority, embed immediately
+      if (dbConfig?.videoId) {
+        return NextResponse.json({
+          isLive: dbConfig.isLive ?? true,
+          configured: true,
+          manual: true,
+          videoId: dbConfig.videoId,
+          channelId: dbConfig.channelId || process.env.YOUTUBE_CHANNEL_ID,
+          title: dbConfig.title || null,
+        }, { headers: corsHeaders });
+      }
+
+      const channelId = dbConfig?.channelId || process.env.YOUTUBE_CHANNEL_ID;
       const apiKey = process.env.YOUTUBE_API_KEY;
-      
-      if (!channelId || channelId.startsWith('TODO') || !apiKey || apiKey.startsWith('TODO')) {
+
+      // Channel ID alone is enough for iframe embed; API key is only needed for live detection
+      if (!channelId || channelId.startsWith('TODO')) {
         return NextResponse.json({
           isLive: false,
           configured: false,
-          message: 'TODO: Add YOUTUBE_CHANNEL_ID and YOUTUBE_API_KEY in .env',
-          mockData: {
-            channelId: 'UCxxxxxxxx',
-            title: 'NewsDesk Live',
-            description: 'Live news coverage',
-          }
         }, { headers: corsHeaders });
       }
-      
+
+      // Uploads playlist ID = channel ID with UC → UU prefix swap
+      const uploadsPlaylistId = 'UU' + channelId.slice(2);
+
+      // No API key → fallback embed only (YouTube handles live redirect itself)
+      if (!apiKey || apiKey.startsWith('TODO')) {
+        return NextResponse.json({
+          isLive: false,
+          configured: true,
+          channelId,
+          uploadsPlaylistId,
+          liveDetection: false,
+        }, { headers: corsHeaders });
+      }
+
       try {
-        // Check if channel is live using YouTube Data API
-        const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&eventType=live&type=video&key=${apiKey}`;
-        const response = await fetch(searchUrl);
-        const data = await response.json();
-        
-        if (data.items && data.items.length > 0) {
-          const liveVideo = data.items[0];
+        // Step 1: check if channel is currently live
+        const liveUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&eventType=live&type=video&key=${apiKey}`;
+        const liveRes = await fetch(liveUrl);
+        const liveData = await liveRes.json();
+
+        if (liveData.items && liveData.items.length > 0) {
+          const liveVideo = liveData.items[0];
           return NextResponse.json({
             isLive: true,
             configured: true,
+            liveDetection: true,
+            channelId,
             videoId: liveVideo.id.videoId,
             title: liveVideo.snippet.title,
-            description: liveVideo.snippet.description,
             thumbnail: liveVideo.snippet.thumbnails.high?.url,
             channelTitle: liveVideo.snippet.channelTitle,
           }, { headers: corsHeaders });
         }
-        
+
+        // Step 2: not live → fetch latest uploaded video
+        const latestUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=1&key=${apiKey}`;
+        const latestRes = await fetch(latestUrl);
+        const latestData = await latestRes.json();
+
+        if (latestData.items && latestData.items.length > 0) {
+          const latest = latestData.items[0].snippet;
+          return NextResponse.json({
+            isLive: false,
+            configured: true,
+            liveDetection: true,
+            channelId,
+            videoId: latest.resourceId.videoId,
+            title: latest.title,
+            thumbnail: latest.thumbnails?.high?.url,
+            channelTitle: latest.channelTitle,
+          }, { headers: corsHeaders });
+        }
+
+        // Step 3: no videos found at all
         return NextResponse.json({
           isLive: false,
           configured: true,
-          message: 'Channel is not currently live',
+          liveDetection: true,
+          channelId,
         }, { headers: corsHeaders });
       } catch (error) {
         return NextResponse.json({
           isLive: false,
           configured: true,
+          liveDetection: false,
+          channelId,
           error: error.message,
         }, { headers: corsHeaders });
       }
     }
 
+    // Get YouTube admin config
+    if (path === 'admin/youtube-config') {
+      const configCollection = await getCollection('config');
+      const config = await configCollection.findOne({ key: 'youtube' });
+      return NextResponse.json({ config: config || {} }, { headers: corsHeaders });
+    }
+
     // ===== PUSH NOTIFICATION TOKENS =====
-    
+
     // Get all push tokens for sending notifications
     if (path === 'admin/push-tokens') {
       const usersCollection = await getCollection('users');
@@ -520,8 +578,20 @@ export async function POST(request) {
       // Empty body is okay for some endpoints like seed
     }
 
+    // Save YouTube admin config
+    if (path === 'admin/youtube-config') {
+      const { videoId, channelId, title, isLive } = body;
+      const configCollection = await getCollection('config');
+      await configCollection.updateOne(
+        { key: 'youtube' },
+        { $set: { key: 'youtube', videoId: videoId || null, channelId: channelId || null, title: title || null, isLive: !!isLive, updatedAt: new Date() } },
+        { upsert: true }
+      );
+      return NextResponse.json({ success: true }, { headers: corsHeaders });
+    }
+
     // ===== NEWS CRUD =====
-    
+
     // Create news article
     if (path === 'admin/news') {
       const newsCollection = await getCollection('news');
@@ -1019,7 +1089,13 @@ export async function POST(request) {
         },
       ];
       
-      await newsCollection.insertMany(sampleNews.map(n => ({ ...n, corrections: [], approvalHistory: [], headlineVariants: [], activeHeadline: 0, seoTitle: n.title, seoDescription: n.excerpt, seoKeywords: n.tags })));
+      await Promise.all(sampleNews.map(n =>
+        newsCollection.updateOne(
+          { slug: n.slug },
+          { $setOnInsert: { ...n, corrections: [], approvalHistory: [], headlineVariants: [], activeHeadline: 0, seoTitle: n.title, seoDescription: n.excerpt, seoKeywords: n.tags } },
+          { upsert: true }
+        )
+      ));
       
       return NextResponse.json({ success: true, message: 'Database seeded successfully' }, { headers: corsHeaders });
     }
