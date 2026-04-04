@@ -8,9 +8,15 @@ export const metadata = {
   title: 'NewsDesk - Your Daily News Source',
   description: 'Stay informed with the latest news across politics, sports, business, entertainment, and technology.',
   manifest: '/manifest.json',
-  themeColor: '#1E40AF',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
 };
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: '#1E40AF',
+};
+
 
 export default function RootLayout({ children }) {
   return (
