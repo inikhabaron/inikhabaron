@@ -41,15 +41,62 @@ import {
   TrendingUp,
   Share2,
   Upload,
+  LogOut,
 } from 'lucide-react';
 
 // Status badge colors
 const statusColors = {
   draft: 'bg-gray-500',
-  pending: 'bg-yellow-500',
+  pending_review: 'bg-yellow-500',
+  needs_revision: 'bg-orange-500',
+  ready_to_publish: 'bg-blue-500',
   published: 'bg-green-500',
   scheduled: 'bg-blue-500',
   rejected: 'bg-red-500',
+};
+
+const statusOptionsByRole = {
+  reporter: [
+    { value: 'draft', label: 'Draft' },
+  ],
+  editor: [
+    { value: 'draft', label: 'Draft' },
+    { value: 'pending_review', label: 'Pending Review' },
+    { value: 'needs_revision', label: 'Needs Revision' },
+  ],
+  admin: [
+    { value: 'draft', label: 'Draft' },
+    { value: 'pending_review', label: 'Pending Review' },
+    { value: 'needs_revision', label: 'Needs Revision' },
+    { value: 'ready_to_publish', label: 'Ready to Publish' },
+    { value: 'published', label: 'Published' },
+    { value: 'scheduled', label: 'Scheduled' },
+  ],
+};
+
+const statusFilterOptionsByRole = {
+  reporter: [
+    { value: 'all', label: 'All' },
+    { value: 'draft', label: 'Draft' },
+    { value: 'pending_review', label: 'Pending Review' },
+    { value: 'needs_revision', label: 'Needs Revision' },
+  ],
+  editor: [
+    { value: 'all', label: 'All' },
+    { value: 'draft', label: 'Draft' },
+    { value: 'pending_review', label: 'Pending Review' },
+    { value: 'needs_revision', label: 'Needs Revision' },
+  ],
+  admin: [
+    { value: 'all', label: 'All' },
+    { value: 'draft', label: 'Draft' },
+    { value: 'pending_review', label: 'Pending Review' },
+    { value: 'needs_revision', label: 'Needs Revision' },
+    { value: 'ready_to_publish', label: 'Ready to Publish' },
+    { value: 'published', label: 'Published' },
+    { value: 'scheduled', label: 'Scheduled' },
+    { value: 'rejected', label: 'Rejected' },
+  ],
 };
 
 // Image Upload Component
@@ -186,6 +233,7 @@ export default function AdminPage() {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [newsStatusFilter, setNewsStatusFilter] = useState('all');
+  const [currentUser, setCurrentUser] = useState(null);
   
   // Edit states
   const [editingNews, setEditingNews] = useState(null);
@@ -194,6 +242,8 @@ export default function AdminPage() {
   const [isNewsDialogOpen, setIsNewsDialogOpen] = useState(false);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+  const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
+  const [versionHistory, setVersionHistory] = useState([]);
   
   // Form states
   const [newsForm, setNewsForm] = useState({
@@ -205,6 +255,9 @@ export default function AdminPage() {
     featuredImage: '',
     status: 'draft',
     isBreaking: false,
+    breakingSuggested: false,
+    isTrending: false,
+    trendingSuggested: false,
     isFeatured: false,
     authorName: 'Admin',
     source: '',
@@ -230,30 +283,100 @@ export default function AdminPage() {
     role: 'reporter',
     isVerified: false,
     bio: '',
+    canPublishScheduled: false,
+    canPublishBreaking: false,
   });
 
   const [ytForm, setYtForm] = useState({ videoId: '', channelId: '', title: '', isLive: false });
   const [ytSaving, setYtSaving] = useState(false);
 
+  // Helper function for authenticated requests
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('admin_token')?.toString().trim();
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}`, 'x-admin-token': token } : {}),
+    };
+  };
+
+  const authFetch = async (url, options = {}) => {
+    const token = localStorage.getItem('admin_token')?.toString().trim();
+    const authUrl = token ? `${url}${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}` : url;
+    const headers = {
+      ...getAuthHeaders(),
+      ...(options.headers || {}),
+    };
+    return fetch(authUrl, { ...options, headers });
+  };
+
   // Fetch functions
+  useEffect(() => {
+    // Check if user is authenticated as admin
+    const checkAdminAuth = () => {
+      const adminToken = localStorage.getItem('admin_token');
+      const adminSession = localStorage.getItem('admin_session');
+
+      if (!adminToken || !adminSession) {
+        // Redirect to login if not authenticated
+        window.location.href = '/admin/login';
+        return;
+      }
+
+      try {
+        const session = JSON.parse(adminSession);
+        // Optionally verify session expiry or role here
+        if (!session || !session.role) {
+          localStorage.removeItem('admin_token');
+          localStorage.removeItem('admin_session');
+          window.location.href = '/admin/login';
+        }
+        setCurrentUser({
+          ...session,
+          role: session.role?.toString().trim().toLowerCase(),
+        });
+      } catch (error) {
+        console.error('Invalid session data:', error);
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_session');
+        window.location.href = '/admin/login';
+      }
+    };
+
+    checkAdminAuth();
+  }, []);
+
   const fetchNews = useCallback(async () => {
     try {
       let url = '/api/admin/news?limit=100';
       if (newsStatusFilter !== 'all') {
         url += `&status=${newsStatusFilter}`;
       }
-      const res = await fetch(url);
+      
+      // Add role-based filtering
+      if (currentUser?.role === 'reporter') {
+        url += `&authorId=${currentUser.id}`;
+      } else if (currentUser?.role === 'editor') {
+        // Editors see articles in their workflow states
+        url += '&workflow=editor';
+      }
+      // Admins see all articles (no additional filtering)
+      
+      const res = await authFetch(url, {
+        method: 'GET',
+      });
       const data = await res.json();
       setNews(data.news || []);
     } catch (error) {
       console.error('Error fetching news:', error);
       toast.error('Failed to fetch news');
     }
-  }, [newsStatusFilter]);
+  }, [newsStatusFilter, currentUser]);
 
   const fetchCategories = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/categories');
+      const res = await authFetch('/api/admin/categories', {
+        method: 'GET',
+      });
       const data = await res.json();
       setCategories(data.categories || []);
     } catch (error) {
@@ -263,7 +386,9 @@ export default function AdminPage() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/users');
+      const res = await authFetch('/api/admin/users', {
+        method: 'GET',
+      });
       const data = await res.json();
       setUsers(data.users || []);
     } catch (error) {
@@ -273,7 +398,9 @@ export default function AdminPage() {
 
   const fetchAnalytics = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/analytics');
+      const res = await authFetch('/api/admin/analytics', {
+        method: 'GET',
+      });
       const data = await res.json();
       setAnalytics(data);
     } catch (error) {
@@ -283,7 +410,9 @@ export default function AdminPage() {
 
   const fetchYtConfig = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/youtube-config');
+      const res = await authFetch('/api/admin/youtube-config', {
+        method: 'GET',
+      });
       const data = await res.json();
       if (data.config) {
         setYtForm({
@@ -301,9 +430,8 @@ export default function AdminPage() {
   const saveYtConfig = async () => {
     setYtSaving(true);
     try {
-      const res = await fetch('/api/admin/youtube-config', {
+      const res = await authFetch('/api/admin/youtube-config', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(ytForm),
       });
       if (res.ok) toast.success('Live stream config saved');
@@ -319,9 +447,8 @@ export default function AdminPage() {
     setYtForm({ videoId: '', channelId: '', title: '', isLive: false });
     setYtSaving(true);
     try {
-      await fetch('/api/admin/youtube-config', {
+      await authFetch('/api/admin/youtube-config', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ videoId: '', channelId: '', title: '', isLive: false }),
       });
       toast.success('Live stream cleared');
@@ -342,7 +469,7 @@ export default function AdminPage() {
         await fetchAnalytics();
       } else if (activeTab === 'news') {
         await fetchNews();
-      } else if (activeTab === 'users') {
+      } else if (activeTab === 'users' && currentUser?.role === 'admin') {
         await fetchUsers();
       } else if (activeTab === 'livestream') {
         await fetchYtConfig();
@@ -351,7 +478,7 @@ export default function AdminPage() {
       setLoading(false);
     };
     load();
-  }, [activeTab, fetchCategories, fetchAnalytics, fetchNews, fetchUsers, fetchYtConfig]);
+  }, [activeTab, fetchCategories, fetchAnalytics, fetchNews, fetchUsers, fetchYtConfig, currentUser]);
 
   // Refetch news when filter changes
   useEffect(() => {
@@ -367,26 +494,33 @@ export default function AdminPage() {
         ...newsForm,
         tags: newsForm.tags.split(',').map(t => t.trim()).filter(Boolean),
         seoKeywords: newsForm.seoKeywords.split(',').map(t => t.trim()).filter(Boolean),
-        authorId: 'admin',
+        authorId: currentUser?.id || 'admin',
+        authorName: currentUser?.name || newsForm.authorName,
+        status: editingNews ? newsForm.status : 'draft', // New articles start as draft
       };
 
       const method = editingNews ? 'PUT' : 'POST';
       const url = editingNews ? `/api/admin/news/${editingNews.id}` : '/api/admin/news';
 
-      const res = await fetch(url, {
+      const res = await authFetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error('Failed to save');
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        const message = data?.error || `Failed to save (${res.status})`;
+        console.error('Save news error response:', { status: res.status, data });
+        throw new Error(message);
+      }
 
       toast.success(editingNews ? 'News updated successfully' : 'News created successfully');
       setIsNewsDialogOpen(false);
       resetNewsForm();
       fetchNews();
     } catch (error) {
-      toast.error('Failed to save news');
+      console.error('Save news error:', error);
+      toast.error(error?.message || 'Failed to save news');
     }
   };
 
@@ -394,7 +528,9 @@ export default function AdminPage() {
     if (!confirm('Are you sure you want to delete this article?')) return;
     
     try {
-      await fetch(`/api/admin/news/${id}`, { method: 'DELETE' });
+      await authFetch(`/api/admin/news/${id}`, { 
+        method: 'DELETE',
+      });
       toast.success('News deleted');
       fetchNews();
     } catch (error) {
@@ -402,33 +538,51 @@ export default function AdminPage() {
     }
   };
 
-  const handleApproveNews = async (id) => {
+  const handleViewVersionHistory = async (articleId) => {
     try {
-      await fetch(`/api/admin/news/${id}/approve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: 'admin', userName: 'Admin' }),
+      const res = await authFetch(`/api/admin/news/${articleId}/versions`, {
+        method: 'GET',
       });
-      toast.success('Article approved and published');
-      fetchNews();
-      fetchAnalytics();
+      const data = await res.json();
+      setVersionHistory(data.versions || []);
+      setIsVersionHistoryOpen(true);
     } catch (error) {
-      toast.error('Failed to approve');
+      toast.error('Failed to load version history');
     }
   };
 
-  const handleRejectNews = async (id, comment) => {
+  const handleLogout = () => {
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_session');
+    window.location.href = '/admin/login';
+  };
+
+  const handleWorkflowAction = async (id, action, comment = '') => {
     try {
-      await fetch(`/api/admin/news/${id}/reject`, {
+      const endpoint = `/api/admin/news/${id}/${action}`;
+      const payload = comment ? { comment, userId: currentUser?.id, userName: currentUser?.name } : { userId: currentUser?.id, userName: currentUser?.name };
+
+      const res = await authFetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: 'admin', userName: 'Admin', comment: comment || 'Needs revision' }),
+        body: JSON.stringify(payload),
       });
-      toast.success('Article rejected');
+
+      if (!res.ok) throw new Error('Failed to perform action');
+
+      toast.success(`Article ${action.replace('_', ' ')}d successfully`);
       fetchNews();
+      fetchAnalytics();
     } catch (error) {
-      toast.error('Failed to reject');
+      toast.error(`Failed to ${action.replace('_', ' ')} article`);
     }
+  };
+
+  const handleApproveNews = async (id) => {
+    await handleWorkflowAction(id, 'approve');
+  };
+
+  const handleRejectNews = async (id, comment) => {
+    await handleWorkflowAction(id, 'revise', comment || 'Needs revision');
   };
 
   const resetNewsForm = () => {
@@ -441,8 +595,11 @@ export default function AdminPage() {
       featuredImage: '',
       status: 'draft',
       isBreaking: false,
+      breakingSuggested: false,
+      isTrending: false,
+      trendingSuggested: false,
       isFeatured: false,
-      authorName: 'Admin',
+      authorName: currentUser?.name || 'Admin',
       source: '',
       sourceUrl: '',
       seoTitle: '',
@@ -464,6 +621,9 @@ export default function AdminPage() {
       featuredImage: item.featuredImage || '',
       status: item.status || 'draft',
       isBreaking: item.isBreaking || false,
+      breakingSuggested: item.breakingSuggested || false,
+      isTrending: item.isTrending || false,
+      trendingSuggested: item.trendingSuggested || false,
       isFeatured: item.isFeatured || false,
       authorName: item.authorName || 'Admin',
       source: item.source || '',
@@ -482,9 +642,8 @@ export default function AdminPage() {
       const method = editingCategory ? 'PUT' : 'POST';
       const url = editingCategory ? `/api/admin/categories/${editingCategory.id}` : '/api/admin/categories';
 
-      const res = await fetch(url, {
+      const res = await authFetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(categoryForm),
       });
 
@@ -504,7 +663,9 @@ export default function AdminPage() {
     if (!confirm('Are you sure?')) return;
     
     try {
-      await fetch(`/api/admin/categories/${id}`, { method: 'DELETE' });
+      await authFetch(`/api/admin/categories/${id}`, { 
+        method: 'DELETE',
+      });
       toast.success('Category deleted');
       fetchCategories();
     } catch (error) {
@@ -518,9 +679,8 @@ export default function AdminPage() {
       const method = editingUser ? 'PUT' : 'POST';
       const url = editingUser ? `/api/admin/users/${editingUser.id}` : '/api/admin/users';
 
-      const res = await fetch(url, {
+      const res = await authFetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userForm),
       });
 
@@ -528,11 +688,25 @@ export default function AdminPage() {
 
       toast.success(editingUser ? 'User updated' : 'User created');
       setIsUserDialogOpen(false);
-      setUserForm({ name: '', email: '', role: 'reporter', isVerified: false, bio: '' });
+      setUserForm({ name: '', email: '', role: 'reporter', isVerified: false, bio: '', canPublishScheduled: false, canPublishBreaking: false });
       setEditingUser(null);
       fetchUsers();
     } catch (error) {
       toast.error('Failed to save user');
+    }
+  };
+
+  const handleDeleteUser = async (id) => {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+    
+    try {
+      await authFetch(`/api/admin/users/${id}`, { 
+        method: 'DELETE',
+      });
+      toast.success('User deleted');
+      fetchUsers();
+    } catch (error) {
+      toast.error('Failed to delete user');
     }
   };
 
@@ -563,7 +737,18 @@ export default function AdminPage() {
                 <Home className="h-4 w-4" />
                 <span className="hidden sm:inline">View Site</span>
               </a>
-              <Badge variant="secondary">Admin</Badge>
+              <Badge variant="secondary" className="capitalize">
+                {currentUser?.role || 'Admin'}
+              </Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="text-primary-foreground hover:bg-primary-foreground/10"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Logout</span>
+              </Button>
             </div>
           </div>
         </div>
@@ -580,14 +765,18 @@ export default function AdminPage() {
               <FileText className="h-4 w-4" />
               News
             </TabsTrigger>
-            <TabsTrigger value="categories" className="flex items-center gap-2">
-              <Tag className="h-4 w-4" />
-              Categories
-            </TabsTrigger>
-            <TabsTrigger value="users" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Users
-            </TabsTrigger>
+            {currentUser?.role === 'admin' && (
+              <>
+                <TabsTrigger value="categories" className="flex items-center gap-2">
+                  <Tag className="h-4 w-4" />
+                  Categories
+                </TabsTrigger>
+                <TabsTrigger value="users" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Users
+                </TabsTrigger>
+              </>
+            )}
             <TabsTrigger value="livestream" className="flex items-center gap-2">
               <Send className="h-4 w-4" />
               Live Stream
@@ -631,7 +820,7 @@ export default function AdminPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm text-muted-foreground">Pending Review</p>
-                          <p className="text-3xl font-bold text-yellow-600">{analytics.stats?.pendingNews || 0}</p>
+                          <p className="text-3xl font-bold text-yellow-600">{analytics.stats?.pendingReviewNews || 0}</p>
                         </div>
                         <Clock className="h-10 w-10 text-yellow-600" />
                       </div>
@@ -696,18 +885,28 @@ export default function AdminPage() {
                     <CardTitle>Quick Actions</CardTitle>
                   </CardHeader>
                   <CardContent className="flex flex-wrap gap-3">
-                    <Button onClick={() => { resetNewsForm(); setIsNewsDialogOpen(true); }}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Article
-                    </Button>
+                    {(currentUser?.role === 'admin' || currentUser?.role === 'editor' || currentUser?.role === 'reporter') && (
+                      <Button onClick={() => { resetNewsForm(); setIsNewsDialogOpen(true); }}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Article
+                      </Button>
+                    )}
                     <Button variant="outline" onClick={() => setActiveTab('news')}>
                       <FileText className="h-4 w-4 mr-2" />
                       Manage News
                     </Button>
-                    <Button variant="outline" onClick={() => setActiveTab('categories')}>
-                      <Tag className="h-4 w-4 mr-2" />
-                      Manage Categories
-                    </Button>
+                    {currentUser?.role === 'admin' && (
+                      <>
+                        <Button variant="outline" onClick={() => setActiveTab('categories')}>
+                          <Tag className="h-4 w-4 mr-2" />
+                          Manage Categories
+                        </Button>
+                        <Button variant="outline" onClick={() => setActiveTab('users')}>
+                          <Users className="h-4 w-4 mr-2" />
+                          Manage Users
+                        </Button>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -726,13 +925,12 @@ export default function AdminPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="published">Published</SelectItem>
-                      <SelectItem value="scheduled">Scheduled</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
+                    {(statusFilterOptionsByRole[currentUser?.role] || statusFilterOptionsByRole.admin).map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                   </Select>
                 </div>
                 <Button onClick={() => { resetNewsForm(); setIsNewsDialogOpen(true); }}>
@@ -759,8 +957,11 @@ export default function AdminPage() {
                       {news.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell className="max-w-xs">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               {item.isBreaking && <Badge className="bg-red-500 text-white">Breaking</Badge>}
+                              {item.breakingSuggested && !item.breakingApproved && <Badge className="bg-orange-500 text-white">Breaking Suggested</Badge>}
+                              {item.isTrending && <Badge className="bg-blue-500 text-white">Trending</Badge>}
+                              {item.trendingSuggested && !item.isTrending && <Badge className="bg-purple-500 text-white">Trending Suggested</Badge>}
                               <span className="truncate">{item.title}</span>
                             </div>
                           </TableCell>
@@ -769,52 +970,140 @@ export default function AdminPage() {
                           </TableCell>
                           <TableCell>
                             <Badge className={`${statusColors[item.status]} text-white`}>
-                              {item.status}
+                              {item.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                             </Badge>
                           </TableCell>
                           <TableCell>{item.authorName || '-'}</TableCell>
                           <TableCell className="text-sm">{formatDate(item.createdAt)}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-1">
-                              {item.status === 'pending' && (
+                              {/* Workflow Actions based on role and status */}
+                              {currentUser?.role === 'reporter' && item.status === 'draft' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-blue-600 hover:text-blue-700"
+                                  onClick={() => handleWorkflowAction(item.id, 'submit')}
+                                  title="Submit for Review"
+                                >
+                                  <Send className="h-4 w-4 mr-1" />
+                                  Submit
+                                </Button>
+                              )}
+                              
+                              {currentUser?.role === 'editor' && item.status === 'pending_review' && (
                                 <>
                                   <Button
-                                    size="icon"
-                                    variant="ghost"
+                                    size="sm"
+                                    variant="outline"
                                     className="text-green-600 hover:text-green-700"
-                                    onClick={() => handleApproveNews(item.id)}
-                                    title="Approve"
+                                    onClick={() => handleWorkflowAction(item.id, 'approve')}
+                                    title="Approve Article"
                                   >
-                                    <Check className="h-4 w-4" />
+                                    <Check className="h-4 w-4 mr-1" />
+                                    Approve
                                   </Button>
                                   <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="text-red-600 hover:text-red-700"
-                                    onClick={() => handleRejectNews(item.id)}
-                                    title="Reject"
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-orange-600 hover:text-orange-700"
+                                    onClick={() => handleWorkflowAction(item.id, 'revise')}
+                                    title="Send Back for Revision"
                                   >
-                                    <X className="h-4 w-4" />
+                                    <X className="h-4 w-4 mr-1" />
+                                    Revise
                                   </Button>
                                 </>
                               )}
+                              
+                              {currentUser?.role === 'reporter' && item.status === 'needs_revision' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-blue-600 hover:text-blue-700"
+                                  onClick={() => handleWorkflowAction(item.id, 'submit')}
+                                  title="Resubmit for Review"
+                                >
+                                  <Send className="h-4 w-4 mr-1" />
+                                  Resubmit
+                                </Button>
+                              )}
+                              
+                              {currentUser?.role === 'admin' && item.status === 'ready_to_publish' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-green-600 hover:text-green-700"
+                                  onClick={() => handleWorkflowAction(item.id, 'publish')}
+                                  title="Publish Article"
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  Publish
+                                </Button>
+                              )}
+                              
+                              {currentUser?.role === 'admin' && item.breakingSuggested && !item.breakingApproved && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-red-600 hover:text-red-700"
+                                  onClick={() => handleWorkflowAction(item.id, 'approve-breaking')}
+                                  title="Approve Breaking News"
+                                >
+                                  <AlertCircle className="h-4 w-4 mr-1" />
+                                  Approve Breaking
+                                </Button>
+                              )}
+                              
+                              {(currentUser?.role === 'admin' || currentUser?.role === 'editor') && item.trendingSuggested && !item.isTrending && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-purple-600 hover:text-purple-700"
+                                  onClick={() => handleWorkflowAction(item.id, 'approve-trending')}
+                                  title="Approve Trending"
+                                >
+                                  <TrendingUp className="h-4 w-4 mr-1" />
+                                  Approve Trending
+                                </Button>
+                              )}
+
+                              {/* Edit button - available based on permissions */}
+                              {((currentUser?.role === 'admin') ||
+                                (currentUser?.role === 'editor' && ['draft', 'needs_revision'].includes(item.status)) ||
+                                (currentUser?.role === 'reporter' && item.status === 'draft' && item.authorId === currentUser?.id)) && (
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => openEditNews(item)}
+                                  title="Edit"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              )}
+
+                              {/* Version History button */}
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                onClick={() => openEditNews(item)}
-                                title="Edit"
+                                onClick={() => handleViewVersionHistory(item.id)}
+                                title="Version History"
                               >
-                                <Edit className="h-4 w-4" />
+                                <History className="h-4 w-4" />
                               </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="text-red-600 hover:text-red-700"
-                                onClick={() => handleDeleteNews(item.id)}
-                                title="Delete"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+
+                              {/* Delete button - admin only */}
+                              {currentUser?.role === 'admin' && (
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="text-red-600 hover:text-red-700"
+                                  onClick={() => handleDeleteNews(item.id)}
+                                  title="Delete"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -907,7 +1196,7 @@ export default function AdminPage() {
               <div className="flex justify-end">
                 <Button onClick={() => {
                   setEditingUser(null);
-                  setUserForm({ name: '', email: '', role: 'reporter', isVerified: false, bio: '' });
+                  setUserForm({ name: '', email: '', role: 'reporter', isVerified: false, bio: '', canPublishScheduled: false, canPublishBreaking: false });
                   setIsUserDialogOpen(true);
                 }}>
                   <Plus className="h-4 w-4 mr-2" />
@@ -945,23 +1234,36 @@ export default function AdminPage() {
                           </TableCell>
                           <TableCell className="text-sm">{formatDate(user.createdAt)}</TableCell>
                           <TableCell className="text-right">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => {
-                                setEditingUser(user);
-                                setUserForm({
-                                  name: user.name,
-                                  email: user.email || '',
-                                  role: user.role,
-                                  isVerified: user.isVerified,
-                                  bio: user.bio || '',
-                                });
-                                setIsUserDialogOpen(true);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditingUser(user);
+                                  setUserForm({
+                                    name: user.name,
+                                    email: user.email || '',
+                                    role: user.role,
+                                    isVerified: user.isVerified,
+                                    bio: user.bio || '',
+                                    canPublishScheduled: user.permissions?.canPublishScheduled || false,
+                                    canPublishBreaking: user.permissions?.canPublishBreaking || false,
+                                  });
+                                  setIsUserDialogOpen(true);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="text-red-600 hover:text-red-700"
+                                onClick={() => handleDeleteUser(user.id)}
+                                title="Delete User"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -1156,10 +1458,11 @@ export default function AdminPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="pending">Pending Review</SelectItem>
-                    <SelectItem value="published">Published</SelectItem>
-                    <SelectItem value="scheduled">Scheduled</SelectItem>
+                    {(statusOptionsByRole[currentUser?.role] || statusOptionsByRole.admin).map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1182,14 +1485,47 @@ export default function AdminPage() {
               )}
             </div>
 
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={newsForm.isBreaking}
-                  onCheckedChange={(v) => setNewsForm({ ...newsForm, isBreaking: v })}
-                />
-                <Label>Breaking News</Label>
-              </div>
+            <div className="flex flex-wrap items-center gap-6">
+              {currentUser?.role === 'admin' && (
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={newsForm.isBreaking}
+                    onCheckedChange={(v) => setNewsForm({ ...newsForm, isBreaking: v })}
+                  />
+                  <Label>Breaking News</Label>
+                </div>
+              )}
+
+              {(currentUser?.role === 'reporter' || currentUser?.role === 'editor') && (
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={newsForm.breakingSuggested}
+                    onCheckedChange={(v) => setNewsForm({ ...newsForm, breakingSuggested: v })}
+                  />
+                  <Label>Suggest Breaking News</Label>
+                </div>
+              )}
+
+              {currentUser?.role !== 'reporter' && (
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={newsForm.isTrending}
+                    onCheckedChange={(v) => setNewsForm({ ...newsForm, isTrending: v })}
+                  />
+                  <Label>Trending</Label>
+                </div>
+              )}
+
+              {currentUser?.role === 'reporter' && (
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={newsForm.trendingSuggested}
+                    onCheckedChange={(v) => setNewsForm({ ...newsForm, trendingSuggested: v })}
+                  />
+                  <Label>Suggest Trending</Label>
+                </div>
+              )}
+
               <div className="flex items-center gap-2">
                 <Switch
                   checked={newsForm.isFeatured}
@@ -1343,6 +1679,61 @@ export default function AdminPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Version History Dialog */}
+      <Dialog open={isVersionHistoryOpen} onOpenChange={setIsVersionHistoryOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Version History</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {versionHistory.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No version history available</p>
+            ) : (
+              <div className="space-y-4">
+                {versionHistory.map((version, index) => (
+                  <Card key={index}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <Badge variant="outline" className="mb-1">
+                            Version {version.version || index + 1}
+                          </Badge>
+                          <p className="text-sm text-muted-foreground">
+                            {formatDate(version.timestamp)}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium">{version.authorName || 'Unknown'}</p>
+                          <Badge className={`${statusColors[version.status]} text-white text-xs`}>
+                            {version.status?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <h4 className="font-semibold">{version.title}</h4>
+                        <p className="text-sm text-muted-foreground line-clamp-3">
+                          {version.content}
+                        </p>
+                        {version.corrections && version.corrections.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-sm font-medium text-orange-600">Corrections:</p>
+                            <ul className="text-sm text-muted-foreground ml-4">
+                              {version.corrections.map((correction, idx) => (
+                                <li key={idx} className="list-disc">{correction}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* User Dialog */}
       <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
         <DialogContent>
@@ -1399,6 +1790,28 @@ export default function AdminPage() {
               />
               <Label>Verified Author</Label>
             </div>
+            {userForm.role === 'editor' && (
+              <>
+                <Separator />
+                <h4 className="font-semibold">Editor Permissions</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={userForm.canPublishScheduled}
+                      onCheckedChange={(v) => setUserForm({ ...userForm, canPublishScheduled: v })}
+                    />
+                    <Label>Can publish scheduled news</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={userForm.canPublishBreaking}
+                      onCheckedChange={(v) => setUserForm({ ...userForm, canPublishBreaking: v })}
+                    />
+                    <Label>Can publish breaking news</Label>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsUserDialogOpen(false)}>

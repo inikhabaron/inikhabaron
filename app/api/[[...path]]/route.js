@@ -19,6 +19,113 @@ try {
   console.log('Razorpay not configured');
 }
 
+// ===== RBAC HELPER FUNCTIONS =====
+async function getUserFromToken(request) {
+  const authHeader = request.headers.get('authorization')?.toString().trim();
+  const fallbackHeader = request.headers.get('x-admin-token')?.toString().trim();
+  const url = new URL(request.url);
+  const queryToken = url.searchParams.get('token')?.toString().trim();
+  const token = authHeader?.startsWith('Bearer ')
+    ? authHeader.substring(7).trim()
+    : fallbackHeader || queryToken;
+  if (!token) {
+    return null;
+  }
+  
+  try {
+    // Simple token validation (in production use JWT)
+    const decoded = Buffer.from(token, 'base64').toString().split(':');
+    const userId = decoded[0];
+    
+    const usersCollection = await getCollection('users');
+    const user = await usersCollection.findOne({ id: userId });
+    return user;
+  } catch (error) {
+    return null;
+  }
+}
+
+function checkRole(user, requiredRoles) {
+  if (!user || !user.role) return false;
+  const role = String(user.role).trim().toLowerCase();
+  return requiredRoles.map((r) => String(r).trim().toLowerCase()).includes(role);
+}
+
+function normalizeStatus(status) {
+  if (!status || typeof status !== 'string') return '';
+  const key = status.toLowerCase();
+  if (['draft'].includes(key)) return 'draft';
+  if (['pending_review', 'pendingreview', 'pending'].includes(key)) return 'pending_review';
+  if (['needs_revision', 'needsrevision'].includes(key)) return 'needs_revision';
+  if (['ready_to_publish', 'readytopublish', 'ready_to_publish'].includes(key)) return 'ready_to_publish';
+  if (['published'].includes(key)) return 'published';
+  if (['scheduled'].includes(key)) return 'scheduled';
+  if (['rejected'].includes(key)) return 'rejected';
+  return key;
+}
+
+function canAccessAdminPanel(user) {
+  return checkRole(user, ['admin', 'editor', 'reporter']);
+}
+
+function canCreateArticle(user) {
+  return checkRole(user, ['admin', 'editor', 'reporter']);
+}
+
+function canEditArticle(user, article) {
+  if (checkRole(user, ['admin'])) return true;
+  if (checkRole(user, ['editor'])) return true; // Editors can edit any article
+  if (checkRole(user, ['reporter']) && article.authorId === user.id) {
+    return ['draft', 'needs_revision'].includes(normalizeStatus(article.status));
+  }
+  return false;
+}
+
+function canSubmitForReview(user, article) {
+  return checkRole(user, ['reporter']) && article.authorId === user.id && normalizeStatus(article.status) === 'draft';
+}
+
+function canReviewArticle(user) {
+  return checkRole(user, ['admin', 'editor']);
+}
+
+function canApproveArticle(user) {
+  return checkRole(user, ['admin', 'editor']);
+}
+
+function canPublishArticle(user) {
+  return checkRole(user, ['admin']);
+}
+
+function canMarkBreaking(user) {
+  return checkRole(user, ['admin']);
+}
+
+function canApproveBreaking(user) {
+  return checkRole(user, ['admin']);
+}
+
+function canSuggestBreaking(user) {
+  return checkRole(user, ['admin', 'editor', 'reporter']);
+}
+
+function canApproveTrending(user) {
+  // Editors can approve trending, admins can too
+  return checkRole(user, ['admin', 'editor']);
+}
+
+function canPublishScheduled(user, userPermissions = {}) {
+  if (checkRole(user, ['admin'])) return true;
+  if (checkRole(user, ['editor']) && userPermissions.canPublishScheduled) return true;
+  return false;
+}
+
+function canPublishBreaking(user, userPermissions = {}) {
+  if (checkRole(user, ['admin'])) return true;
+  if (checkRole(user, ['editor']) && userPermissions.canPublishBreaking) return true;
+  return false;
+}
+
 // Initialize Resend (will work when key is added)
 let resend = null;
 try {
@@ -33,7 +140,7 @@ try {
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-Token',
 };
 
 // Handle OPTIONS requests
@@ -593,10 +700,76 @@ export async function POST(request) {
       return NextResponse.json({ success: true }, { headers: corsHeaders });
     }
 
+    // ===== ADMIN LOGIN =====
+    if (path === 'admin/login') {
+      const { email, password } = body;
+
+      if (!email || !password) {
+        return NextResponse.json(
+          { error: 'Email and password are required' },
+          { status: 400, headers: corsHeaders }
+        );
+      }
+
+      const usersCollection = await getCollection('users');
+      const user = await usersCollection.findOne({ email: email.toLowerCase() });
+
+      if (!user) {
+        return NextResponse.json(
+          { error: 'Invalid email or password' },
+          { status: 401, headers: corsHeaders }
+        );
+      }
+
+      // Check if user is admin or editor (has access to admin panel)
+      if (!user.role || !['admin', 'editor', 'reporter'].includes(user.role)) {
+        return NextResponse.json(
+          { error: 'User account does not have admin access' },
+          { status: 403, headers: corsHeaders }
+        );
+      }
+
+      // Simple password validation (plain text for now)
+      // TODO: In production, use bcrypt for password hashing
+      if (user.password !== password) {
+        return NextResponse.json(
+          { error: 'Invalid email or password' },
+          { status: 401, headers: corsHeaders }
+        );
+      }
+
+      // Generate a simple token (in production use JWT)
+      const token = Buffer.from(`${user.id}:${Date.now()}`).toString('base64');
+
+      // Return user data without password
+      const { password: _, ...userWithoutPassword } = user;
+      const normalizedUser = {
+        ...userWithoutPassword,
+        role: userWithoutPassword.role?.toString().trim().toLowerCase(),
+      };
+
+      return NextResponse.json(
+        {
+          success: true,
+          admin: normalizedUser,
+          token: token,
+        },
+        { status: 200, headers: corsHeaders }
+      );
+    }
+
     // ===== NEWS CRUD =====
 
-    // Create news article
+    // Create news article (Reporter/Admin/Editor)
     if (path === 'admin/news') {
+      const user = await getUserFromToken(request);
+      if (!user || !canCreateArticle(user)) {
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 403, headers: corsHeaders }
+        );
+      }
+
       const newsCollection = await getCollection('news');
       
       const newsItem = {
@@ -609,29 +782,27 @@ export async function POST(request) {
         tags: body.tags || [],
         featuredImage: body.featuredImage || null,
         images: body.images || [],
-        status: body.status || 'draft', // draft, pending, published, scheduled, rejected
-        isBreaking: body.isBreaking || false,
+        status: normalizeStatus(body.status) || 'draft',
+        isBreaking: false, // Only admin can mark as breaking
+        breakingApproved: false,
+        breakingSuggested: body.breakingSuggested || false, // Reporter/Editor suggestion
+        isTrending: false, // Approved trending status
+        trendingSuggested: body.trendingSuggested || false, // Reporter suggestion
         isFeatured: body.isFeatured || false,
-        authorId: body.authorId,
-        authorName: body.authorName,
+        authorId: user.id,
+        authorName: user.name,
         source: body.source || null,
         sourceUrl: body.sourceUrl || null,
         // SEO fields
         seoTitle: body.seoTitle || body.title,
         seoDescription: body.seoDescription || body.excerpt,
         seoKeywords: body.seoKeywords || [],
-        // A/B Testing headlines
-        headlineVariants: body.headlineVariants || [],
-        activeHeadline: 0,
-        // Scheduling
-        scheduledAt: body.scheduledAt ? new Date(body.scheduledAt) : null,
-        publishedAt: body.status === 'published' ? new Date() : null,
-        // Workflow
-        approvalHistory: [],
+        // Workflow fields
+        reviewedBy: null,
+        approvedBy: null,
+        versionHistory: [],
         corrections: [],
-        // Analytics
-        views: 0,
-        shares: { whatsapp: 0, twitter: 0, facebook: 0 },
+        approvalHistory: [],
         // Timestamps
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -738,6 +909,243 @@ export async function POST(request) {
         }
       );
       
+      return NextResponse.json({ success: result.modifiedCount > 0 }, { headers: corsHeaders });
+    }
+
+    // ===== NEWSROOM WORKFLOW ENDPOINTS =====
+
+    // Submit article for review (Reporter only)
+    if (path.match(/^admin\/news\/[a-zA-Z0-9-]+\/submit$/)) {
+      const user = await getUserFromToken(request);
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
+      }
+
+      const newsId = path.split('/')[2];
+      const newsCollection = await getCollection('news');
+      const article = await newsCollection.findOne({ id: newsId });
+
+      if (!article) {
+        return NextResponse.json({ error: 'Article not found' }, { status: 404, headers: corsHeaders });
+      }
+
+      if (!canSubmitForReview(user, article)) {
+        return NextResponse.json({ error: 'Cannot submit this article for review' }, { status: 403, headers: corsHeaders });
+      }
+
+      const result = await newsCollection.updateOne(
+        { id: newsId },
+        {
+          $set: { status: 'PENDING_REVIEW', updatedAt: new Date() },
+          $push: {
+            approvalHistory: {
+              action: 'submitted',
+              by: user.id,
+              byName: user.name,
+              at: new Date(),
+              comment: body.comment || 'Submitted for review',
+            },
+          },
+        }
+      );
+
+      return NextResponse.json({ success: result.modifiedCount > 0 }, { headers: corsHeaders });
+    }
+
+    // Send back to reporter for revision (Editor/Admin only)
+    if (path.match(/^admin\/news\/[a-zA-Z0-9-]+\/revise$/)) {
+      const user = await getUserFromToken(request);
+      if (!user || !canReviewArticle(user)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 403, headers: corsHeaders });
+      }
+
+      const newsId = path.split('/')[2];
+      const newsCollection = await getCollection('news');
+
+      const result = await newsCollection.updateOne(
+        { id: newsId },
+        {
+          $set: { status: 'NEEDS_REVISION', reviewedBy: user.id, updatedAt: new Date() },
+          $push: {
+            approvalHistory: {
+              action: 'sent_back',
+              by: user.id,
+              byName: user.name,
+              at: new Date(),
+              comment: body.comment || 'Needs revision',
+            },
+            corrections: {
+              id: uuidv4(),
+              text: body.comment || 'Please revise the article',
+              by: user.id,
+              byName: user.name,
+              at: new Date(),
+            },
+          },
+        }
+      );
+
+      return NextResponse.json({ success: result.modifiedCount > 0 }, { headers: corsHeaders });
+    }
+
+    // Approve article for publishing (Editor/Admin only)
+    if (path.match(/^admin\/news\/[a-zA-Z0-9-]+\/approve$/)) {
+      const user = await getUserFromToken(request);
+      if (!user || !canApproveArticle(user)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 403, headers: corsHeaders });
+      }
+
+      const newsId = path.split('/')[2];
+      const newsCollection = await getCollection('news');
+
+      const result = await newsCollection.updateOne(
+        { id: newsId },
+        {
+          $set: { status: 'READY_TO_PUBLISH', reviewedBy: user.id, updatedAt: new Date() },
+          $push: {
+            approvalHistory: {
+              action: 'approved',
+              by: user.id,
+              byName: user.name,
+              at: new Date(),
+              comment: body.comment || 'Approved for publishing',
+            },
+          },
+        }
+      );
+
+      return NextResponse.json({ success: result.modifiedCount > 0 }, { headers: corsHeaders });
+    }
+
+    // Publish article (Admin only)
+    if (path.match(/^admin\/news\/[a-zA-Z0-9-]+\/publish$/)) {
+      const user = await getUserFromToken(request);
+      if (!user || !canPublishArticle(user)) {
+        return NextResponse.json({ error: 'Unauthorized - Admin only' }, { status: 403, headers: corsHeaders });
+      }
+
+      const newsId = path.split('/')[2];
+      const newsCollection = await getCollection('news');
+
+      const result = await newsCollection.updateOne(
+        { id: newsId },
+        {
+          $set: {
+            status: 'PUBLISHED',
+            publishedAt: new Date(),
+            approvedBy: user.id,
+            updatedAt: new Date()
+          },
+          $push: {
+            approvalHistory: {
+              action: 'published',
+              by: user.id,
+              byName: user.name,
+              at: new Date(),
+              comment: body.comment || 'Published',
+            },
+          },
+        }
+      );
+
+      return NextResponse.json({ success: result.modifiedCount > 0 }, { headers: corsHeaders });
+    }
+
+    // Mark/unmark as breaking news (Admin only)
+    if (path.match(/^admin\/news\/[a-zA-Z0-9-]+\/breaking$/)) {
+      const user = await getUserFromToken(request);
+      if (!user || !canMarkBreaking(user)) {
+        return NextResponse.json({ error: 'Unauthorized - Admin only' }, { status: 403, headers: corsHeaders });
+      }
+
+      const newsId = path.split('/')[2];
+      const newsCollection = await getCollection('news');
+      const isBreaking = body.isBreaking || false;
+
+      const result = await newsCollection.updateOne(
+        { id: newsId },
+        {
+          $set: {
+            isBreaking: isBreaking,
+            breakingApproved: isBreaking, // Admin approval when marking
+            updatedAt: new Date()
+          },
+          $push: {
+            approvalHistory: {
+              action: isBreaking ? 'marked_breaking' : 'unmarked_breaking',
+              by: user.id,
+              byName: user.name,
+              at: new Date(),
+            },
+          },
+        }
+      );
+
+      return NextResponse.json({ success: result.modifiedCount > 0 }, { headers: corsHeaders });
+    }
+
+    // Approve breaking news suggestion (Admin only)
+    if (path.match(/^admin\/news\/[a-zA-Z0-9-]+\/approve-breaking$/)) {
+      const user = await getUserFromToken(request);
+      if (!user || !canApproveBreaking(user)) {
+        return NextResponse.json({ error: 'Unauthorized - Admin only' }, { status: 403, headers: corsHeaders });
+      }
+
+      const newsId = path.split('/')[2];
+      const newsCollection = await getCollection('news');
+
+      const result = await newsCollection.updateOne(
+        { id: newsId },
+        {
+          $set: {
+            isBreaking: true,
+            breakingApproved: true,
+            updatedAt: new Date()
+          },
+          $push: {
+            approvalHistory: {
+              action: 'breaking_approved',
+              by: user.id,
+              byName: user.name,
+              at: new Date(),
+              comment: body.comment || 'Breaking news approved',
+            },
+          },
+        }
+      );
+
+      return NextResponse.json({ success: result.modifiedCount > 0 }, { headers: corsHeaders });
+    }
+
+    // Approve trending news suggestion (Editor/Admin)
+    if (path.match(/^admin\/news\/[a-zA-Z0-9-]+\/approve-trending$/)) {
+      const user = await getUserFromToken(request);
+      if (!user || !canApproveTrending(user)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 403, headers: corsHeaders });
+      }
+
+      const newsId = path.split('/')[2];
+      const newsCollection = await getCollection('news');
+
+      const result = await newsCollection.updateOne(
+        { id: newsId },
+        {
+          $set: {
+            isTrending: true,
+            updatedAt: new Date()
+          },
+          $push: {
+            approvalHistory: {
+              action: 'trending_approved',
+              by: user.id,
+              byName: user.name,
+              at: new Date(),
+              comment: body.comment || 'Trending status approved',
+            },
+          },
+        }
+      );
+
       return NextResponse.json({ success: result.modifiedCount > 0 }, { headers: corsHeaders });
     }
 
@@ -873,12 +1281,18 @@ export async function POST(request) {
       
       const user = {
         id: uuidv4(),
-        email: body.email,
+        email: body.email.toLowerCase(),
+        password: body.password, // Store password (use bcrypt in production)
         name: body.name,
-        role: body.role || 'reporter',
+        role: (body.role || 'reporter').toString().trim().toLowerCase(),
         isVerified: body.isVerified || false,
         bio: body.bio || '',
         avatar: body.avatar || null,
+        // Editor permissions (only applicable for editor role)
+        permissions: {
+          canPublishScheduled: body.canPublishScheduled || false,
+          canPublishBreaking: body.canPublishBreaking || false,
+        },
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -965,14 +1379,63 @@ export async function POST(request) {
     if (path === 'seed') {
       const categoriesCollection = await getCollection('categories');
       const newsCollection = await getCollection('news');
+      const usersCollection = await getCollection('users');
       
       // Check if already seeded
       const existingCategories = await categoriesCollection.countDocuments({});
-      if (existingCategories > 0) {
+      const existingUsers = await usersCollection.countDocuments({});
+      
+      // Always ensure demo users exist
+      const demoUsers = [
+        {
+          id: 'admin-' + uuidv4(),
+          email: 'admin@newsdesk.com',
+          password: 'admin123', // In production, use hashed passwords
+          name: 'Admin User',
+          role: 'admin',
+          isVerified: true,
+          bio: 'System Administrator',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'editor-' + uuidv4(),
+          email: 'editor@newsdesk.com',
+          password: 'editor123',
+          name: 'Editor User',
+          role: 'editor',
+          isVerified: true,
+          bio: 'Content Editor',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'reporter-' + uuidv4(),
+          email: 'reporter@newsdesk.com',
+          password: 'reporter123',
+          name: 'Reporter User',
+          role: 'reporter',
+          isVerified: true,
+          bio: 'News Reporter',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+
+      await Promise.all(demoUsers.map(user =>
+        usersCollection.updateOne(
+          { email: user.email },
+          { $set: user },
+          { upsert: true }
+        )
+      ));
+      
+      if (existingCategories > 0 && existingUsers > 0) {
         return NextResponse.json({ message: 'Already seeded' }, { headers: corsHeaders });
       }
       
       // Seed categories (upsert by slug to avoid race condition duplicates)
+      if (existingCategories === 0) {
       const defaultCategories = [
         { id: uuidv4(), name: 'Politics', slug: 'politics', color: '#DC2626', icon: 'Building', order: 1, isActive: true },
         { id: uuidv4(), name: 'Sports', slug: 'sports', color: '#16A34A', icon: 'Trophy', order: 2, isActive: true },
@@ -987,9 +1450,11 @@ export async function POST(request) {
       await Promise.all(defaultCategories.map(cat =>
         categoriesCollection.updateOne({ slug: cat.slug }, { $setOnInsert: cat }, { upsert: true })
       ));
+      }
       
       // Seed sample news
-      const sampleNews = [
+      if (existingCategories === 0) {
+        const sampleNews = [
         {
           id: uuidv4(),
           title: 'Breaking: Major Tech Company Announces Revolutionary AI Product',
@@ -1099,6 +1564,7 @@ export async function POST(request) {
           { upsert: true }
         )
       ));
+      }
       
       return NextResponse.json({ success: true, message: 'Database seeded successfully' }, { headers: corsHeaders });
     }
@@ -1118,37 +1584,110 @@ export async function PUT(request) {
   try {
     const body = await request.json();
 
-    // Update news article
+    // Update news article (with RBAC and version history)
     if (path.match(/^admin\/news\/[a-zA-Z0-9-]+$/)) {
+      const user = await getUserFromToken(request);
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
+      }
+
       const newsId = path.split('/')[2];
       const newsCollection = await getCollection('news');
-      
+      const article = await newsCollection.findOne({ id: newsId });
+
+      if (!article) {
+        return NextResponse.json({ error: 'Article not found' }, { status: 404, headers: corsHeaders });
+      }
+
+      if (!canEditArticle(user, article)) {
+        return NextResponse.json({ error: 'Cannot edit this article' }, { status: 403, headers: corsHeaders });
+      }
+
+      // Create version history before updating
+      const previousVersion = {
+        id: uuidv4(),
+        title: article.title,
+        content: article.content,
+        excerpt: article.excerpt,
+        category: article.category,
+        tags: article.tags,
+        featuredImage: article.featuredImage,
+        status: article.status,
+        isBreaking: article.isBreaking,
+        editedBy: user.id,
+        editedByName: user.name,
+        editedAt: new Date(),
+      };
+
       const updateData = {
         ...body,
         updatedAt: new Date(),
       };
-      
-      // Handle publish date
-      if (body.status === 'published' && !body.publishedAt) {
-        updateData.publishedAt = new Date();
+
+      // Handle breaking news suggestions and approvals
+      if (body.breakingSuggested !== undefined) {
+        if (!canSuggestBreaking(user)) {
+          return NextResponse.json({ error: 'Cannot suggest breaking news' }, { status: 403, headers: corsHeaders });
+        }
+        updateData.breakingSuggested = body.breakingSuggested;
+        updateData.breakingApproved = false; // Reset approval when suggestion changes
       }
-      
-      if (body.scheduledAt) {
-        updateData.scheduledAt = new Date(body.scheduledAt);
+
+      if (body.isBreaking !== undefined) {
+        if (!canMarkBreaking(user)) {
+          return NextResponse.json({ error: 'Only admin can mark articles as breaking news' }, { status: 403, headers: corsHeaders });
+        }
+        updateData.isBreaking = body.isBreaking;
+        updateData.breakingApproved = body.isBreaking;
       }
-      
+
+      // Handle trending news suggestions and approvals
+      if (body.trendingSuggested !== undefined) {
+        updateData.trendingSuggested = body.trendingSuggested;
+        // Only editors and admins can approve trending
+        if (body.trendingSuggested && !canApproveTrending(user)) {
+          updateData.isTrending = false; // Reset if user can't approve
+        }
+      }
+
+      if (body.isTrending !== undefined) {
+        if (!canApproveTrending(user)) {
+          return NextResponse.json({ error: 'Cannot approve trending status' }, { status: 403, headers: corsHeaders });
+        }
+        updateData.isTrending = body.isTrending;
+      }
+
+      // Handle status changes with workflow validation
+      const requestedStatus = normalizeStatus(body.status);
+      const currentStatus = normalizeStatus(article.status);
+      if (requestedStatus && requestedStatus !== currentStatus) {
+        if (requestedStatus === 'pending_review' && !canSubmitForReview(user, article)) {
+          return NextResponse.json({ error: 'Cannot submit for review' }, { status: 403, headers: corsHeaders });
+        }
+        if (requestedStatus === 'ready_to_publish' && !canApproveArticle(user)) {
+          return NextResponse.json({ error: 'Cannot approve article' }, { status: 403, headers: corsHeaders });
+        }
+        if (requestedStatus === 'published' && !canPublishArticle(user)) {
+          return NextResponse.json({ error: 'Cannot publish article' }, { status: 403, headers: corsHeaders });
+        }
+        updateData.status = requestedStatus;
+      }
+
       delete updateData.id;
       delete updateData._id;
-      
+
       const result = await newsCollection.updateOne(
         { id: newsId },
-        { $set: updateData }
+        {
+          $set: updateData,
+          $push: { versionHistory: previousVersion }
+        }
       );
-      
+
       if (result.matchedCount === 0) {
-        return NextResponse.json({ error: 'News not found' }, { status: 404, headers: corsHeaders });
+        return NextResponse.json({ error: 'Article not found' }, { status: 404, headers: corsHeaders });
       }
-      
+
       const updatedNews = await newsCollection.findOne({ id: newsId });
       return NextResponse.json({ success: true, news: updatedNews }, { headers: corsHeaders });
     }
