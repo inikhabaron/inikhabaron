@@ -28,7 +28,9 @@ async function getUserFromToken(request) {
   const token = authHeader?.startsWith('Bearer ')
     ? authHeader.substring(7).trim()
     : fallbackHeader || queryToken;
+  console.log('Auth Debug:', { authHeader, fallbackHeader, queryToken, token });
   if (!token) {
+    console.log('No token found');
     return null;
   }
   
@@ -36,11 +38,14 @@ async function getUserFromToken(request) {
     // Simple token validation (in production use JWT)
     const decoded = Buffer.from(token, 'base64').toString().split(':');
     const userId = decoded[0];
+    console.log('Decoded userId:', userId);
     
     const usersCollection = await getCollection('users');
     const user = await usersCollection.findOne({ id: userId });
+    console.log('Found user:', user ? { id: user.id, name: user.name, role: user.role } : null);
     return user;
   } catch (error) {
+    console.log('Token decode error:', error.message);
     return null;
   }
 }
@@ -1388,7 +1393,6 @@ export async function POST(request) {
       // Always ensure demo users exist
       const demoUsers = [
         {
-          id: 'admin-' + uuidv4(),
           email: 'admin@newsdesk.com',
           password: 'admin123', // In production, use hashed passwords
           name: 'Admin User',
@@ -1399,7 +1403,6 @@ export async function POST(request) {
           updatedAt: new Date(),
         },
         {
-          id: 'editor-' + uuidv4(),
           email: 'editor@newsdesk.com',
           password: 'editor123',
           name: 'Editor User',
@@ -1410,7 +1413,6 @@ export async function POST(request) {
           updatedAt: new Date(),
         },
         {
-          id: 'reporter-' + uuidv4(),
           email: 'reporter@newsdesk.com',
           password: 'reporter123',
           name: 'Reporter User',
@@ -1422,13 +1424,22 @@ export async function POST(request) {
         },
       ];
 
-      await Promise.all(demoUsers.map(user =>
-        usersCollection.updateOne(
-          { email: user.email },
-          { $set: user },
-          { upsert: true }
-        )
-      ));
+      await Promise.all(demoUsers.map(async (userData) => {
+        const existingUser = await usersCollection.findOne({ email: userData.email });
+        if (existingUser) {
+          // Update existing user but keep the ID
+          await usersCollection.updateOne(
+            { email: userData.email },
+            { $set: { ...userData, id: existingUser.id } }
+          );
+        } else {
+          // Create new user with new ID
+          await usersCollection.insertOne({
+            ...userData,
+            id: userData.role + '-' + uuidv4(),
+          });
+        }
+      }));
       
       if (existingCategories > 0 && existingUsers > 0) {
         return NextResponse.json({ message: 'Already seeded' }, { headers: corsHeaders });
