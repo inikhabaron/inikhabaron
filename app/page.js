@@ -15,7 +15,7 @@ import {
   ExternalLink, Crown, CheckCircle, Image as ImageIcon,
   ChevronDown, Settings, HelpCircle, LogOut as LogOutIcon,
   Music, Plane, Share2, ArrowUp, ArrowDown, Sun, Moon,
-  MessageCircle, Type, ChevronUp,
+  MessageCircle, Type, ChevronUp, Apple,
 } from 'lucide-react';
 
 // ─── Font options for the toolbar ─────────────────────────────────────────────
@@ -256,11 +256,14 @@ export default function HomePage() {
   const [youtubeLive, setYoutubeLive] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [dark, setDark] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]);
   const [textScale, setTextScale] = useState(1);
   const [showFontToolbar, setShowFontToolbar] = useState(false);
   const contentRef = useRef(null);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
 
   // persist prefs
   useEffect(() => {
@@ -342,6 +345,32 @@ export default function HomePage() {
 
   const getCategoryIcon = (slug) => categoryIcons[slug] || Newspaper;
 
+  {/* Notification bell handler */ }
+
+  const handleNotificationClick = async () => {
+  if (!("Notification" in window)) {
+    alert("Notifications not supported");
+    return;
+  }
+
+  if (Notification.permission === "granted") {
+    new Notification("NewsDesk 🔔", {
+      body: "You are already subscribed!",
+    });
+    return;
+  }
+
+  const permission = await Notification.requestPermission();
+
+  if (permission === "granted") {
+    new Notification("Subscribed ✅", {
+      body: "You will receive breaking news alerts!",
+    });
+  } else {
+    alert("Permission denied ❌");
+  }
+};
+
   // ── Palette ───────────────────────────────────────────────────────────────────
   const bg         = dark ? '#141620'   : '#F5F6F8';
   const surface    = dark ? '#1e2130'   : '#FFFFFF';
@@ -359,6 +388,16 @@ export default function HomePage() {
     { label: 'Sports',      slug: 'sports' },
     { label: 'Technology',  slug: 'technology' },
   ];
+
+  const navSlugs = navItems.map(n => n.slug);
+
+  const isMoreActive =
+  selectedCategory !== 'all' &&
+  !navItems.some(n => n.slug === selectedCategory);
+
+  const extraCategories = categories.filter(
+    cat => !navSlugs.includes(cat.slug)
+  );
 
   const leftNavItems = [
     { label: 'News',    icon: Newspaper,  slug: 'all' },
@@ -394,8 +433,8 @@ export default function HomePage() {
 
           {/* ═══ LEFT SIDEBAR ══════════════════════════════════════════════════ */}
           <aside style={{
-            width: sidebarCollapsed ? '60px' : '210px',
-            minWidth: sidebarCollapsed ? '60px' : '210px',
+            width: sidebarCollapsed ? '60px' : '250px',
+            minWidth: sidebarCollapsed ? '60px' : '250px',
             backgroundColor: surface,
             borderRight: `1px solid ${bdr}`,
             display: 'flex', flexDirection: 'column',
@@ -506,17 +545,133 @@ export default function HomePage() {
                       {!sidebarCollapsed && <span style={{ fontSize: '13px', fontWeight: 600, color: T2 }}>Sign In</span>}
                     </button>
                   </DialogTrigger>
-                  <DialogContent style={{ borderRadius: '16px', padding: '28px' }}>
-                    <DialogHeader><DialogTitle style={{ color: T1, fontWeight: 700 }}>Sign in to NewsDesk</DialogTitle></DialogHeader>
-                    <div style={{ paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <button style={{ border: `1px solid ${bdr}`, borderRadius: '8px', padding: '10px 16px', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', backgroundColor: surface, color: T2, fontFamily: selectedFont.value }} onClick={handleGoogleSignIn} disabled={authLoading}>
-                        {authLoading ? <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite', color: ACCENT }} /> : <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>}
-                        Continue with Google
+                  <DialogContent
+                    style={{
+                      borderRadius: '20px',
+                      padding: '0',
+                      overflow: 'hidden',
+                      background: 'rgba(255,255,255,0.85)',
+                      backdropFilter: 'blur(20px)',
+                      border: `1px solid ${bdr}`,
+                      boxShadow: '0 20px 60px rgba(0,0,0,0.25)'
+                    }}
+                  >
+                    {/* HEADER */}
+                    <div
+                      style={{
+                        padding: '28px',
+                        background: 'linear-gradient(135deg, #3BAFDA, #6C63FF)',
+                        color: 'white',
+                        textAlign: 'center',
+                        position: 'relative'
+                      }}
+                    >
+                      <button
+                        onClick={() => setAuthDialogOpen(false)}
+                        style={{
+                          position: 'absolute',
+                          right: '10px',
+                          top: '10px',
+                          background: 'rgb(255, 255, 255)',
+                          border: 'none',
+                          borderRadius: '25%',
+                          width: '28px',
+                          height: '28px',
+                          cursor: 'pointer',
+                          color: 'White'
+                        }}
+                      >
+                        ✕
                       </button>
-                      <button style={{ border: `1px solid ${bdr}`, borderRadius: '8px', padding: '10px 16px', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', backgroundColor: surface, color: T2, fontFamily: selectedFont.value }} onClick={handleAppleSignIn} disabled={authLoading}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+
+                      <h2 style={{ fontSize: '20px', fontWeight: 700 }}>
+                        Welcome Back 👋
+                      </h2>
+                      <p style={{ fontSize: '13px', opacity: 0.9 }}>
+                        Sign in to continue to NewsDesk
+                      </p>
+                    </div>
+
+                    {/* BODY */}
+                    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      
+                      {/* GOOGLE BUTTON */}
+                      <button
+                        onClick={handleGoogleSignIn}
+                        disabled={authLoading}
+                        style={{
+                          padding: '12px',
+                          borderRadius: '10px',
+                          border: `1px solid ${bdr}`,
+                          background: '#fff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '10px',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.15)';
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        {authLoading ? (
+                          <Loader2 style={{ animation: 'spin 1s linear infinite' }} />
+                        ) : (
+                          <>
+                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="18" />
+                            Continue with Google
+                          </>
+                        )}
+                      </button>
+
+                      {/* APPLE BUTTON */}
+                      <button
+                        onClick={handleAppleSignIn}
+                        disabled={authLoading}
+                        style={{
+                          padding: '12px',
+                          borderRadius: '10px',
+                          border: `1px solid ${bdr}`,
+                          background: '#fff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '10px',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.15)';
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        <Apple size={16} />
                         Continue with Apple
                       </button>
+
+                      {/* FOOTER TEXT */}
+                      {/* <p style={{
+                        textAlign: 'center',
+                        fontSize: '12px',
+                        color: T3,
+                        marginTop: '10px'
+                      }}>
+                        By continuing, you agree to our Terms & Privacy Policy
+                      </p> */}
                     </div>
                   </DialogContent>
                 </Dialog>
@@ -543,18 +698,166 @@ export default function HomePage() {
 
               {[
                 { label: 'Account', icon: User, action: null },
-                { label: 'Settings', icon: Settings, action: null },
                 { label: 'Help & Support', icon: HelpCircle, action: null },
-                { label: 'Log Out', icon: LogOutIcon, action: handleSignOut },
               ].map(({ label, icon: Icon, action }) => (
-                <button key={label} onClick={action || undefined}
-                  style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '9px 10px', borderRadius: '8px', border: 'none', cursor: 'pointer', marginBottom: '2px', backgroundColor: 'transparent', color: T3, transition: 'all 0.15s', justifyContent: sidebarCollapsed ? 'center' : 'flex-start' }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = hoverBg; e.currentTarget.style.color = T2; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = T3; }}>
-                  <Icon style={{ width: '17px', height: '17px', flexShrink: 0 }} />
-                  {!sidebarCollapsed && <span style={{ fontSize: '14px', fontWeight: 500 }}>{label}</span>}
+                <button
+                  key={label}
+                  onClick={action || undefined}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    width: '100%',
+                    padding: '9px 10px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    marginBottom: '2px',
+                    backgroundColor: 'transparent',
+                    color: T3,
+                    justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.backgroundColor = hoverBg;
+                    e.currentTarget.style.color = T2;
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = T3;
+                  }}
+                >
+                  <Icon style={{ width: '17px', height: '17px' }} />
+                  {!sidebarCollapsed && <span>{label}</span>}
                 </button>
               ))}
+
+              {/* SETTINGS DROPDOWN */}
+              <div>
+                <button
+                  onClick={() => {
+                    if (sidebarCollapsed) {
+                      setSidebarCollapsed(false);   // 👈 open sidebar first
+                    } else {
+                      setShowSettingsMenu(p => !p); // 👈 then toggle dropdown
+                    }
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    width: '100%',
+                    padding: '9px 10px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    backgroundColor: 'transparent',
+                    color: T3,
+                    justifyContent: sidebarCollapsed ? 'center' : 'space-between'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Settings style={{ width: '17px', height: '17px' }} />
+                    {!sidebarCollapsed && <span>Settings</span>}
+                  </div>
+
+                  {!sidebarCollapsed &&
+                    (showSettingsMenu ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                </button>
+
+                {showSettingsMenu && !sidebarCollapsed && (
+                  <div style={{
+                    marginLeft: '28px',
+                    marginTop: '6px',
+                    backgroundColor: surface,
+                    borderRadius: '8px',
+                    padding: '10px',
+                    border: `1px solid ${bdr}`,
+                    zIndex: 50,
+                    position: 'relative'
+                  }}>
+
+                    {/* Language */}
+                    <div style={{ marginBottom: '10px' }}>
+                      <p style={{ fontSize: '11px', color: T3 }}>Language</p>
+
+                      <select
+                        value={selectedLanguage}
+                        onChange={(e) => setSelectedLanguage(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '6px',
+                          borderRadius: '6px',
+                          border: `1px solid ${bdr}`,
+                          background: surface,
+                          color: T2,
+                          fontSize: '12px'
+                        }}
+                      >
+                        <option value="en">English</option>
+                        <option value="hi">Hindi</option>
+                      </select>
+                    </div>
+
+                    {/* Typography */}
+                    <button onClick={() => setShowFontToolbar(p => !p)}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', border: 'none', borderTop: `1px solid ${bdr}`, backgroundColor: 'transparent', cursor: 'pointer', color: T3, transition: 'background-color 0.15s' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = hoverBg}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Type style={{ width: '15px', height: '15px' }} />
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: T2 }}>Typography</span>
+                      </div>
+                      {showFontToolbar ? <ChevronDown style={{ width: '14px', height: '14px' }} /> : <ChevronUp style={{ width: '14px', height: '14px' }} />}
+                    </button>
+
+                    {/* Expanded font toolbar */}
+                    {showFontToolbar && (
+                      <FontToolbar
+                        selectedFont={selectedFont} onFontChange={handleFontChange}
+                        selectedSize={textScale} onSizeChange={handleSizeChange}
+                        dark={dark}
+                      />
+                    )}
+
+                    {/* Logout (only when user is logged in) */}
+                    {user && (
+                      <button
+                        onClick={handleSignOut}
+                        style={{
+                          width: '100%',
+                          marginTop: '10px',
+                          padding: '10px 12px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          backgroundColor: dark ? 'rgba(239,68,68,0.12)' : '#FEE2E2',
+                          color: '#EF4444',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.backgroundColor = '#EF4444';
+                          e.currentTarget.style.color = '#fff';
+                          e.currentTarget.style.transform = 'scale(1.02)';
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.backgroundColor = dark ? 'rgba(239,68,68,0.12)' : '#FEE2E2';
+                          e.currentTarget.style.color = '#EF4444';
+                          e.currentTarget.style.transform = 'scale(1)';
+                        }}
+                      >
+                        <LogOutIcon style={{ width: '16px', height: '16px' }} />
+                        Log Out
+                      </button>
+                    )}
+
+                  </div>
+                )}
+              </div>
 
               {/* Admin */}
               <button onClick={() => window.location.href = '/admin'}
@@ -569,27 +872,7 @@ export default function HomePage() {
             {/* ── Font Toolbar (above dark mode toggle) ── */}
             {!sidebarCollapsed && (
               <>
-                {/* Toolbar trigger */}
-                <button onClick={() => setShowFontToolbar(p => !p)}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', border: 'none', borderTop: `1px solid ${bdr}`, backgroundColor: 'transparent', cursor: 'pointer', color: T3, transition: 'background-color 0.15s' }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = hoverBg}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Type style={{ width: '15px', height: '15px' }} />
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: T2 }}>Typography</span>
-                  </div>
-                  {showFontToolbar ? <ChevronDown style={{ width: '14px', height: '14px' }} /> : <ChevronUp style={{ width: '14px', height: '14px' }} />}
-                </button>
-
-                {/* Expanded font toolbar */}
-                {showFontToolbar && (
-                  <FontToolbar
-                    selectedFont={selectedFont} onFontChange={handleFontChange}
-                    selectedSize={textScale} onSizeChange={handleSizeChange}
-                    dark={dark}
-                  />
-                )}
-
+                
                 {/* Dark mode toggle */}
                 <div style={{ padding: '12px 16px', borderTop: `1px solid ${bdr}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -619,7 +902,7 @@ export default function HomePage() {
 
             {/* Top nav bar */}
             <header style={{ backgroundColor: surface, borderBottom: `1px solid ${bdr}`, padding: '0 24px', display: 'flex', alignItems: 'center', height: '54px', position: 'sticky', top: 0, zIndex: 30 }}>
-              <nav style={{ display: 'flex', alignItems: 'center', flex: 1, overflowX: 'auto', gap: 0 }}>
+              <nav style={{ display: 'flex', alignItems: 'center', flex: 1, overflowX: 'visible', gap: 0 }}>
                 {navItems.map((item) => {
                   const isActive = selectedCategory === item.slug;
                   return (
@@ -631,15 +914,94 @@ export default function HomePage() {
                     </button>
                   );
                 })}
-                {categories.length > 5 && (
-                  <button style={{ padding: '0 14px', height: '54px', border: 'none', cursor: 'pointer', backgroundColor: 'transparent', fontSize: `${14 * textScale}px`, fontWeight: 500, fontFamily: selectedFont.value, color: T3, borderBottom: '2px solid transparent', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    More <ChevronDown style={{ width: '13px', height: '13px' }} />
-                  </button>
+
+                {/* "More" dropdown for extra categories */}
+                {extraCategories.length > 0 && (
+                  <div style={{ position: 'relative' }}>
+                    
+                    <button
+                      onClick={() => setShowMoreMenu(p => !p)}
+                      style={{
+                        padding: '0 14px',
+                        height: '54px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        backgroundColor: 'transparent',
+                        fontSize: `${14 * textScale}px`,
+                        fontWeight: isMoreActive ? 600 : 500,
+                        color: isMoreActive ? ACCENT : T3,
+                        borderBottom: isMoreActive
+                          ? `2px solid ${ACCENT}`
+                          : '2px solid transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.color = ACCENT;
+                        e.currentTarget.style.textShadow = '0 0 8px rgba(59,175,218,0.6)';
+                      }}
+                      onMouseLeave={e => {
+                        if (!isMoreActive) {
+                          e.currentTarget.style.color = T3;
+                          e.currentTarget.style.textShadow = 'none';
+                        }
+                      }}
+                    >
+                      More <ChevronDown style={{ width: '13px', height: '13px' }} />
+                    </button>
+
+                    {showMoreMenu && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '54px',
+                        left: 0,
+                        backgroundColor: surface,
+                        border: `1px solid ${bdr}`,
+                        borderRadius: '8px',
+                        minWidth: '180px',
+                        boxShadow: '0 8px 20px rgba(0,0,0,0.08)',
+                        zIndex: 100
+                      }}>
+                        {extraCategories.map(cat => {
+                          const isActive = selectedCategory === cat.slug;
+
+                          return (
+                            <button
+                              key={cat.slug}
+                              onClick={() => {
+                                setSelectedCategory(cat.slug);
+                                setShowMoreMenu(false);
+                              }}
+                              style={{
+                                width: '100%',
+                                textAlign: 'left',
+                                padding: '10px 14px',
+                                border: 'none',
+                                background: isActive ? (dark ? 'rgba(59,175,218,0.15)' : '#EBF8FF') : 'transparent',
+                                cursor: 'pointer',
+                                color: isActive ? ACCENT : T2,
+                                fontSize: `${13 * textScale}px`,
+                                fontWeight: isActive ? 600 : 500,
+                                transition: 'all 0.15s'
+                              }}
+                              onMouseEnter={e => { if (!isActive) e.currentTarget.style.backgroundColor = hoverBg;}}
+                              onMouseLeave={e => { if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';}}
+                            >
+                              {cat.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                  </div>
                 )}
               </nav>
               {/* Header right */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '16px', flexShrink: 0 }}>
-                <button style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: surfaceAlt, color: T3, position: 'relative' }}>
+                <button onClick={handleNotificationClick} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: surfaceAlt, color: T3, position: 'relative' }}>
                   <Bell style={{ width: '16px', height: '16px' }} />
                   {breakingNews.length > 0 && <span style={{ position: 'absolute', top: '6px', right: '6px', width: '7px', height: '7px', backgroundColor: '#e53e3e', borderRadius: '50%', border: `2px solid ${surface}` }} />}
                 </button>

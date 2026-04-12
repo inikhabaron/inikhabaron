@@ -1,8 +1,9 @@
-import { Inter } from 'next/font/google';
+import { Inter, DM_Sans } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/sonner';
 
 const inter = Inter({ subsets: ['latin'] });
+const dmSans = DM_Sans({ subsets: ['latin'] });
 
 export const metadata = {
   title: 'NewsDesk - Your Daily News Source',
