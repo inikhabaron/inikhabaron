@@ -132,8 +132,9 @@ const SubscriptionPlans = ({ open, onClose }) => {
 };
 
 // ─── Article Card (grid) ──────────────────────────────────────────────────────
-const ArticleCard = ({ item, onClick, formatDate }) => {
+const ArticleCard = ({ item, onClick, formatDate, showShareMenu, setShowShareMenu }) => {
   const dark = React.useContext(DarkCtx);
+  const shareRef = useRef(null);
   const { scale } = React.useContext(FontCtx);
   const catColor = getCatAccent(item.category);
   const [hovered, setHovered] = useState(false);
@@ -142,9 +143,9 @@ const ArticleCard = ({ item, onClick, formatDate }) => {
       onClick={() => onClick(item)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{ cursor: 'pointer', backgroundColor: dark ? '#1e2130' : '#FFFFFF', border: `1px solid ${dark ? '#2e3347' : '#E6E8EB'}`, borderRadius: '12px', overflow: 'hidden', transition: 'box-shadow 0.2s, transform 0.2s', boxShadow: hovered ? '0 6px 20px rgba(0,0,0,0.09)' : '0 1px 3px rgba(0,0,0,0.04)', transform: hovered ? 'translateY(-2px)' : 'none' }}
+      style={{ cursor: 'pointer', backgroundColor: dark ? '#1e2130' : '#FFFFFF', border: `1px solid ${dark ? '#2e3347' : '#E6E8EB'}`, borderRadius: '12px', overflow: 'visible', transition: 'box-shadow 0.2s, transform 0.2s', boxShadow: hovered ? '0 6px 20px rgba(0,0,0,0.09)' : '0 1px 3px rgba(0,0,0,0.04)', transform: hovered && showShareMenu !== item.id ? 'translateY(-2px)' : 'none' }}
     >
-      <div style={{ position: 'relative', height: '186px', overflow: 'hidden', backgroundColor: dark ? '#2e3347' : '#F0F2F5' }}>
+      <div style={{ position: 'relative', height: '186px', overflow: 'visible', zIndex: 1, display: 'flex', backgroundColor: dark ? '#2e3347' : '#F0F2F5' }}>
         <img src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600'} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s', transform: hovered ? 'scale(1.04)' : 'scale(1)' }} />
         {item.isBreaking && (
           <span style={{ position: 'absolute', top: '10px', right: '10px', backgroundColor: '#e53e3e', color: 'white', fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '20px', letterSpacing: '0.04em' }}>BREAKING</span>
@@ -166,9 +167,121 @@ const ArticleCard = ({ item, onClick, formatDate }) => {
             <button onClick={(e) => e.stopPropagation()} style={{ padding: '5px', border: 'none', background: 'none', cursor: 'pointer', borderRadius: '6px', color: '#8A8F98', transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = dark ? '#2e3347' : '#F0F2F5'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
               <Bookmark style={{ width: '14px', height: '14px' }} />
             </button>
-            <button onClick={(e) => e.stopPropagation()} style={{ padding: '5px', border: 'none', background: 'none', cursor: 'pointer', borderRadius: '6px', color: '#8A8F98', transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = dark ? '#2e3347' : '#F0F2F5'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-              <Share2 style={{ width: '14px', height: '14px' }} />
-            </button>
+            <div ref={shareRef} style={{ position: 'relative' }}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowShareMenu(prev => prev === item.id ? null : item.id);
+                }}
+                style={{
+                  padding: '5px',
+                  border: 'none',
+                  background: 'none',
+                  cursor: 'pointer',
+                  borderRadius: '6px',
+                  color: '#8A8F98',
+                  transition: 'background 0.15s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = dark ? '#2e3347' : '#F0F2F5'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <Share2 style={{ width: '13px', height: '13px' }} />
+              </button>
+
+              {showShareMenu === item.id && (  
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    position: 'absolute',
+                    top: '110%',   
+                    right: 0,
+                    background: 'white',
+                    border: '1px solid #E6E8EB',
+                    borderRadius: '10px',
+                    padding: '10px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    zIndex: 9999,
+                    minWidth: '140px',
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.15)'
+                  }}
+                >
+                  <button
+                    onClick={() => shareOnWhatsApp(item)}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      padding: '8px 10px',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      borderRadius: '6px',
+                      fontSize: '13px'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    WhatsApp
+                  </button>
+
+                  <button
+                    onClick={() => shareOnTwitter(item)}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      padding: '8px 10px',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      borderRadius: '6px',
+                      fontSize: '13px'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    Twitter
+                  </button>
+
+                  <button
+                    onClick={() => shareOnFacebook(item)}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      padding: '8px 10px',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      borderRadius: '6px',
+                      fontSize: '13px'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    Facebook
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        `${window.location.origin}/news/${item.id}`
+                      );
+                      toast.success("Link copied!");
+                    }}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      padding: '8px 10px',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      borderRadius: '6px',
+                      fontSize: '13px'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    Copy Link
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -262,8 +375,11 @@ export default function HomePage() {
   const [showFontToolbar, setShowFontToolbar] = useState(false);
   const contentRef = useRef(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const moreMenuRef = useRef(null);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [showShareMenu, setShowShareMenu] = useState(null);
+  const shareMenuRef = useRef(null);
 
   // persist prefs
   useEffect(() => {
@@ -345,8 +461,37 @@ export default function HomePage() {
 
   const getCategoryIcon = (slug) => categoryIcons[slug] || Newspaper;
 
-  {/* Notification bell handler */ }
+  {/* More menu*/}
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target)) {
+        setShowMoreMenu(false);
+      }
+    }
 
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+{/* Share*/ }
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        shareMenuRef.current &&
+        !shareMenuRef.current.contains(event.target)
+      ) {
+        setShowShareMenu(null);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  {/* Notification bell handler */ }
   const handleNotificationClick = async () => {
   if (!("Notification" in window)) {
     alert("Notifications not supported");
@@ -445,7 +590,7 @@ export default function HomePage() {
 
             {/* ── Logo row FIXED ── */}
             <div style={{
-              padding: '18px 14px 14px',
+              padding: '14.7px 10.7px 10.7px',
               borderBottom: `1px solid ${bdr}`,
               display: 'flex',
               alignItems: 'center',
@@ -542,7 +687,7 @@ export default function HomePage() {
                       <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: surfaceAlt, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <User style={{ width: '15px', height: '15px', color: T3 }} />
                       </div>
-                      {!sidebarCollapsed && <span style={{ fontSize: '13px', fontWeight: 600, color: T2 }}>Sign In</span>}
+                      {!sidebarCollapsed && <span style={{ fontSize: '14px', fontWeight: 600, color: T2 }}>Sign In</span>}
                     </button>
                   </DialogTrigger>
                   <DialogContent
@@ -777,7 +922,7 @@ export default function HomePage() {
                   }}>
 
                     {/* Language */}
-                    <div style={{ marginBottom: '10px' }}>
+                    <div style={{ marginBottom: '15px' }}>
                       <p style={{ fontSize: '11px', color: T3 }}>Language</p>
 
                       <select
@@ -800,12 +945,12 @@ export default function HomePage() {
 
                     {/* Typography */}
                     <button onClick={() => setShowFontToolbar(p => !p)}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', border: 'none', borderTop: `1px solid ${bdr}`, backgroundColor: 'transparent', cursor: 'pointer', color: T3, transition: 'background-color 0.15s' }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px',width: '100%', borderRadius: '8px', border: 'none', borderTop: `1px solid ${bdr}`, backgroundColor: 'transparent', cursor: 'pointer', color: T3, transition: 'background-color 0.15s' }}
                       onMouseEnter={e => e.currentTarget.style.backgroundColor = hoverBg}
                       onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Type style={{ width: '15px', height: '15px' }} />
-                        <span style={{ fontSize: '12px', fontWeight: 600, color: T2 }}>Typography</span>
+                        <Type style={{ width: '16px', height: '16px' }} />
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: T2 }}>Typography</span>
                       </div>
                       {showFontToolbar ? <ChevronDown style={{ width: '14px', height: '14px' }} /> : <ChevronUp style={{ width: '14px', height: '14px' }} />}
                     </button>
@@ -898,11 +1043,11 @@ export default function HomePage() {
           </aside>
 
           {/* ═══ CENTER CONTENT ════════════════════════════════════════════════ */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, width: '100%' }}>
 
             {/* Top nav bar */}
-            <header style={{ backgroundColor: surface, borderBottom: `1px solid ${bdr}`, padding: '0 24px', display: 'flex', alignItems: 'center', height: '54px', position: 'sticky', top: 0, zIndex: 30 }}>
-              <nav style={{ display: 'flex', alignItems: 'center', flex: 1, overflowX: 'visible', gap: 0 }}>
+            <header style={{ backgroundColor: surface, borderBottom: `1px solid ${bdr}`, padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '54px', position: 'sticky', top: 0, zIndex: 30 }}> 
+              <nav style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0  }}>
                 {navItems.map((item) => {
                   const isActive = selectedCategory === item.slug;
                   return (
@@ -917,7 +1062,7 @@ export default function HomePage() {
 
                 {/* "More" dropdown for extra categories */}
                 {extraCategories.length > 0 && (
-                  <div style={{ position: 'relative' }}>
+                  <div ref={moreMenuRef} style={{ position: 'relative' }}>
                     
                     <button
                       onClick={() => setShowMoreMenu(p => !p)}
@@ -999,6 +1144,7 @@ export default function HomePage() {
                   </div>
                 )}
               </nav>
+
               {/* Header right */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '16px', flexShrink: 0 }}>
                 <button onClick={handleNotificationClick} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: surfaceAlt, color: T3, position: 'relative' }}>
@@ -1037,7 +1183,7 @@ export default function HomePage() {
             )}
 
             {/* Feed */}
-            <div style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
+            <div style={{ flex: 1, padding: '24px', width: `calc(100% - 288px)`, overflowY: 'auto' }}>
 
               {/* YouTube live */}
               {youtubeLive?.videoId && (
@@ -1057,7 +1203,7 @@ export default function HomePage() {
                 const hero = news[0];
                 return (
                   <div onClick={() => setSelectedNews(hero)}
-                    style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', marginBottom: '28px', cursor: 'pointer', height: '320px', border: `1px solid ${bdr}` }}>
+                    style={{ position: 'relative', borderRadius: '14px', overflow: 'visible', marginBottom: '28px', cursor: 'pointer', height: '320px', border: `1px solid ${bdr}` }}>
                     <img src={hero.featuredImage || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200'} alt={hero.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.72) 45%, rgba(0,0,0,0.08) 100%)' }} />
                     <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '22px 24px' }}>
@@ -1073,11 +1219,126 @@ export default function HomePage() {
                           <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: `${11 * textScale}px`, fontFamily: selectedFont.value, fontWeight: 300 }}>{formatDate(hero.publishedAt)}</span>
                         </div>
                         <div style={{ display: 'flex', gap: '6px' }}>
-                          {[Bookmark, Share2].map((Icon, i) => (
-                            <button key={i} onClick={(e) => e.stopPropagation()} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '6px', padding: '6px 8px', cursor: 'pointer', color: 'white', backdropFilter: 'blur(4px)' }}>
+                          {[Bookmark].map((Icon, i) => (
+                            <button key={i} onClick={(e) => e.stopPropagation()} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '6px', padding: '6px 8px', cursor: 'pointer', color: 'white', backdropFilter: 'blur(4px)' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = dark ? '#2e3347' : '#7c7c7c'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
                               <Icon style={{ width: '13px', height: '13px' }} />
                             </button>
                           ))}
+                          <div ref={shareMenuRef} style={{ position: 'relative' }}>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowShareMenu(prev => prev === hero.id ? null : hero.id);
+                              }}
+                              style={{
+                                background: 'rgba(255,255,255,0.12)',
+                                border: 'none',
+                                borderRadius: '6px',
+                                padding: '6px 8px',
+                                cursor: 'pointer',
+                                color: 'white',
+                                backdropFilter: 'blur(4px)'
+                              }}
+                              onMouseEnter={e => e.currentTarget.style.backgroundColor = dark ? '#2e3347' : '#7c7c7c'}
+                              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                              <Share2 style={{ width: '13px', height: '13px' }} />
+                            </button>
+
+                            {showShareMenu === hero.id && (  
+                              <div
+                                onClick={(e) => e.stopPropagation()}
+                                style={{
+                                  position: 'absolute',
+                                  top: '110%',   
+                                  right: 0,
+                                  background: 'white',
+                                  border: '1px solid #E6E8EB',
+                                  borderRadius: '10px',
+                                  padding: '10px',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '8px',
+                                  zIndex: 100,
+                                  minWidth: '140px',
+                                  boxShadow: '0 10px 25px rgba(0,0,0,0.15)'
+                                }}
+                              >
+                                <button
+                                  onClick={() => shareOnWhatsApp(hero)}
+                                  style={{
+                                    border: 'none',
+                                    background: 'transparent',
+                                    padding: '8px 10px',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    borderRadius: '6px',
+                                    fontSize: '13px'
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
+                                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                >
+                                  WhatsApp
+                                </button>
+
+                                <button
+                                  onClick={() => shareOnTwitter(hero)}
+                                  style={{
+                                    border: 'none',
+                                    background: 'transparent',
+                                    padding: '8px 10px',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    borderRadius: '6px',
+                                    fontSize: '13px'
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
+                                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                >
+                                  Twitter
+                                </button>
+
+                                <button
+                                  onClick={() => shareOnFacebook(hero)}
+                                  style={{
+                                    border: 'none',
+                                    background: 'transparent',
+                                    padding: '8px 10px',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    borderRadius: '6px',
+                                    fontSize: '13px'
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
+                                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                >
+                                  Facebook
+                                </button>
+
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(
+                                      `${window.location.origin}/news/${hero.id}`
+                                    );
+                                    toast.success("Link copied!");
+                                  }}
+                                  style={{
+                                    border: 'none',
+                                    background: 'transparent',
+                                    padding: '8px 10px',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    borderRadius: '6px',
+                                    fontSize: '13px'
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
+                                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                >
+                                  Copy Link
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1098,7 +1359,13 @@ export default function HomePage() {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
                     {news.slice(1).map((item, idx) => (
                       <React.Fragment key={item.id}>
-                        <ArticleCard item={item} onClick={setSelectedNews} formatDate={formatDate} />
+                        <ArticleCard
+                          item={item}
+                          onClick={setSelectedNews}
+                          formatDate={formatDate}
+                          showShareMenu={showShareMenu}
+                          setShowShareMenu={setShowShareMenu}
+                        />
                         {(idx + 1) % 6 === 0 && idx !== news.length - 2 && (
                           <div style={{ gridColumn: '1 / -1' }}><NativeAd /></div>
                         )}
@@ -1128,7 +1395,7 @@ export default function HomePage() {
           </div>
 
           {/* ═══ RIGHT SIDEBAR ════════════════════════════════════════════════ */}
-          <aside style={{ width: '288px', minWidth: '288px', backgroundColor: surface, borderLeft: `1px solid ${bdr}`, overflowY: 'auto', padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: '22px', position: 'sticky', top: 0, height: '100vh' }}>
+          <aside style={{ width: '288px', marginTop: '54px', minWidth: '288px', backgroundColor: surface, borderLeft: `1px solid ${bdr}`, padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: '22px', position: 'fixed', right:0, top: 0, height: '93vh', overflowY: 'auto' }}>
 
             {/* Trending News */}
             <div>
@@ -1162,8 +1429,8 @@ export default function HomePage() {
                       <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: surfaceAlt, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <Icon style={{ width: '15px', height: '15px', color: ACCENT }} />
                       </div>
-                      <span style={{ flex: 1, fontSize: `${13 * textScale}px`, fontWeight: 500, color: T2, textAlign: 'left', fontFamily: selectedFont.value }}>{cat.name}</span>
-                      <span style={{ fontSize: `${11 * textScale}px`, color: T3, fontWeight: 300 }}>{(cat.views / 1000).toFixed(cat.views > 10000 ? 0 : 1)}k</span>
+                      <span style={{ flex: 1, fontSize: `${14 * textScale}px`, fontWeight: 500, color: T2, textAlign: 'left', fontFamily: selectedFont.value }}>{cat.name}</span>
+                      <span style={{ fontSize: `${13 * textScale}px`, color: T3, fontWeight: 300 }}>{(cat.views / 1000).toFixed(cat.views > 10000 ? 0 : 1)}k</span>
                       {cat.trend
                         ? <ArrowUp style={{ width: '13px', height: '13px', color: '#38a169' }} />
                         : <ArrowDown style={{ width: '13px', height: '13px', color: '#e53e3e' }} />}
