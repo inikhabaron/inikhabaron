@@ -253,7 +253,7 @@ function Sidebar({ activeTab, onTabChange, currentUser, isOpen, onClose, isMobil
               <Pencil size={15} color="#fff" />
             </div>
             <span style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>
-              Data<span style={{ color: '#60a5fa' }}>Board</span>
+              Dash<span style={{ color: '#60a5fa' }}>Board</span>
             </span>
           </div>
         </div>
@@ -273,7 +273,7 @@ function Sidebar({ activeTab, onTabChange, currentUser, isOpen, onClose, isMobil
         </nav>
 
         <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.07)', fontSize: 11, color: '#475569' }}>
-          (c) DataBoard 2023
+          (c) NewsDesk 2026
         </div>
       </div>
     </>
@@ -367,7 +367,7 @@ function DashboardView({ analytics, loading }) {
         {[
           { label: 'Total Articles', value: analytics.stats?.totalNews || 0, icon: FileText, color: '#2563eb', bg: '#eff6ff' },
           { label: 'Published', value: analytics.stats?.publishedNews || 0, icon: CheckCircle, color: '#059669', bg: '#f0fdf4' },
-          { label: 'Pending Review', value: analytics.stats?.pendingReviewNews || 0, icon: Clock, color: '#d97706', bg: '#fffbeb' },
+          { label: 'Pending Review', value: (analytics.stats?.draftNews || 0) + (analytics.stats?.pendingReviewNews || 0) + (analytics.stats?.needsRevisionNews || 0), icon: Clock, color: '#d97706', bg: '#fffbeb' },
           { label: 'Total Views', value: (analytics.stats?.totalViews || 0).toLocaleString(), icon: Eye, color: '#7c3aed', bg: '#faf5ff' },
         ].map(({ label, value, icon: Icon, color, bg }) => (
           <div key={label} style={{ ...DS.card, padding: '20px 22px' }}>

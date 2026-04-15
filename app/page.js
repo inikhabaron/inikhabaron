@@ -145,7 +145,7 @@ const ArticleCard = ({ item, onClick, formatDate, showShareMenu, setShowShareMen
       onMouseLeave={() => setHovered(false)}
       style={{ cursor: 'pointer', backgroundColor: dark ? '#1e2130' : '#FFFFFF', border: `1px solid ${dark ? '#2e3347' : '#E6E8EB'}`, borderRadius: '12px', overflow: 'visible', transition: 'box-shadow 0.2s, transform 0.2s', boxShadow: hovered ? '0 6px 20px rgba(0,0,0,0.09)' : '0 1px 3px rgba(0,0,0,0.04)', transform: hovered && showShareMenu !== item.id ? 'translateY(-2px)' : 'none' }}
     >
-      <div style={{ position: 'relative', height: '186px', overflow: 'visible', zIndex: 1, display: 'flex', backgroundColor: dark ? '#2e3347' : '#F0F2F5' }}>
+      <div style={{ position: 'relative', height: '186px', overflow: 'hidden', zIndex: 1, display: 'flex', backgroundColor: dark ? '#2e3347' : '#F0F2F5' }}>
         <img src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600'} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s', transform: hovered ? 'scale(1.04)' : 'scale(1)' }} />
         {item.isBreaking && (
           <span style={{ position: 'absolute', top: '10px', right: '10px', backgroundColor: '#e53e3e', color: 'white', fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '20px', letterSpacing: '0.04em' }}>BREAKING</span>
@@ -156,11 +156,13 @@ const ArticleCard = ({ item, onClick, formatDate, showShareMenu, setShowShareMen
         <h3 style={{ fontSize: `${15 * scale}px`, fontWeight: 700, color: dark ? '#e2e8f0' : '#2d3748', lineHeight: 1.4, marginBottom: '10px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</h3>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-            <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: dark ? '#2e3347' : '#F0F2F5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            {/* <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: dark ? '#2e3347' : '#F0F2F5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <User style={{ width: '11px', height: '11px', color: '#8A8F98' }} />
-            </div>
-            <span style={{ fontSize: `${12 * scale}px`, fontWeight: 400, color: '#8A8F98', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.authorName || 'NewsDesk'}</span>
-            <span style={{ color: dark ? '#3e4557' : '#D1D5DB', fontSize: '14px' }}>·</span>
+            </div> */}
+            {/* <span style={{ fontSize: `${12 * scale}px`, fontWeight: 400, color: '#8A8F98', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {item.authorName || 'NewsDesk'}
+              </span> */}
+            {/* <span style={{ color: dark ? '#3e4557' : '#D1D5DB', fontSize: '14px' }}>·</span> */}
             <span style={{ fontSize: `${11 * scale}px`, fontWeight: 300, color: '#8A8F98', flexShrink: 0, whiteSpace: 'nowrap' }}>{formatDate(item.publishedAt)}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
@@ -547,8 +549,8 @@ export default function HomePage() {
   const leftNavItems = [
     { label: 'News',    icon: Newspaper,  slug: 'all' },
     { label: 'Movies',  icon: Film,       slug: 'entertainment' },
-    { label: 'Music',   icon: Music,      slug: null },
-    { label: 'Travel',  icon: Plane,      slug: 'local' },
+    { label: 'Music',   icon: Music,      slug: 'music' },
+    { label: 'Travel',  icon: Plane,      slug: 'travel' },
     { label: 'Sports',  icon: Trophy,     slug: 'sports' },
   ];
 
@@ -1151,18 +1153,22 @@ export default function HomePage() {
                   <Bell style={{ width: '16px', height: '16px' }} />
                   {breakingNews.length > 0 && <span style={{ position: 'absolute', top: '6px', right: '6px', width: '7px', height: '7px', backgroundColor: '#e53e3e', borderRadius: '50%', border: `2px solid ${surface}` }} />}
                 </button>
-                <button style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: surfaceAlt, color: T3 }}>
+                <span style={{ color: 'rgba(255,255,255,0.4)' }}>...</span>
+                {/* <button style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: surfaceAlt, color: T3 }}>
                   <MessageCircle style={{ width: '16px', height: '16px' }} />
-                </button>
+                </button> */}
                 <form onSubmit={handleSearch}>
                   <div style={{ position: 'relative' }}>
                     <Search style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', width: '13px', height: '13px', color: T3 }} />
                     <input type="search" placeholder="Type to search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                      style={{ backgroundColor: surfaceAlt, border: `1px solid ${bdr}`, borderRadius: '8px', padding: '6px 12px 6px 28px', fontSize: '13px', color: T1, outline: 'none', width: '200px', fontFamily: selectedFont.value, transition: 'border-color 0.15s' }}
+                      style={{ backgroundColor: surfaceAlt, border: `1px solid ${bdr}`, borderRadius: '8px', padding: '6px 12px 6px 28px', fontSize: '13px', color: T1, outline: 'none', width: '400px', fontFamily: selectedFont.value, transition: 'border-color 0.15s' }}
                       onFocus={e => e.target.style.borderColor = ACCENT}
                       onBlur={e => e.target.style.borderColor = bdr} />
                   </div>
                 </form>
+              </div>
+              <div style={{ height: '24px', marginLeft: '16px'}} >
+                <span style={{ fontSize: '12px', color: T3, fontFamily: selectedFont.value }}>{new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
               </div>
             </header>
 
@@ -1211,11 +1217,11 @@ export default function HomePage() {
                       <h1 style={{ color: 'white', fontSize: `${20 * textScale}px`, fontWeight: 700, lineHeight: 1.35, margin: '10px 0 12px', fontFamily: selectedFont.value }}>{hero.title}</h1>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {/* <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <User style={{ width: '11px', height: '11px', color: 'white' }} />
-                          </div>
-                          <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: `${12 * textScale}px`, fontFamily: selectedFont.value, fontWeight: 400 }}>{hero.authorName || 'NewsDesk'}</span>
-                          <span style={{ color: 'rgba(255,255,255,0.4)' }}>·</span>
+                          </div> */}
+                          {/* <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: `${12 * textScale}px`, fontFamily: selectedFont.value, fontWeight: 400 }}>{hero.authorName || 'NewsDesk'}</span>
+                          <span style={{ color: 'rgba(255,255,255,0.4)' }}>·</span> */}
                           <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: `${11 * textScale}px`, fontFamily: selectedFont.value, fontWeight: 300 }}>{formatDate(hero.publishedAt)}</span>
                         </div>
                         <div style={{ display: 'flex', gap: '6px' }}>
