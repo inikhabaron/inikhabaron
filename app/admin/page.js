@@ -23,6 +23,11 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 
+import dynamic from "next/dynamic";
+import "react-quill/dist/quill.snow.css";
+import { useRouter } from 'next/navigation';
+
+
 // ─── CODE 1: STATUS CONSTANTS ──────────────────────────────────────────────────
 const statusColors = {
   draft: 'bg-gray-500',
@@ -70,6 +75,8 @@ const statusFilterOptionsByRole = {
   ],
 };
 
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+
 // ─── CODE 2: DESIGN SYSTEM ─────────────────────────────────────────────────────
 const SIDEBAR_W = 230;
 
@@ -110,7 +117,7 @@ const DS = {
   header: {
     background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 24px',
     height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    position: 'sticky', top: 0, zIndex: 100,
+    position: 'sticky', top: 0,
   },
   card: { background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden' },
   btn: (variant = 'primary', extra = {}) => {
@@ -149,6 +156,18 @@ const DS = {
     position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
     zIndex: 199, display: 'flex',
   },
+};
+
+const toolbarBtn = {
+  width: 30,
+  height: 30,
+  border: 'none',
+  borderRadius: 6,
+  background: '#f3f4f6',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center'
 };
 
 // ─── CODE 1: IMAGE UPLOAD COMPONENT (PRESERVED EXACTLY) ────────────────────────
@@ -218,8 +237,59 @@ const ImageUpload = ({ value, onChange, folder = 'news' }) => {
           </button>
         </div>
       )}
-      <input value={value || ''} onChange={(e) => onChange(e.target.value)} placeholder="Or paste image URL directly"
-        style={{ ...DS.input, fontSize: 12 }} />
+      {/* <input value={value || ''} onChange={(e) => onChange(e.target.value)} placeholder="Or paste image URL directly"
+        style={{ ...DS.input, fontSize: 12 }} /> */}
+    </div>
+  );
+};
+
+const MultiImageUpload = ({ images = [], onChange }) => {
+  const handleAdd = (url) => {
+    onChange([...images, { url, crop: null }]);
+  };
+
+  const removeImage = (index) => {
+    const updated = [...images];
+    updated.splice(index, 1);
+    onChange(updated);
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      
+      <ImageUpload
+        value=""
+        onChange={(url) => handleAdd(url)}
+      />
+
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        {images.map((img, i) => (
+          <div key={i} style={{
+            position: 'relative',
+            width: 120,
+            height: 100,
+            borderRadius: 8,
+            overflow: 'hidden',
+            border: '1px solid #e5e7eb'
+          }}>
+            <img src={img.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+
+            <button onClick={() => removeImage(i)}
+              style={{
+                position: 'absolute',
+                top: 5,
+                right: 5,
+                background: '#dc2626',
+                border: 'none',
+                borderRadius: 4,
+                color: '#fff',
+                cursor: 'pointer'
+              }}>
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -287,15 +357,21 @@ function Header({ currentUser, onLogout, searchQuery, onSearchChange, onToggleSi
     users: ['Users'], livestream: ['Live Stream'],
   };
   const crumbs = BREADCRUMBS[activeTab] || [activeTab];
+  const router = useRouter();
 
   return (
     <div style={DS.header}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button onClick={onToggleSidebar} style={{ ...DS.btn('ghost'), padding: 6, color: '#6b7280' }}>
+        {/* <button onClick={onToggleSidebar} style={{ ...DS.btn('ghost'), padding: 6, color: '#6b7280' }}>
           <Menu size={20} />
-        </button>
+        </button> */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b7280', fontSize: 13 }}>
-          <Home size={14} color="#9ca3af" />
+          <Home
+            size={14}
+            color="#9ca3af"
+            style={{ cursor: 'pointer' }}
+            onClick={() => router.push('/')} // ✅ redirect
+          />
           {crumbs.map((b, i) => (
             <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <ChevronRight size={12} color="#d1d5db" />
@@ -330,7 +406,7 @@ function Header({ currentUser, onLogout, searchQuery, onSearchChange, onToggleSi
           <span style={{ fontSize: 13, fontWeight: 500, color: '#374151', whiteSpace: 'nowrap' }}>
             {currentUser?.name || 'Admin'}
           </span>
-          <ChevronDown size={13} color="#9ca3af" />
+          {/* <ChevronDown size={13} color="#9ca3af" /> */}
         </div>
 
         <button onClick={onLogout} style={{ ...DS.btn('ghost'), color: '#6b7280', padding: '6px 8px' }} title="Logout">
@@ -920,7 +996,7 @@ export default function AdminPage() {
   const [versionHistory, setVersionHistory] = useState([]);
 
   const [newsForm, setNewsForm] = useState({
-    title: '', content: '', excerpt: '', category: '', tags: '', featuredImage: '',
+    title: '', content: '', excerpt: '', category: '', tags: '', featuredImage: '', images: [],
     status: 'draft', isBreaking: false, breakingSuggested: false, isTrending: false,
     trendingSuggested: false, isFeatured: false, authorName: 'Admin',
     source: '', sourceUrl: '', seoTitle: '', seoDescription: '', seoKeywords: '', scheduledAt: '',
@@ -1090,6 +1166,7 @@ export default function AdminPage() {
     try {
       const payload = {
         ...newsForm,
+        images: newsForm.images,
         tags: newsForm.tags.split(',').map(t => t.trim()).filter(Boolean),
         seoKeywords: newsForm.seoKeywords.split(',').map(t => t.trim()).filter(Boolean),
         authorId: currentUser?.id || 'admin',
@@ -1158,7 +1235,7 @@ export default function AdminPage() {
 
   const resetNewsForm = () => {
     setNewsForm({
-      title: '', content: '', excerpt: '', category: '', tags: '', featuredImage: '',
+      title: '', content: '', excerpt: '', category: '', tags: '', featuredImage: '', images: [],
       status: 'draft', isBreaking: false, breakingSuggested: false, isTrending: false,
       trendingSuggested: false, isFeatured: false, authorName: currentUser?.name || 'Admin',
       source: '', sourceUrl: '', seoTitle: '', seoDescription: '', seoKeywords: '', scheduledAt: '',
@@ -1172,6 +1249,7 @@ export default function AdminPage() {
       title: item.title || '', content: item.content || '', excerpt: item.excerpt || '',
       category: item.category || '', tags: item.tags?.join(', ') || '',
       featuredImage: item.featuredImage || '', status: item.status || 'draft',
+      images: item.images || [],
       isBreaking: item.isBreaking || false, breakingSuggested: item.breakingSuggested || false,
       isTrending: item.isTrending || false, trendingSuggested: item.trendingSuggested || false,
       isFeatured: item.isFeatured || false, authorName: item.authorName || 'Admin',
@@ -1311,8 +1389,10 @@ export default function AdminPage() {
           onToggleSidebar={() => setSidebarOpen(o => !o)}
           activeTab={activeTab}
         />
-        <div style={{ flex: 1, overflowY: 'auto' }}>
-          {renderView()}
+        <div style={{ flex: 1 }}>
+          <div style={{ height: '100%', overflowY: 'auto' }}>
+            {renderView()}
+          </div>
         </div>
       </div>
 
@@ -1349,7 +1429,7 @@ export default function AdminPage() {
               <div style={DS.sectionNum}>2</div>
               <span style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Description</span>
             </div>
-            <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
+            {/* <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
               <div style={{ padding: '8px 12px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
                 {[Bold, Italic, Underline, Type, AlignLeft, AlignCenter, AlignRight, List, Link, ImageIcon, Smile].map((Icon, i) => (
                   <button key={i} style={{ width: 28, height: 28, border: 'none', borderRadius: 6, background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}
@@ -1368,9 +1448,45 @@ export default function AdminPage() {
                   ))}
                 </div>
               </div>
+              
               <Textarea value={newsForm.content} onChange={e => setNewsForm({ ...newsForm, content: e.target.value })}
                 placeholder="Article content..." rows={8}
                 style={{ border: 'none', borderRadius: 0, resize: 'vertical', outline: 'none', boxShadow: 'none' }} />
+            </div> */}
+
+            <div style={{ border: '1px solid #e5e7eb',
+              borderRadius: '10px',
+              overflow: 'hidden',
+              background: '#fff' }}>
+
+              <ReactQuill
+                value={newsForm.content}
+                onChange={(value) => setNewsForm({ ...newsForm, content: value })}
+                placeholder="Article content..." 
+                style={{ height: '250px' }}
+                modules={{
+                  toolbar: [
+                    ['bold', 'italic', 'underline'],               // B I U
+                    [{ size: ['small', false, 'large', 'huge'] }], // TEXT SIZE ✅
+                    [{ align: [] }],                               // ALIGNMENT ✅ (same line)
+                    [{ list: 'ordered' }, { list: 'bullet' }],     // LIST
+                    ['link', 'image'],                             // LINKS + IMAGE                            
+                    ['clean']                                      // CLEAR FORMAT
+                  ],
+                  history: {
+                    delay: 1000,
+                    maxStack: 50,
+                    userOnly: true
+                  }
+                }}
+                formats={[
+                  'bold', 'italic', 'underline',
+                  'size', 'align',
+                  'list', 'bullet',
+                  'link', 'image', 'clean'
+                ]}
+              />
+
             </div>
 
             <div className="space-y-2">
@@ -1387,7 +1503,19 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Featured Image</Label>
-                <ImageUpload value={newsForm.featuredImage} onChange={url => setNewsForm({ ...newsForm, featuredImage: url })} folder="news" />
+                <ImageUpload
+                  value={newsForm.featuredImage}
+                  onChange={url => setNewsForm({ ...newsForm, featuredImage: url })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Gallery Images</Label>
+
+                <MultiImageUpload
+                  images={newsForm.images}
+                  onChange={(imgs) => setNewsForm({ ...newsForm, images: imgs })}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Tags (comma separated)</Label>
@@ -1537,7 +1665,7 @@ export default function AdminPage() {
 
       {/* ── Code 1: Version History Dialog (preserved exactly) ── */}
       <Dialog open={isVersionHistoryOpen} onOpenChange={setIsVersionHistoryOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto z-[9999]">
           <DialogHeader><DialogTitle>Version History</DialogTitle></DialogHeader>
           <div className="space-y-4">
             {versionHistory.length === 0 ? (

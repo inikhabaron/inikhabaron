@@ -26,6 +26,8 @@ export default function RootLayout({ children }) {
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#1E40AF" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        {/* <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1008647598112103"
+     crossorigin="anonymous"></script> */}
       </head>
       <body className={inter.className}>
         {children}

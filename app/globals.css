@@ -31,6 +31,21 @@ input, textarea, select, button {
   border-radius: 3px;
 }
 
+.ql-toolbar {
+  border: none !important;
+  border-bottom: 1px solid #f3f4f6 !important;
+}
+
+.ql-container {
+  border: none !important;
+}
+
+.ql-editor {
+  min-height: 180px;
+  font-size: 14px;
+  color: #111827;
+}
+
 @media (max-width: 768px) {
   .db-sidebar {
     transform: translateX(-230px);
