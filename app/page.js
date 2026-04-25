@@ -47,6 +47,86 @@ const categoryIcons = {
 const ACCENT   = '#3BAFDA';
 const ACCENT_H = '#2B9FC8'; // hover
 
+const translations = {
+  en: {
+    latestNews: "Latest News",
+    local: "Local",
+    national: "National",
+    world: "World",
+    entertainment: "Entertainment",
+    politics: "Politics",
+    business: "Business",
+    sports: "Sports",
+    technology: "Technology",
+    more: "More",
+    news: "News",
+    movies: "Movies",
+    music: "Music",
+    travel: "Travel",
+    discussion: "Discussion",
+    schemes: "Schemes",
+    study: "Study",
+    jobs: "Jobs",
+    farmers: "Farmers",
+    science: "Science",
+    leap: "Leap",
+    spirituality: "Spirituality",
+    localInterest: "Local Interest",
+    settings: "Settings",
+    language: "Language",
+    typography: "Typography",
+    darkMode: "Dark Mode",
+    logout: "Log Out",
+    adminPanel: "Admin Panel",
+    trendingNews: "Trending News",
+    trendingSections: "Trending Sections",
+    popularTags: "Popular Tags",
+    searchPlaceholder: "Type to search...",
+    loadMore: "Load More",
+    noArticles: "No articles found",
+    checkBackLater: "Check back later"
+  },
+
+  hi: {
+    latestNews: "ताज़ा खबर",
+    local: "स्थानीय",
+    national: "राष्ट्रीय",
+    world: "दुनिया",
+    entertainment: "मनोरंजन",
+    politics: "राजनीति",
+    business: "व्यापार",
+    sports: "खेल",
+    technology: "तकनीक",
+    more: "और",
+    news: "समाचार",
+    movies: "फिल्में",
+    music: "संगीत",
+    travel: "यात्रा",
+    discussion: "विमर्श",
+    schemes: "योजनाएं",
+    study: "पढ़ाई",
+    jobs: "नौकरी",
+    farmers: "किसान",
+    science: "विज्ञान",
+    leap: "छलांग",
+    spirituality: "आध्यात्म",
+    localInterest: "लोकरुचि",
+    settings: "सेटिंग्स",
+    language: "भाषा",
+    typography: "टाइपोग्राफी",
+    darkMode: "डार्क मोड",
+    logout: "लॉग आउट",
+    adminPanel: "एडमिन पैनल",
+    trendingNews: "ट्रेंडिंग न्यूज़",
+    trendingSections: "लोकप्रिय सेक्शन",
+    popularTags: "लोकप्रिय टैग",
+    searchPlaceholder: "खोजें...",
+    loadMore: "और देखें",
+    noArticles: "कोई लेख नहीं मिला",
+    checkBackLater: "बाद में देखें"
+  }
+};
+
 const getCatAccent = (cat) => {
   const map = { sport:'#3BAFDA', sports:'#3BAFDA', health:'#38b2ac', business:'#ed8936', food:'#e53e3e', travel:'#48bb78', politics:'#805ad5', technology:'#319795', entertainment:'#d69e2e' };
   return map[(cat||'').toLowerCase()] || ACCENT;
@@ -132,7 +212,7 @@ const SubscriptionPlans = ({ open, onClose }) => {
 };
 
 // ─── Article Card (grid) ──────────────────────────────────────────────────────
-const ArticleCard = ({ item, onClick, formatDate, showShareMenu, setShowShareMenu }) => {
+const ArticleCard = ({ item, onClick, formatDate, showShareMenu, setShowShareMenu, selectedLanguage }) => {
   const dark = React.useContext(DarkCtx);
   const shareRef = useRef(null);
   const { scale } = React.useContext(FontCtx);
@@ -152,7 +232,7 @@ const ArticleCard = ({ item, onClick, formatDate, showShareMenu, setShowShareMen
         )}
       </div>
       <div style={{ padding: '14px 16px 16px' }}>
-        <p style={{ fontSize: `${11 * scale}px`, fontWeight: 600, color: catColor, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{item.category}</p>
+        <span style={{ fontSize: `${11 * scale}px`, fontWeight: 600, color: catColor, backgroundColor: getCatAccent(item.category), color: 'white', borderRadius: '20px', padding: '3px 10px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.06em' }}> {selectedLanguage === "hi" ? (translations.hi[item.category] || item.category) : item.category}</span>
         <h3 style={{ fontSize: `${15 * scale}px`, fontWeight: 700, color: dark ? '#e2e8f0' : '#2d3748', lineHeight: 1.4, marginBottom: '10px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</h3>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
@@ -292,14 +372,14 @@ const ArticleCard = ({ item, onClick, formatDate, showShareMenu, setShowShareMen
 };
 
 // ─── Right sidebar trending item ──────────────────────────────────────────────
-const TrendingItem = ({ item, onClick, dark, scale }) => (
+const TrendingItem = ({ item, onClick, dark, scale, selectedLanguage }) => (
   <div onClick={() => onClick(item)} style={{ display: 'flex', gap: '10px', padding: '10px 0', cursor: 'pointer', borderBottom: `1px solid ${dark ? '#2e3347' : '#F0F2F5'}` }}
     onMouseEnter={e => e.currentTarget.style.opacity = '0.75'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
     <div style={{ width: '52px', height: '52px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, backgroundColor: dark ? '#2e3347' : '#F0F2F5' }}>
       <img src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=200'} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
     </div>
     <div style={{ flex: 1, minWidth: 0 }}>
-      <p style={{ fontSize: `${11 * scale}px`, fontWeight: 600, color: getCatAccent(item.category), textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '3px' }}>{item.category}</p>
+      <p style={{ fontSize: `${11 * scale}px`, fontWeight: 600, color: getCatAccent(item.category), textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '3px' }}>{selectedLanguage === "hi" ? (translations.hi[item.category] || item.category) : item.category}</p>
       <p style={{ fontSize: `${13 * scale}px`, fontWeight: 500, color: dark ? '#d1d5db' : '#333', lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</p>
     </div>
   </div>
@@ -379,11 +459,44 @@ export default function HomePage() {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const moreMenuRef = useRef(null);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [selectedLanguage, setSelectedLanguage] = useState("en");
+  const [languageLoaded, setLanguageLoaded] = useState(false);
+
+  const t = translations[selectedLanguage];
+
+  // if (!languageLoaded) {
+  //   return (
+  //     <div style={{
+  //       height: "100vh",
+  //       display: "flex",
+  //       justifyContent: "center",
+  //       alignItems: "center"
+  //     }}>
+  //       Loading...
+  //     </div>
+  //   );
+  // }
+
   const [showShareMenu, setShowShareMenu] = useState(null);
   const shareMenuRef = useRef(null);
 
   // persist prefs
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem("news_language");
+
+    if (savedLanguage) {
+      setSelectedLanguage(savedLanguage);
+    }
+
+    setLanguageLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (languageLoaded) {
+      localStorage.setItem("news_language", selectedLanguage);
+    }
+  }, [selectedLanguage, languageLoaded]);
+
   useEffect(() => {
     const d = localStorage.getItem('newsdesk_dark');
     if (d === 'true') setDark(true);
@@ -529,11 +642,11 @@ export default function HomePage() {
   const hoverBg    = dark ? '#252838'   : '#F5F6F8';
 
   const navItems = [
-    { label: 'Latest News', slug: 'all' },
-    { label: 'Politics',    slug: 'politics' },
-    { label: 'Business',    slug: 'business' },
-    { label: 'Sports',      slug: 'sports' },
-    { label: 'Technology',  slug: 'technology' },
+    { label: t.latestNews, slug: 'all' },
+    { label: t.politics, slug: 'politics' },
+    { label: t.business, slug: 'business' },
+    { label: t.sports, slug: 'sports' },
+    { label: t.technology, slug: 'technology' },
   ];
 
   const navSlugs = navItems.map(n => n.slug);
@@ -547,11 +660,11 @@ export default function HomePage() {
   );
 
   const leftNavItems = [
-    { label: 'News',    icon: Newspaper,  slug: 'all' },
-    { label: 'Movies',  icon: Film,       slug: 'entertainment' },
-    { label: 'Music',   icon: Music,      slug: 'music' },
-    { label: 'Travel',  icon: Plane,      slug: 'travel' },
-    { label: 'Sports',  icon: Trophy,     slug: 'sports' },
+    { label: t.news, icon: Newspaper, slug: 'all' },
+    { label: t.movies, icon: Film, slug: 'entertainment' },
+    { label: t.music, icon: Music, slug: 'music' },
+    { label: t.travel, icon: Plane, slug: 'travel' },
+    { label: t.sports, icon: Trophy, slug: 'sports' },
   ];
 
   const trendingCategories = categories.map((cat, i) => ({
@@ -843,7 +956,7 @@ export default function HomePage() {
 
               <div style={{ height: '1px', backgroundColor: bdr, margin: '10px 4px' }} />
 
-              {[
+              {/* {[
                 { label: 'Account', icon: User, action: null },
                 { label: 'Help & Support', icon: HelpCircle, action: null },
               ].map(({ label, icon: Icon, action }) => (
@@ -876,7 +989,7 @@ export default function HomePage() {
                   <Icon style={{ width: '17px', height: '17px' }} />
                   {!sidebarCollapsed && <span>{label}</span>}
                 </button>
-              ))}
+              ))} */}
 
               {/* SETTINGS DROPDOWN */}
               <div>
@@ -891,6 +1004,7 @@ export default function HomePage() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
+                    fontSize: '14.8px',
                     gap: '10px',
                     width: '100%',
                     padding: '9px 10px',
@@ -904,7 +1018,7 @@ export default function HomePage() {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <Settings style={{ width: '17px', height: '17px' }} />
-                    {!sidebarCollapsed && <span>Settings</span>}
+                    {!sidebarCollapsed && <span>{t.settings}</span>}
                   </div>
 
                   {!sidebarCollapsed &&
@@ -925,7 +1039,7 @@ export default function HomePage() {
 
                     {/* Language */}
                     <div style={{ marginBottom: '15px' }}>
-                      <p style={{ fontSize: '11px', color: T3 }}>Language</p>
+                      <p style={{ fontSize: '11px', color: T3 }}>{t.language}</p>
 
                       <select
                         value={selectedLanguage}
@@ -952,7 +1066,7 @@ export default function HomePage() {
                       onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Type style={{ width: '16px', height: '16px' }} />
-                        <span style={{ fontSize: '13px', fontWeight: 600, color: T2 }}>Typography</span>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: T2 }}>{t.typography}</span>
                       </div>
                       {showFontToolbar ? <ChevronDown style={{ width: '14px', height: '14px' }} /> : <ChevronUp style={{ width: '14px', height: '14px' }} />}
                     </button>
@@ -998,7 +1112,7 @@ export default function HomePage() {
                         }}
                       >
                         <LogOutIcon style={{ width: '16px', height: '16px' }} />
-                        Log Out
+                        {t.logout}
                       </button>
                     )}
 
@@ -1012,7 +1126,7 @@ export default function HomePage() {
                 onMouseEnter={e => { e.currentTarget.style.backgroundColor = hoverBg; e.currentTarget.style.color = T2; }}
                 onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = T3; }}>
                 <Building style={{ width: '17px', height: '17px', flexShrink: 0 }} />
-                {!sidebarCollapsed && <><span style={{ fontSize: '14px', fontWeight: 500, flex: 1, textAlign: 'left' }}>Admin Panel</span><ExternalLink style={{ width: '12px', height: '12px', opacity: 0.5 }} /></>}
+                {!sidebarCollapsed && <><span style={{ fontSize: '14px', fontWeight: 500, flex: 1, textAlign: 'left' }}>{t.adminPanel}</span><ExternalLink style={{ width: '12px', height: '12px', opacity: 0.5 }} /></>}
               </button>
             </nav>
 
@@ -1024,7 +1138,7 @@ export default function HomePage() {
                 <div style={{ padding: '12px 16px', borderTop: `1px solid ${bdr}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {dark ? <Moon style={{ width: '14px', height: '14px', color: T3 }} /> : <Sun style={{ width: '14px', height: '14px', color: T3 }} />}
-                    <span style={{ fontSize: '13px', fontWeight: 500, color: T2 }}>Dark mode</span>
+                    <span style={{ fontSize: '13px', fontWeight: 500, color: T2 }}>{t.darkMode}</span>
                   </div>
                   <button onClick={toggleDark}
                     style={{ width: '40px', height: '22px', borderRadius: '11px', border: 'none', cursor: 'pointer', backgroundColor: dark ? ACCENT : '#CBD5E0', position: 'relative', transition: 'background-color 0.2s', flexShrink: 0 }}>
@@ -1096,7 +1210,7 @@ export default function HomePage() {
                         }
                       }}
                     >
-                      More <ChevronDown style={{ width: '13px', height: '13px' }} />
+                      {t.more} <ChevronDown style={{ width: '13px', height: '13px' }} />
                     </button>
 
                     {showMoreMenu && (
@@ -1136,7 +1250,11 @@ export default function HomePage() {
                               onMouseEnter={e => { if (!isActive) e.currentTarget.style.backgroundColor = hoverBg;}}
                               onMouseLeave={e => { if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';}}
                             >
-                              {cat.name}
+                              {
+                                selectedLanguage === "hi"
+                                  ? (translations.hi[cat.slug] || cat.name)
+                                  : cat.name
+                              }
                             </button>
                           );
                         })}
@@ -1160,7 +1278,7 @@ export default function HomePage() {
                 <form onSubmit={handleSearch}>
                   <div style={{ position: 'relative' }}>
                     <Search style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', width: '13px', height: '13px', color: T3 }} />
-                    <input type="search" placeholder="Type to search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                    <input type="search" placeholder={t.searchPlaceholder} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                       style={{ backgroundColor: surfaceAlt, border: `1px solid ${bdr}`, borderRadius: '8px', padding: '6px 12px 6px 28px', fontSize: '13px', color: T1, outline: 'none', width: '400px', fontFamily: selectedFont.value, transition: 'border-color 0.15s' }}
                       onFocus={e => e.target.style.borderColor = ACCENT}
                       onBlur={e => e.target.style.borderColor = bdr} />
@@ -1213,7 +1331,7 @@ export default function HomePage() {
                     <img src={hero.featuredImage || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200'} alt={hero.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.72) 45%, rgba(0,0,0,0.08) 100%)' }} />
                     <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '22px 24px' }}>
-                      <span style={{ fontSize: `${11 * textScale}px`, fontWeight: 600, color: 'white', backgroundColor: getCatAccent(hero.category), padding: '3px 10px', borderRadius: '20px', textTransform: 'capitalize', letterSpacing: '0.04em', fontFamily: selectedFont.value }}>{hero.category}</span>
+                      <span style={{ fontSize: `${11 * textScale}px`, fontWeight: 600, color: 'white', backgroundColor: getCatAccent(hero.category), padding: '3px 10px', borderRadius: '20px', textTransform: 'capitalize', letterSpacing: '0.04em', fontFamily: selectedFont.value }}>{selectedLanguage === "hi" ? (translations.hi[hero.category] || hero.category) : hero.category}</span>
                       <h1 style={{ color: 'white', fontSize: `${20 * textScale}px`, fontWeight: 700, lineHeight: 1.35, margin: '10px 0 12px', fontFamily: selectedFont.value }}>{hero.title}</h1>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1371,6 +1489,7 @@ export default function HomePage() {
                           formatDate={formatDate}
                           showShareMenu={showShareMenu}
                           setShowShareMenu={setShowShareMenu}
+                          selectedLanguage={selectedLanguage}
                         />
                         {(idx + 1) % 6 === 0 && idx !== news.length - 2 && (
                           <div style={{ gridColumn: '1 / -1' }}><NativeAd /></div>
@@ -1384,15 +1503,15 @@ export default function HomePage() {
                         style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 22px', borderRadius: '8px', border: `1px solid ${bdr}`, backgroundColor: surface, color: T2, fontSize: `${13 * textScale}px`, fontWeight: 500, cursor: 'pointer', fontFamily: selectedFont.value, transition: 'border-color 0.15s' }}
                         onMouseEnter={e => e.currentTarget.style.borderColor = ACCENT}
                         onMouseLeave={e => e.currentTarget.style.borderColor = bdr}>
-                        {loading ? <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite', color: ACCENT }} /> : <><span>Load more</span><ChevronDown style={{ width: '14px', height: '14px' }} /></>}
+                        {loading ? <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite', color: ACCENT }} /> : <><span>{t.loadMore}</span><ChevronDown style={{ width: '14px', height: '14px' }} /></>}
                       </button>
                     </div>
                   )}
                   {news.length === 0 && !loading && (
                     <div style={{ textAlign: 'center', padding: '60px 0' }}>
                       <Newspaper style={{ width: '44px', height: '44px', color: T3, margin: '0 auto 12px' }} />
-                      <p style={{ color: T1, fontSize: `${15 * textScale}px`, fontWeight: 600, marginBottom: '4px' }}>No articles found</p>
-                      <p style={{ color: T3, fontSize: `${13 * textScale}px` }}>{searchQuery ? 'Try different search terms' : 'Check back later'}</p>
+                      <p style={{ color: T1, fontSize: `${15 * textScale}px`, fontWeight: 600, marginBottom: '4px' }}>{t.noArticles}</p>
+                      <p style={{ color: T3, fontSize: `${13 * textScale}px` }}>{searchQuery ? 'Try different search terms' : '{t.checkBackLater}'}</p>
                     </div>
                   )}
                 </>
@@ -1406,14 +1525,14 @@ export default function HomePage() {
             {/* Trending News */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                <h3 style={{ fontSize: `${15 * textScale}px`, fontWeight: 700, color: T1, fontFamily: selectedFont.value }}>Trending News</h3>
+                <h3 style={{ fontSize: `${15 * textScale}px`, fontWeight: 700, color: T1, fontFamily: selectedFont.value }}>{t.trendingNews}</h3>
                 <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: ACCENT, padding: '4px', borderRadius: '4px' }}>
                   <ChevronRight style={{ width: '16px', height: '16px' }} />
                 </button>
               </div>
               <div>
                 {(breakingNews.length > 0 ? breakingNews : news).slice(0, 6).map((item) => (
-                  <TrendingItem key={item.id} item={item} onClick={setSelectedNews} dark={dark} scale={textScale} />
+                  <TrendingItem key={item.id} item={item} onClick={setSelectedNews} dark={dark} scale={textScale} selectedLanguage={selectedLanguage} />
                 ))}
               </div>
             </div>
@@ -1423,7 +1542,7 @@ export default function HomePage() {
             {/* Trending Sections */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <h3 style={{ fontSize: `${15 * textScale}px`, fontWeight: 700, color: T1, fontFamily: selectedFont.value }}>Trending Sections</h3>
+                <h3 style={{ fontSize: `${15 * textScale}px`, fontWeight: 700, color: T1, fontFamily: selectedFont.value }}>{t.trendingSections}</h3>
                 <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: ACCENT, padding: '4px' }}><ChevronRight style={{ width: '16px', height: '16px' }} /></button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -1435,7 +1554,7 @@ export default function HomePage() {
                       <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: surfaceAlt, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <Icon style={{ width: '15px', height: '15px', color: ACCENT }} />
                       </div>
-                      <span style={{ flex: 1, fontSize: `${14 * textScale}px`, fontWeight: 500, color: T2, textAlign: 'left', fontFamily: selectedFont.value }}>{cat.name}</span>
+                      <span style={{ flex: 1, fontSize: `${14 * textScale}px`, fontWeight: 500, color: T2, textAlign: 'left', fontFamily: selectedFont.value }}>{selectedLanguage === "hi" ? (translations.hi[cat.slug] || cat.name) : cat.name}</span>
                       <span style={{ fontSize: `${13 * textScale}px`, color: T3, fontWeight: 300 }}>{(cat.views / 1000).toFixed(cat.views > 10000 ? 0 : 1)}k</span>
                       {cat.trend
                         ? <ArrowUp style={{ width: '13px', height: '13px', color: '#38a169' }} />
@@ -1451,11 +1570,42 @@ export default function HomePage() {
             {/* Popular Tags */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <h3 style={{ fontSize: `${15 * textScale}px`, fontWeight: 700, color: T1, fontFamily: selectedFont.value }}>Popular Tags</h3>
+                <h3 style={{ fontSize: `${15 * textScale}px`, fontWeight: 700, color: T1, fontFamily: selectedFont.value }}>{t.popularTags}</h3>
                 <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: T3, fontSize: '18px', lineHeight: 1, padding: '2px' }}>+</button>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
-                {(allTags.length > 0 ? allTags : ['Politics','Advertising','News','Development','Design','Finance','Football','Future','Travel','Technology','Food','Architecture','Tennis','Video']).map((tag) => (
+                {(allTags.length > 0 ? allTags : selectedLanguage === "hi"? [
+                                                                              'राजनीति',
+                                                                              'विज्ञापन',
+                                                                              'समाचार',
+                                                                              'विकास',
+                                                                              'डिजाइन',
+                                                                              'वित्त',
+                                                                              'फुटबॉल',
+                                                                              'भविष्य',
+                                                                              'यात्रा',
+                                                                              'तकनीक',
+                                                                              'भोजन',
+                                                                              'वास्तुकला',
+                                                                              'टेनिस',
+                                                                              'वीडियो'
+                                                                            ]
+                                                                          : [
+                                                                              'Politics',
+                                                                              'Advertising',
+                                                                              'News',
+                                                                              'Development',
+                                                                              'Design',
+                                                                              'Finance',
+                                                                              'Football',
+                                                                              'Future',
+                                                                              'Travel',
+                                                                              'Technology',
+                                                                              'Food',
+                                                                              'Architecture',
+                                                                              'Tennis',
+                                                                              'Video'
+                                                                            ]).map((tag) => (
                   <button key={tag}
                     style={{ padding: '4px 11px', borderRadius: '20px', border: `1px solid ${bdr}`, backgroundColor: 'transparent', color: T2, fontSize: `${12 * textScale}px`, fontWeight: 400, cursor: 'pointer', transition: 'all 0.15s', fontFamily: selectedFont.value }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor = ACCENT; e.currentTarget.style.color = ACCENT; e.currentTarget.style.backgroundColor = dark ? 'rgba(59,175,218,0.08)' : '#EBF8FF'; }}
@@ -1483,7 +1633,7 @@ export default function HomePage() {
               <ScrollArea style={{ maxHeight: '90vh' }} ref={contentRef} onScroll={handleScroll}>
                 <div style={{ position: 'relative', aspectRatio: '16/9' }}>
                   <img src={selectedNews.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800'} alt={selectedNews.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                  <span style={{ position: 'absolute', top: '16px', left: '16px', backgroundColor: getCatAccent(selectedNews.category), color: 'white', fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: '20px', textTransform: 'capitalize', fontFamily: selectedFont.value }}>{selectedNews.category}</span>
+                  <span style={{ position: 'absolute', top: '16px', left: '16px', backgroundColor: getCatAccent(selectedNews.category), color: 'white', fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: '20px', textTransform: 'capitalize', fontFamily: selectedFont.value }}>{selectedLanguage === "hi" ? (translations.hi[selectedNews.category] || selectedNews.category) : selectedNews.category}</span>
                   <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px', backgroundColor: 'rgba(0,0,0,0.15)' }}>
                     <div style={{ height: '100%', backgroundColor: ACCENT, width: `${scrollPosition}%`, transition: 'width 0.3s' }} />
                   </div>
