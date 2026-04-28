@@ -1,4 +1,5 @@
 import { Inter, DM_Sans } from 'next/font/google';
+import Script from "next/script";
 import './globals.css';
 import { Toaster } from '@/components/ui/sonner';
 
@@ -26,8 +27,12 @@ export default function RootLayout({ children }) {
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#1E40AF" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-        {/* <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1008647598112103"
-     crossorigin="anonymous"></script> */}
+        <Script
+          async
+          strategy="afterInteractive"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1008647598112103"
+          crossOrigin="anonymous"
+        />
       </head>
       <body className={inter.className}>
         {children}

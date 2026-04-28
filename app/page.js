@@ -144,36 +144,144 @@ const DarkCtx    = React.createContext(false);
 const FontCtx    = React.createContext({ font: FONT_OPTIONS[0], scale: 1 });
 
 // ─── Ad Components ────────────────────────────────────────────────────────────
-const ProgrammaticAd = ({ placement, size = '728x90' }) => {
+// const ProgrammaticAd = ({ placement, size = '728x90' }) => {
+//   const dark = React.useContext(DarkCtx);
+//   useEffect(() => {
+//     fetch('/api/ads/impression', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adId: `prog_${placement}_${Date.now()}`, adType: 'programmatic', placement, sessionId: getSessionId(), estimatedRevenue: 0.002 }) }).catch(() => {});
+//   }, [placement]);
+//   const [, height] = size.split('x').map(Number);
+//   return (
+//     <div style={{ height, width: '100%', backgroundColor: dark ? '#1e2130' : '#F5F6F8', border: `1px dashed ${dark ? '#2e3347' : '#E6E8EB'}`, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+//       <span style={{ fontSize: '11px', fontWeight: 500, color: '#8A8F98', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Advertisement</span>
+//     </div>
+//   );
+// };
+
+const ProgrammaticAd = ({ placement, size = "728x90" }) => {
   const dark = React.useContext(DarkCtx);
+
   useEffect(() => {
-    fetch('/api/ads/impression', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adId: `prog_${placement}_${Date.now()}`, adType: 'programmatic', placement, sessionId: getSessionId(), estimatedRevenue: 0.002 }) }).catch(() => {});
+    // Your existing custom impression tracking
+    fetch("/api/ads/impression", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        adId: `prog_${placement}_${Date.now()}`,
+        adType: "programmatic",
+        placement,
+        sessionId: getSessionId(),
+        estimatedRevenue: 0.002,
+      }),
+    }).catch(() => {});
+
+    // Google AdSense initialization
+    try {
+      if (window.adsbygoogle) {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      }
+    } catch (err) {
+      console.log("Adsense error:", err);
+    }
   }, [placement]);
-  const [, height] = size.split('x').map(Number);
+
+  const [, height] = size.split("x").map(Number);
+
   return (
-    <div style={{ height, width: '100%', backgroundColor: dark ? '#1e2130' : '#F5F6F8', border: `1px dashed ${dark ? '#2e3347' : '#E6E8EB'}`, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <span style={{ fontSize: '11px', fontWeight: 500, color: '#8A8F98', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Advertisement</span>
+    <div
+      style={{
+        height,
+        width: "100%",
+        backgroundColor: dark ? "#1e2130" : "#F5F6F8",
+        borderRadius: "8px",
+        overflow: "hidden",
+      }}
+    >
+      <ins
+        className="adsbygoogle"
+        style={{
+          display: "block",
+          width: "100%",
+          height: "100%",
+        }}
+        data-ad-client="ca-pub-1008647598112103"
+        data-ad-slot="YOUR_AD_SLOT_ID"
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      ></ins>
     </div>
   );
 };
 
+// const NativeAd = () => {
+//   const dark = React.useContext(DarkCtx);
+//   useEffect(() => {
+//     fetch('/api/ads/impression', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adId: `native_${Date.now()}`, adType: 'native', placement: 'in-article', sessionId: getSessionId(), estimatedRevenue: 0.005 }) }).catch(() => {});
+//   }, []);
+//   return (
+//     <div style={{ backgroundColor: dark ? '#1e2130' : '#F5F6F8', border: `1px solid ${dark ? '#2e3347' : '#E6E8EB'}`, borderRadius: '10px', padding: '14px 16px' }}>
+//       <span style={{ fontSize: '10px', fontWeight: 600, color: '#8A8F98', backgroundColor: dark ? '#2e3347' : '#E6E8EB', padding: '2px 8px', borderRadius: '4px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Sponsored</span>
+//       <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+//         <div style={{ width: '52px', height: '52px', borderRadius: '8px', backgroundColor: dark ? '#2e3347' : '#dde0e6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+//           <ImageIcon style={{ width: '20px', height: '20px', color: '#8A8F98' }} />
+//         </div>
+//         <div>
+//           <p style={{ fontSize: '13px', fontWeight: 600, color: dark ? '#d1d5db' : '#333', marginBottom: '3px' }}>Premium Content Partner</p>
+//           <p style={{ fontSize: '12px', color: '#8A8F98', lineHeight: 1.5 }}>Discover exclusive offers from our trusted partners.</p>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
 const NativeAd = () => {
   const dark = React.useContext(DarkCtx);
+
   useEffect(() => {
-    fetch('/api/ads/impression', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adId: `native_${Date.now()}`, adType: 'native', placement: 'in-article', sessionId: getSessionId(), estimatedRevenue: 0.005 }) }).catch(() => {});
+    // Track impression in your database
+    fetch("/api/ads/impression", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        adId: `native_${Date.now()}`,
+        adType: "native",
+        placement: "in-article",
+        sessionId: getSessionId(),
+        estimatedRevenue: 0.005,
+      }),
+    }).catch(() => {});
+
+    // Load AdSense ad
+    try {
+      if (window.adsbygoogle) {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      }
+    } catch (err) {
+      console.log("Adsense error:", err);
+    }
   }, []);
+
   return (
-    <div style={{ backgroundColor: dark ? '#1e2130' : '#F5F6F8', border: `1px solid ${dark ? '#2e3347' : '#E6E8EB'}`, borderRadius: '10px', padding: '14px 16px' }}>
-      <span style={{ fontSize: '10px', fontWeight: 600, color: '#8A8F98', backgroundColor: dark ? '#2e3347' : '#E6E8EB', padding: '2px 8px', borderRadius: '4px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Sponsored</span>
-      <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
-        <div style={{ width: '52px', height: '52px', borderRadius: '8px', backgroundColor: dark ? '#2e3347' : '#dde0e6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <ImageIcon style={{ width: '20px', height: '20px', color: '#8A8F98' }} />
-        </div>
-        <div>
-          <p style={{ fontSize: '13px', fontWeight: 600, color: dark ? '#d1d5db' : '#333', marginBottom: '3px' }}>Premium Content Partner</p>
-          <p style={{ fontSize: '12px', color: '#8A8F98', lineHeight: 1.5 }}>Discover exclusive offers from our trusted partners.</p>
-        </div>
-      </div>
+    <div
+      style={{
+        width: "100%",
+        minHeight: "250px",
+        backgroundColor: dark ? "#1e2130" : "#F5F6F8",
+        borderRadius: "10px",
+        overflow: "hidden",
+      }}
+    >
+      <ins
+        className="adsbygoogle"
+        style={{ display: "block" }}
+        data-ad-client="ca-pub-1008647598112103"
+        data-ad-slot="YOUR_AD_SLOT_ID"
+        data-ad-format="fluid"
+        data-ad-layout="in-article"
+      ></ins>
     </div>
   );
 };
