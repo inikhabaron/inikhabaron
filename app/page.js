@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
+import Image from "next/image";
 import {
   Search, Menu, X, Clock, Eye, ChevronRight, Newspaper,
   Bell, User, Bookmark, Building, Trophy, Briefcase, Film,
@@ -821,7 +822,7 @@ export default function HomePage() {
             }}>
 
               {/* Logo */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {/* <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{
                   width: '28px',
                   height: '28px',
@@ -844,6 +845,18 @@ export default function HomePage() {
                     NewsDesk
                   </span>
                 )}
+              </div> */}
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                <Image
+                  src="/logo.svg"
+                  alt="Logo"
+                  
+                  width = {130}
+                  height = {54}
+                  
+                  
+                />
               </div>
 
               {/* Hamburger ONLY in expanded */}
