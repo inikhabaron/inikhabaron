@@ -76,6 +76,7 @@ const translations = {
     settings: "Settings",
     language: "Language",
     typography: "Typography",
+    lightMode: "Light Mode",
     darkMode: "Dark Mode",
     logout: "Log Out",
     adminPanel: "Admin Panel",
@@ -115,6 +116,7 @@ const translations = {
     settings: "सेटिंग्स",
     language: "भाषा",
     typography: "टाइपोग्राफी",
+    lightMode: "लाइट मोड",
     darkMode: "डार्क मोड",
     logout: "लॉग आउट",
     adminPanel: "एडमिन पैनल",
@@ -560,6 +562,8 @@ export default function HomePage() {
   const [youtubeLive, setYoutubeLive] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [dark, setDark] = useState(false);
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
+  const [isChevronVisible, setIsChevronVisible] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]);
   const [textScale, setTextScale] = useState(1);
@@ -605,6 +609,17 @@ export default function HomePage() {
       localStorage.setItem("news_language", selectedLanguage);
     }
   }, [selectedLanguage, languageLoaded]);
+
+ // Chevron visibility on sidebar toggle
+
+  useEffect(() => {
+    let timer;
+    setIsChevronVisible(true);
+    timer = setTimeout(() => {
+      setIsChevronVisible(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [isRightSidebarOpen]);
 
   useEffect(() => {
     const d = localStorage.getItem('newsdesk_dark');
@@ -1259,7 +1274,11 @@ export default function HomePage() {
                 <div style={{ padding: '12px 16px', borderTop: `1px solid ${bdr}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {dark ? <Moon style={{ width: '14px', height: '14px', color: T3 }} /> : <Sun style={{ width: '14px', height: '14px', color: T3 }} />}
-                    <span style={{ fontSize: '13px', fontWeight: 500, color: T2 }}>{t.darkMode}</span>
+                    <span style={{ fontSize: '13px', fontWeight: 500, color: T2 }}>
+                      {dark 
+                        ? (selectedLanguage === "hi" ? "डार्क मोड" : "Dark Mode") 
+                        : (selectedLanguage === "hi" ? "लाइट मोड" : "Light Mode")}
+                    </span>
                   </div>
                   <button onClick={toggleDark}
                     style={{ width: '40px', height: '22px', borderRadius: '11px', border: 'none', cursor: 'pointer', backgroundColor: dark ? ACCENT : '#CBD5E0', position: 'relative', transition: 'background-color 0.2s', flexShrink: 0 }}>
@@ -1429,7 +1448,7 @@ export default function HomePage() {
             )}
 
             {/* Feed */}
-            <div style={{ flex: 1, padding: '24px', width: `calc(100% - 288px)`, overflowY: 'auto' }}>
+            <div style={{ flex: 1, padding: '24px', width: isRightSidebarOpen ? `calc(100% - 288px)` : `100%`, overflowY: 'auto' }}>
 
               {/* YouTube live */}
               {youtubeLive?.videoId && (
@@ -1642,15 +1661,72 @@ export default function HomePage() {
           </div>
 
           {/* ═══ RIGHT SIDEBAR ════════════════════════════════════════════════ */}
-          <aside style={{ width: '288px', marginTop: '54px', minWidth: '288px', backgroundColor: surface, borderLeft: `1px solid ${bdr}`, padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: '22px', position: 'fixed', right:0, top: 0, height: '93vh', overflowY: 'auto' }}>
+          <aside
+            style={{
+              width: isRightSidebarOpen ? '288px' : '0px',
+              minWidth: isRightSidebarOpen ? '288px' : '0px',
+              marginTop: '54px',
+              backgroundColor: surface,
+              borderLeft: isRightSidebarOpen ? `1px solid ${bdr}` : 'none',
+              padding: isRightSidebarOpen ? '20px 18px' : '0px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '22px',
+              position: 'fixed',
+              right: 0,
+              top: 0,
+              height: '93vh',
+              overflow: 'hidden',
+              transition: 'all 0.3s ease',
+              zIndex: 50
+            }}
+          >
+
+          <button
+            onClick={() => setIsRightSidebarOpen(prev => !prev)}
+            onMouseEnter={() => setIsChevronVisible(true)}
+            onMouseLeave={() => {
+              if (!isRightSidebarOpen) {
+                setTimeout(() => setIsChevronVisible(false), 1000);
+              }
+            }}
+            style={{
+              position: 'fixed',
+              right: isRightSidebarOpen ? '288px' : '10px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 100,
+              width: '42px',
+              height: '42px',
+              borderRadius: '50%',
+              backgroundColor: dark ? '#2f2f2f' : '#ffffff',
+              border: dark ? 'none' : '1px solid #E6E8EB', 
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+              transition: 'all 0.3s ease',
+              opacity: isChevronVisible ? 1 : 0.15
+            }}
+          >
+            <ChevronRight
+              size={20}
+              color={ACCENT}
+              style={{
+                transform: isRightSidebarOpen ? 'rotate(0deg)' : 'rotate(180deg)',
+                transition: 'transform 0.3s ease'
+              }}
+            />
+          </button>
 
             {/* Trending News */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
                 <h3 style={{ fontSize: `${15 * textScale}px`, fontWeight: 700, color: T1, fontFamily: selectedFont.value }}>{t.trendingNews}</h3>
-                <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: ACCENT, padding: '4px', borderRadius: '4px' }}>
+                {/* <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: ACCENT, padding: '4px', borderRadius: '4px' }}>
                   <ChevronRight style={{ width: '16px', height: '16px' }} />
-                </button>
+                </button> */}
               </div>
               <div>
                 {(breakingNews.length > 0 ? breakingNews : news).slice(0, 6).map((item) => (
@@ -1778,7 +1854,17 @@ export default function HomePage() {
                     </div>
                   )}
                   <div style={{ marginBottom: '20px' }}><NativeAd /></div>
-                  <div style={{ fontSize: `${15 * textScale}px`, lineHeight: 1.85, color: T2, fontFamily: selectedFont.value, fontWeight: 400, whiteSpace: 'pre-wrap' }}>{selectedNews.content}</div>
+                  {/* <div style={{ fontSize: `${15 * textScale}px`, lineHeight: 1.85, color: T2, fontFamily: selectedFont.value, fontWeight: 400, whiteSpace: 'pre-wrap' }}>{selectedNews.content}</div> */}
+                  <div
+                    style={{
+                      fontSize: `${15 * textScale}px`,
+                      lineHeight: 1.85,
+                      color: T2,
+                      fontFamily: selectedFont.value,
+                      fontWeight: 400
+                    }}
+                    dangerouslySetInnerHTML={{ __html: selectedNews.content }}
+                  />
                   {selectedNews.corrections?.length > 0 && (
                     <div style={{ marginTop: '20px', padding: '14px', backgroundColor: dark ? 'rgba(234,179,8,0.08)' : '#fefce8', border: '1px solid #fde68a', borderRadius: '8px' }}>
                       <p style={{ fontSize: '12px', fontWeight: 700, color: '#92400e', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}><AlertCircle style={{ width: '13px', height: '13px' }} />Corrections</p>
