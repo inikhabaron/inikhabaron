@@ -1392,7 +1392,8 @@ export default function HomePage() {
                   <Bell style={{ width: '16px', height: '16px' }} />
                   {breakingNews.length > 0 && <span style={{ position: 'absolute', top: '6px', right: '6px', width: '7px', height: '7px', backgroundColor: '#e53e3e', borderRadius: '50%', border: `2px solid ${surface}` }} />}
                 </button>
-                <span style={{ color: 'rgba(255,255,255,0.4)' }}>...</span>
+                <span></span>
+                <span></span>
                 {/* <button style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: surfaceAlt, color: T3 }}>
                   <MessageCircle style={{ width: '16px', height: '16px' }} />
                 </button> */}
@@ -1664,7 +1665,7 @@ export default function HomePage() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <h3 style={{ fontSize: `${15 * textScale}px`, fontWeight: 700, color: T1, fontFamily: selectedFont.value }}>{t.trendingSections}</h3>
-                <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: ACCENT, padding: '4px' }}><ChevronRight style={{ width: '16px', height: '16px' }} /></button>
+                {/* <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: ACCENT, padding: '4px' }}><ChevronRight style={{ width: '16px', height: '16px' }} /></button> */}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {trendingCategories.slice(0, 5).map((cat) => {
@@ -1692,7 +1693,7 @@ export default function HomePage() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <h3 style={{ fontSize: `${15 * textScale}px`, fontWeight: 700, color: T1, fontFamily: selectedFont.value }}>{t.popularTags}</h3>
-                <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: T3, fontSize: '18px', lineHeight: 1, padding: '2px' }}>+</button>
+                {/* <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: T3, fontSize: '18px', lineHeight: 1, padding: '2px' }}>+</button> */}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
                 {(allTags.length > 0 ? allTags : selectedLanguage === "hi"? [

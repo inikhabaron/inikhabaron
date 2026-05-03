@@ -1171,7 +1171,7 @@ export default function AdminPage() {
         seoKeywords: newsForm.seoKeywords.split(',').map(t => t.trim()).filter(Boolean),
         authorId: currentUser?.id || 'admin',
         authorName: currentUser?.name || newsForm.authorName,
-        status: editingNews ? newsForm.status : 'draft',
+        status: newsForm.status,
       };
       const method = editingNews ? 'PUT' : 'POST';
       const url = editingNews ? `/api/admin/news/${editingNews.id}` : '/api/admin/news';

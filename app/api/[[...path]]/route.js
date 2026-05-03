@@ -776,6 +776,8 @@ export async function POST(request) {
       }
 
       const newsCollection = await getCollection('news');
+
+      const status = normalizeStatus(body.status) || 'draft';
       
       const newsItem = {
         id: uuidv4(),
@@ -787,7 +789,8 @@ export async function POST(request) {
         tags: body.tags || [],
         featuredImage: body.featuredImage || null,
         images: body.images || [],
-        status: normalizeStatus(body.status) || 'draft',
+        status: status,
+        publishedAt: status === 'published' ? new Date() : null,
         isBreaking: false, // Only admin can mark as breaking
         breakingApproved: false,
         breakingSuggested: body.breakingSuggested || false, // Reporter/Editor suggestion
@@ -941,7 +944,7 @@ export async function POST(request) {
       const result = await newsCollection.updateOne(
         { id: newsId },
         {
-          $set: { status: 'PENDING_REVIEW', updatedAt: new Date() },
+          $set: { status: 'pending_review', updatedAt: new Date() },
           $push: {
             approvalHistory: {
               action: 'submitted',
@@ -970,7 +973,7 @@ export async function POST(request) {
       const result = await newsCollection.updateOne(
         { id: newsId },
         {
-          $set: { status: 'NEEDS_REVISION', reviewedBy: user.id, updatedAt: new Date() },
+          $set: { status: 'needs_revision', reviewedBy: user.id, updatedAt: new Date() },
           $push: {
             approvalHistory: {
               action: 'sent_back',
@@ -1006,7 +1009,7 @@ export async function POST(request) {
       const result = await newsCollection.updateOne(
         { id: newsId },
         {
-          $set: { status: 'READY_TO_PUBLISH', reviewedBy: user.id, updatedAt: new Date() },
+          $set: { status: 'ready_to_publish', reviewedBy: user.id, updatedAt: new Date() },
           $push: {
             approvalHistory: {
               action: 'approved',
@@ -1036,7 +1039,7 @@ export async function POST(request) {
         { id: newsId },
         {
           $set: {
-            status: 'PUBLISHED',
+            status: 'published',
             publishedAt: new Date(),
             approvedBy: user.id,
             updatedAt: new Date()
