@@ -25,6 +25,10 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <link rel="manifest" href="/manifest.json" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
         <meta name="theme-color" content="#1E40AF" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <Script

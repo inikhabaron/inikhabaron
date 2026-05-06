@@ -268,13 +268,23 @@ export async function GET(request) {
         ];
       }
       
-      const [rawNews, total] = await Promise.all([
-        newsCollection.find(query).sort({ publishedAt: -1 }).skip(skip).limit(limit * 3).toArray(),
+      // const [rawNews, total] = await Promise.all([
+      //   newsCollection.find(query).sort({ publishedAt: -1 }).skip(skip).limit(limit * 3).toArray(),
+      //   newsCollection.countDocuments(query),
+      // ]);
+
+      // const seenSlugs = new Set();
+      // const news = rawNews.filter(n => seenSlugs.has(n.slug) ? false : seenSlugs.add(n.slug)).slice(0, limit);
+      const [news, total] = await Promise.all([
+        newsCollection
+          .find(query)
+          .sort({ publishedAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .toArray(),
         newsCollection.countDocuments(query),
       ]);
-
-      const seenSlugs = new Set();
-      const news = rawNews.filter(n => seenSlugs.has(n.slug) ? false : seenSlugs.add(n.slug)).slice(0, limit);
+      
 
       return NextResponse.json({
         news,
@@ -777,7 +787,7 @@ export async function POST(request) {
 
       const newsCollection = await getCollection('news');
 
-      const status = normalizeStatus(body.status) || 'draft';
+      const status = normalizeStatus(body.status);
       
       const newsItem = {
         id: uuidv4(),
@@ -786,7 +796,7 @@ export async function POST(request) {
         content: body.content,
         excerpt: body.excerpt || body.content?.substring(0, 200),
         category: body.category,
-        tags: body.tags || [],
+        tags: (body.tags || []).filter(tag => tag?.toLowerCase() !== body.category?.toLowerCase()),
         featuredImage: body.featuredImage || null,
         images: body.images || [],
         status: status,
@@ -1635,6 +1645,9 @@ export async function PUT(request) {
 
       const updateData = {
         ...body,
+        tags: (body.tags || []).filter(
+          tag => tag?.toLowerCase() !== body.category?.toLowerCase()
+        ),
         updatedAt: new Date(),
       };
 

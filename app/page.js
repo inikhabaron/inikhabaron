@@ -302,7 +302,7 @@ const SubscriptionPlans = ({ open, onClose }) => {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent style={{ maxWidth: '860px', borderRadius: '16px', padding: '32px' }}>
         <DialogHeader><DialogTitle style={{ fontSize: '20px', fontWeight: 700, color: dark ? '#e5e7eb' : '#333', textAlign: 'center' }}>Choose Your Plan</DialogTitle></DialogHeader>
-        {loading ? <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><Loader2 style={{ width: '28px', height: '28px', color: ACCENT, animation: 'spin 1s linear infinite' }} /></div> : (
+        {loading ? <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><Loader style={{ width: '28px', height: '28px', color: ACCENT }} /></div> : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', padding: '20px 0' }}>
             {plans.map((plan) => (
               <div key={plan.id} style={{ border: `2px solid ${plan.popular ? ACCENT : bdr}`, borderRadius: '12px', padding: '20px', position: 'relative', backgroundColor: plan.popular ? (dark ? 'rgba(59,175,218,0.08)' : 'rgba(59,175,218,0.04)') : 'transparent' }}>
@@ -343,8 +343,8 @@ const ArticleCard = ({ item, onClick, formatDate, showShareMenu, setShowShareMen
         )}
       </div>
       <div style={{ padding: '14px 16px 16px' }}>
-        <span style={{ fontSize: `${11 * scale}px`, fontWeight: 600, color: catColor, backgroundColor: getCatAccent(item.category), color: 'white', borderRadius: '20px', padding: '3px 10px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.06em' }}> {selectedLanguage === "hi" ? (translations.hi[item.category] || item.category) : item.category}</span>
-        <h3 style={{ fontSize: `${15 * scale}px`, fontWeight: 700, color: dark ? '#e2e8f0' : '#2d3748', lineHeight: 1.4, marginBottom: '10px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</h3>
+        <span style={{ fontSize: `${11 * scale}px`, fontWeight: 600, backgroundColor: getCatAccent(item.category), color: 'white', borderRadius: '20px', padding: '3px 10px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.06em' }}> {selectedLanguage === "hi" ? (translations.hi[item.category] || item.category) : item.category}</span>
+        <h3 style={{ fontSize: `${15 * scale}px`, fontWeight: 700, color: dark ? '#e2e8f0' : '#2d3748', lineHeight: 1.4, marginBottom: '5px', marginTop: '5px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</h3>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
             {/* <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: dark ? '#2e3347' : '#F0F2F5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -542,6 +542,14 @@ const FontToolbar = ({ selectedFont, onFontChange, selectedSize, onSizeChange, d
   );
 };
 
+const Loader = () => {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <div className="loader"></div>
+    </div>
+  );
+};
+
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function HomePage() {
   const [news, setNews] = useState([]);
@@ -572,8 +580,14 @@ export default function HomePage() {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const moreMenuRef = useRef(null);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState("en");
+  const [selectedLanguage, setSelectedLanguage] = useState("hi");
   const [languageLoaded, setLanguageLoaded] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileRef = useRef(null);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [isSearchActive, setIsSearchActive] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(1200);
 
   const t = translations[selectedLanguage];
 
@@ -593,14 +607,70 @@ export default function HomePage() {
   const [showShareMenu, setShowShareMenu] = useState(null);
   const shareMenuRef = useRef(null);
 
+  //=================================Mobile view handling========================================
+  // Check initial width on mount and set mobile view accordingly
+  useEffect(() => {
+    let timeout;
+    const handleResize = () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        setIsMobileView(window.innerWidth <= 1159);
+      }, 150); // debounce
+    };
+    handleResize(); // run on load
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // User profile
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setShowProfileMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  //Handle mobile search with debounce
+
+  useEffect(() => {
+    if (!isMobileView) return;
+    const delay = setTimeout(() => {
+      if (searchQuery.trim() !== '') {
+        fetchNews(selectedCategory, searchQuery, 1);
+        // setShowMobileSearch(false);
+      }
+    }, 400);
+    return () => clearTimeout(delay);
+  }, [searchQuery, selectedCategory]);
+
+  // Track window width for responsive features
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+//=====================================Desktop only features below========================================
+
   // persist prefs
   useEffect(() => {
     const savedLanguage = localStorage.getItem("news_language");
-
     if (savedLanguage) {
       setSelectedLanguage(savedLanguage);
+    }else {
+      setSelectedLanguage("hi"); // default Hindi
     }
-
+    if (!savedLanguage) {
+      localStorage.setItem("news_language", "hi");
+    }
     setLanguageLoaded(true);
   }, []);
 
@@ -651,6 +721,7 @@ export default function HomePage() {
       if (cat && cat !== 'all') url += `&category=${cat}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       const r = await fetch(url); const d = await r.json();
+      // console.log("TOTAL ARTICLES FROM API:", d.news?.length);
       if (pageNum === 1) setNews(d.news || []); else setNews(p => [...p, ...(d.news || [])]);
       setHasMore(d.pagination?.page < d.pagination?.pages);
     } catch (e) { console.error(e); toast.error('Failed to load news'); } finally { setLoading(false); }
@@ -773,6 +844,17 @@ export default function HomePage() {
     { label: t.technology, slug: 'technology' },
   ];
 
+  const mobileNavItems = [
+    { label: t.latestNews, slug: 'all' },
+    ...categories.map(cat => ({
+      label:
+        selectedLanguage === "hi"
+          ? (translations.hi[cat.slug] || cat.name)
+          : cat.name,
+      slug: cat.slug
+    }))
+  ];
+
   const navSlugs = navItems.map(n => n.slug);
 
   const isMoreActive =
@@ -813,66 +895,1105 @@ export default function HomePage() {
   return (
     <DarkCtx.Provider value={dark}>
       <FontCtx.Provider value={{ font: selectedFont, scale: textScale }}>
-        <div style={{ minHeight: '100vh', backgroundColor: bg, fontFamily: selectedFont.value, display: 'flex' }}>
+        <div
+          style={{
+            minHeight: '100vh',
+            backgroundColor: bg,
+
+            fontFamily:
+              selectedLanguage === 'hi'
+                ? "'Noto Sans Devanagari', sans-serif"
+                : selectedFont.value,
+
+            display: 'flex'
+          }}
+        >
+
+          {/* ═══ CENTER CONTENT ════════════════════════════════════════════════ */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, width: '100%', paddingLeft: isMobileView ? '0px' : (sidebarCollapsed ? '60px' : '220px'), paddingRight: isMobileView ? '0px' : (isRightSidebarOpen ? '288px' : '0px'), }}>
+
+            {/* Top nav bar */}
+            <header style={{ backgroundColor: surface, borderBottom: `1px solid ${bdr}`, display: 'flex', flexDirection: isMobileView ? 'column' : 'row', alignItems: isMobileView ? 'stretch' : 'center', justifyContent: 'space-between', width: '100%', height: isMobileView ? '102px' : '54px', position: 'fixed', left: 0, top: 0, zIndex: 100 }}> 
+
+              {/* Mobile view */}
+
+              {isMobileView ? (
+                <>
+                  {/* ================= MOBILE TOP NAVBAR ================= */}
+                  <div
+                    style={{
+                      height: 'auto',
+                      minHeight: '56px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0 16px',
+                    }}
+                  >
+                    {/* LEFT: LOGO */}
+                    <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    marginRight: '20px'
+                  }}>
+                    <Image
+                      src="/logo.svg"
+                      alt="Logo"
+                      width={90}
+                      height={36}
+                    />
+                  </div>
+
+                    {/* RIGHT: ICONS */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      
+                      {/* Search */}
+                      <Search
+                        onClick={() => {setShowMobileSearch(true); setIsSearchActive(true);}}
+                        style={{ width: '20px', height: '20px', color: T2, cursor: 'pointer' }}
+                      />
+
+                      {/* Dark Mode */}
+                      <div style={{ padding: '12px', borderTop: `1px solid ${bdr}`, display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
+                        <button onClick={toggleDark} style={{ padding: '8px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: 'transparent', color: T3 }} onMouseEnter={e => e.currentTarget.style.backgroundColor = hoverBg} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                          {dark ? <Moon style={{ width: '16px', height: '16px' }} /> : <Sun style={{ width: '16px', height: '16px' }} />}
+                        </button>
+                      </div>
+
+                      {/* Profile */}
+                      <div ref={profileRef} style={{ position: 'relative' }}>
+                        <User
+                          onClick={() => setShowProfileMenu(p => !p)}
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            color: T2,
+                            cursor: 'pointer'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.color = ACCENT}
+                          onMouseLeave={e => e.currentTarget.style.color = T2}
+                        />
+
+                        {showProfileMenu && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: '32px',
+                              right: 0,
+                              width: '200px',
+                              backgroundColor: surface,
+                              border: `1px solid ${bdr}`,
+                              borderRadius: '10px',
+                              boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                              padding: '12px',
+                              zIndex: 999
+                            }}
+                          >
+
+                            {/* USER INFO */}
+                            {user ? (
+                              <div style={{ marginBottom: '10px' }}>
+                                <p style={{ fontSize: '13px', fontWeight: 600, color: T1 }}>
+                                  {user.displayName || user.email?.split('@')[0]}
+                                </p>
+                                <p style={{ fontSize: '11px', color: T3 }}>
+                                  {user.email}
+                                </p>
+                              </div>
+                            ) : null}
+
+                            {/* SIGN IN */}
+                            {!user && (
+                              <button
+                                onClick={() => {
+                                  setAuthDialogOpen(true);
+                                  setShowProfileMenu(false);
+                                }}
+                                style={{
+                                  width: '100%',
+                                  padding: '10px',
+                                  borderRadius: '8px',
+                                  border: `1px solid ${bdr}`,
+                                  // backgroundColor: 'rgba(59,175,218,0.12)',
+                                  cursor: 'pointer',
+                                  fontSize: '13px',
+                                  fontWeight: 600
+                                }}
+                                onMouseEnter={e => {
+                                  e.currentTarget.style.backgroundColor = 'ACCENT';
+                                  e.currentTarget.style.color = '#fff';
+                                  e.currentTarget.style.transform = 'scale(1.02)';
+                                }}
+                                onMouseLeave={e => {
+                                  e.currentTarget.style.backgroundColor = dark ? 'rgba(59,175,218,0.12)' : '#EBF8FF';
+                                  e.currentTarget.style.color = 'ACCENT';
+                                  e.currentTarget.style.transform = 'scale(1)';
+                                }}
+                              >
+                                Sign In
+                              </button>
+                            )}
+
+                            {/* LOGOUT BUTTON */}
+                            {user && (
+                              <button
+                                onClick={() => {
+                                  handleSignOut();
+                                  setShowProfileMenu(false);
+                                }}
+                                style={{
+                                  width: '100%',
+                                  marginTop: '10px',
+                                  padding: '10px 12px',
+                                  borderRadius: '8px',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '10px',
+                                  backgroundColor: dark ? 'rgba(239,68,68,0.12)' : '#FEE2E2',
+                                  color: '#EF4444',
+                                  fontSize: '13px',
+                                  fontWeight: 600,
+                                  transition: 'all 0.2s ease'
+                                }}
+                                onMouseEnter={e => {
+                                  e.currentTarget.style.backgroundColor = '#EF4444';
+                                  e.currentTarget.style.color = '#fff';
+                                  e.currentTarget.style.transform = 'scale(1.02)';
+                                }}
+                                onMouseLeave={e => {
+                                  e.currentTarget.style.backgroundColor = dark ? 'rgba(239,68,68,0.12)' : '#FEE2E2';
+                                  e.currentTarget.style.color = '#EF4444';
+                                  e.currentTarget.style.transform = 'scale(1)';
+                                }}
+                              >
+                                <LogOutIcon style={{ width: '16px', height: '16px' }} />
+                                {t.logout}
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ================= CATEGORY NAVBAR ================= */}
+                  <div
+                    style={{
+                      height: 'auto',
+                      minHeight: '46px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      overflowX: 'auto',
+                      padding: '0 10px',
+                      gap: '10px',
+                      borderTop: `1px solid ${bdr}`,
+                      backgroundColor: dark ? '#181a24' : '#fff',
+                      scrollBehavior: 'smooth',
+                    }}
+                    className="hide-scrollbar"
+                  >
+                    {mobileNavItems.map((item) => {
+                      const isActive = selectedCategory === item.slug;
+
+                      return (
+                        <button
+                          key={item.slug}
+                          onClick={() => setSelectedCategory(item.slug)}
+                          style={{
+                            whiteSpace: 'nowrap',
+                            padding: '6px 14px',
+                            borderRadius: '20px',
+                            border: 'none',
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                            backgroundColor: isActive
+                              ? ACCENT
+                              : dark
+                              ? '#252838'
+                              : '#F1F3F5',
+                            color: isActive ? 'white' : T2,
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <>
+
+                  {/* ============================ Desktop view ======================================= */}
+                  
+                  {/* Logo */}
+                  {/* <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '7px',
+                      backgroundColor: ACCENT,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <Newspaper style={{ width: '14px', height: '14px', color: 'white' }} />
+                    </div>
+
+                    {!sidebarCollapsed && (
+                      <span style={{
+                        fontSize: '17px',
+                        fontWeight: 800,
+                        color: T1,
+                        letterSpacing: '-0.3px'
+                      }}>
+                        NewsDesk
+                      </span>
+                    )}
+                  </div> */}
+                  
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    marginRight: '20px',
+                    paddingLeft: '20px',
+                  }}>
+                    <Image
+                      src="/logo.svg"
+                      alt="Logo"
+                      width={90}
+                      height={36}
+                    />
+                  </div>
+                  
+                  <nav style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                    {navItems.map((item) => {
+                      const isActive = selectedCategory === item.slug;
+                      return (
+                        <button key={item.slug} onClick={() => setSelectedCategory(item.slug)}
+                          style={{ padding: '0 16px', height: '54px', border: 'none', cursor: 'pointer', backgroundColor: 'transparent', fontSize: `${14 * textScale}px`, fontWeight: isActive ? 600 : 500, fontFamily: selectedFont.value, color: isActive ? ACCENT : T3, borderBottom: `2px solid ${isActive ? ACCENT : 'transparent'}`, whiteSpace: 'nowrap', transition: 'all 0.15s', flexShrink: 0 }}
+                          onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = T2; }}
+                          onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = T3; }}>
+                          {item.label}
+                        </button>
+                      );
+                    })}
+
+                    {/* "More" dropdown for extra categories */}
+                    {extraCategories.length > 0 && (
+                      <div ref={moreMenuRef} style={{ position: 'relative' }}>
+                        
+                        <button
+                          onClick={() => setShowMoreMenu(p => !p)}
+                          style={{
+                            padding: '0 14px',
+                            height: '54px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            backgroundColor: 'transparent',
+                            fontSize: `${14 * textScale}px`,
+                            fontWeight: isMoreActive ? 600 : 500,
+                            color: isMoreActive ? ACCENT : T3,
+                            borderBottom: isMoreActive
+                              ? `2px solid ${ACCENT}`
+                              : '2px solid transparent',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.color = ACCENT;
+                            e.currentTarget.style.textShadow = '0 0 8px rgba(59,175,218,0.6)';
+                          }}
+                          onMouseLeave={e => {
+                            if (!isMoreActive) {
+                              e.currentTarget.style.color = T3;
+                              e.currentTarget.style.textShadow = 'none';
+                            }
+                          }}
+                        >
+                          {t.more} <ChevronDown style={{ width: '13px', height: '13px' }} />
+                        </button>
+
+                        {showMoreMenu && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '54px',
+                            left: 0,
+                            backgroundColor: surface,
+                            border: `1px solid ${bdr}`,
+                            borderRadius: '8px',
+                            minWidth: '180px',
+                            boxShadow: '0 8px 20px rgba(0,0,0,0.08)',
+                            zIndex: 100
+                          }}>
+                            {extraCategories.map(cat => {
+                              const isActive = selectedCategory === cat.slug;
+
+                              return (
+                                <button
+                                  key={cat.slug}
+                                  onClick={() => {
+                                    setSelectedCategory(cat.slug);
+                                    setShowMoreMenu(false);
+                                  }}
+                                  style={{
+                                    width: '100%',
+                                    textAlign: 'left',
+                                    padding: '10px 14px',
+                                    border: 'none',
+                                    background: isActive ? (dark ? 'rgba(59,175,218,0.15)' : '#EBF8FF') : 'transparent',
+                                    cursor: 'pointer',
+                                    color: isActive ? ACCENT : T2,
+                                    fontSize: `${13 * textScale}px`,
+                                    fontWeight: isActive ? 600 : 500,
+                                    transition: 'all 0.15s'
+                                  }}
+                                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.backgroundColor = hoverBg;}}
+                                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';}}
+                                >
+                                  {
+                                    selectedLanguage === "hi"
+                                      ? (translations.hi[cat.slug] || cat.name)
+                                      : cat.name
+                                  }
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                      </div>
+                    )}
+                  </nav>
+
+                  {/* Header right */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '16px', flexShrink: 0, minWidth: 0 }}>
+                    <button onClick={handleNotificationClick} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: surfaceAlt, color: T3, position: 'relative' }}>
+                      <Bell style={{ width: '16px', height: '16px' }} />
+                      {breakingNews.length > 0 && <span style={{ position: 'absolute', top: '6px', right: '6px', width: '7px', height: '7px', backgroundColor: '#e53e3e', borderRadius: '50%', border: `2px solid ${surface}` }} />}
+                    </button>
+                    <span></span>
+                    <span></span>
+                    {/* <button style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: surfaceAlt, color: T3 }}>
+                      <MessageCircle style={{ width: '16px', height: '16px' }} />
+                    </button> */}
+                    {/* <form onSubmit={handleSearch}>
+                      <div style={{ position: 'relative', width: window.innerWidth < 1040 ? '100px' : 'clamp(150px, 35vw, 400px)', transition: 'all 0.03s ease' }}>
+                        <Search style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', width: '13px', height: '13px', color: T3 }} />
+                        <input type="search" placeholder={t.searchPlaceholder} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                          style={{ backgroundColor: surfaceAlt, border: `1px solid ${bdr}`, borderRadius: '8px', padding: '6px 12px 6px 28px', fontSize: '13px', color: T1, outline: 'none', width: '100%', fontFamily: selectedFont.value, transition: 'border-color 0.15s' }}
+                          onFocus={e => e.target.style.borderColor = ACCENT}
+                          onBlur={e => e.target.style.borderColor = bdr} />
+                      </div>
+                    </form> */}
+                    
+                    <form onSubmit={handleSearch}>
+                      <div
+                        style={{
+                          position: 'relative',
+                          width: 'clamp(250px, 25vw, 400px)',
+                          transition: 'width 0.1s ease'
+                        }}
+                      >
+                        <Search
+                          style={{
+                            position: 'absolute',
+                            left: '9px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            width: '13px',
+                            height: '13px',
+                            color: T3
+                          }}
+                        />
+
+                        <input
+                          type="search"
+                          placeholder={t.searchPlaceholder}
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          onFocus={e => e.target.style.borderColor = ACCENT}
+                          onBlur={e => e.target.style.borderColor = bdr}
+                          style={{
+                            backgroundColor: surfaceAlt,
+                            border: `1px solid ${bdr}`,
+                            borderRadius: '8px',
+                            padding: '6px 12px 6px 28px',
+                            fontSize: '13px',
+                            color: T1,
+                            outline: 'none',
+                            width: '100%',
+                            fontFamily: selectedFont.value,
+                            transition: 'border-color 0.15s'
+                          }}
+                        />
+                      </div>
+                    </form>
+                  </div>
+                  <div style={{ height: '24px', marginLeft: '16px', paddingRight: '20px' }} >
+                    <span style={{ fontSize: '12px', color: T3, fontFamily: selectedFont.value }}>{new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  </div>
+                </>
+              )}
+            </header>
+
+            {isMobileView && showMobileSearch && (
+              <div
+                style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: dark ? '#141620' : '#fff',
+                  zIndex: 9999,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  padding: '14px'
+                }}
+              >
+
+                {/* TOP BAR */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+
+                  {/* BACK BUTTON */}
+                  <button
+                    onClick={() => setShowMobileSearch(false)}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      color: dark ? '#fff' : '#141620',
+                      cursor: 'pointer'
+                    }}
+                  >                    
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                  </button>
+
+                  {/* SEARCH INPUT */}
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <input
+                      autoFocus
+                      placeholder="खबर, टॉपिक, शहर या राज्य खोजें"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          setPage(1);
+                          fetchNews(selectedCategory, searchQuery, 1);
+                          setIsSearchActive(true);
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '10px 40px 10px 14px',
+                        borderRadius: '10px',
+                        border: `1px solid ${bdr}`,
+                        backgroundColor: dark ? '#1e2130' : '#f3f4f6',
+                        color: T1,
+                        fontSize: '14px'
+                      }}
+                    />
+
+                    <Search
+                      onClick={() => {
+                        setPage(1);
+                        fetchNews(selectedCategory, searchQuery, 1);
+                        setIsSearchActive(true);
+                      }}
+                      style={{
+                        position: 'absolute',
+                        right: '10px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: '18px',
+                        height: '18px',
+                        color: ACCENT,
+                        cursor: 'pointer'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* ================= CONTENT ================= */}
+
+                {!isSearchActive ? (
+                  // 🔹 BEFORE SEARCH (Trending UI)
+                  <div style={{ marginTop: '20px' }}>
+                    <p style={{ color: 'red', fontSize: '14px', marginBottom: '12px', fontWeight: 700 }}>
+                      ट्रेंडिंग
+                    </p>
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                      {(allTags.length > 0 ? allTags : [
+                        'बंगाल में हिंसा',
+                        'अमेरिका-ईरान युद्ध',
+                        'IPL 2026',
+                        'गर्मी की मार',
+                        'चारधाम यात्रा'
+                      ]).map(tag => (
+                        <button
+                          key={tag}
+                          onClick={() => {
+                            setSearchQuery(tag);
+                            setIsSearchActive(true);
+                            fetchNews(selectedCategory, tag, 1);
+                          }}
+                          style={{
+                            padding: '8px 14px',
+                            borderRadius: '20px',
+                            border: `1px solid ${bdr}`,
+                            background: 'transparent',
+                            color: T2,
+                            fontSize: '13px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {tag} →
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                ) : (
+                  // 🔥 AFTER SEARCH (RESULTS LIKE IMAGE 2)
+                  <div style={{ marginTop: '16px', overflowY: 'auto' }}>
+
+                    {/* FILTER BUTTONS */}
+                    <div style={{ display: 'flex', gap: '10px', marginBottom: '14px' }}>
+                      <button style={{
+                        padding: '6px 14px',
+                        borderRadius: '20px',
+                        backgroundColor: '#fff',
+                        color: '#000',
+                        fontSize: '13px',
+                        border: 'none',
+                        fontWeight: 700
+                      }}>
+                        लेटेस्ट रिजल्ट
+                      </button>
+
+                      <button style={{
+                        padding: '6px 14px',
+                        borderRadius: '20px',
+                        backgroundColor: 'transparent',
+                        color: '#aaa',
+                        fontSize: '13px',
+                        border: `1px solid ${bdr}`,
+                        fontWeight: 700
+                      }}>
+                        टॉप रिजल्ट
+                      </button>
+                    </div>
+
+                    {/* RESULTS LIST */}
+                    {loading ? (
+                      <p style={{ textAlign: 'center' }}><Loader /></p>
+                    ) : news.length === 0 ? (
+                      <p style={{ textAlign: 'center', color: ACCENT, fontWeight: 500 }}>कोई रिजल्ट नहीं मिला</p>
+                    ) : (
+                      news.map(item => (
+                        <div
+                          key={item.id}
+                          onClick={() => {
+                            setShowMobileSearch(false);
+                            setSelectedNews(item);
+                          }}
+                          style={{
+                            display: 'flex',
+                            gap: '10px',
+                            padding: '12px 0',
+                            borderBottom: `1px solid ${bdr}`,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <div style={{ flex: 1 }}>
+                            <p style={{
+                              fontSize: '14px',
+                              fontWeight: 600,
+                              color: dark ? '#fff' : '#000'
+                            }}>
+                              {item.title}
+                            </p>
+
+                            <p style={{
+                              fontSize: '12px',
+                              color: T3,
+                              marginTop: '6px'
+                            }}>
+                              {formatDate(item.publishedAt)}
+                            </p>
+                          </div>
+
+                          <img
+                            src={item.featuredImage}
+                            style={{
+                              width: '90px',
+                              height: '60px',
+                              borderRadius: '8px',
+                              objectFit: 'cover'
+                            }}
+                          />
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Breaking ticker */}
+            {breakingNews.length > 0 && (
+              <div style={{ backgroundColor: dark ? '#1a2535' : '#EBF8FF', borderBottom: `1px solid ${dark ? '#2a3d55' : '#BEE3F8'}`, padding: '6px 24px', overflow: 'hidden', display: 'flex', alignItems: 'center', gap: '12px', marginTop: isMobileView ? '102px' : '54px' }}>
+                <span style={{ backgroundColor: '#e53e3e', color: 'white', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: selectedFont.value, letterSpacing: '0.05em' }}>
+                  <span style={{ width: '5px', height: '5px', backgroundColor: 'white', borderRadius: '50%', display: 'inline-block', animation: 'pulse 1s infinite' }} />BREAKING
+                </span>
+                <div style={{ overflow: 'hidden', flex: 1 }}>
+                  <div className="animate-marquee" style={{ whiteSpace: 'nowrap', color: dark ? '#90cdf4' : '#2c5282', fontSize: `${13 * textScale}px`, fontWeight: 500, fontFamily: selectedFont.value }}>
+                    {[...breakingNews, ...breakingNews].map((item, i) => (
+                      <span key={`${item.id}-${i}`} style={{ marginRight: '48px' }}>{item.title}<span style={{ opacity: 0.4, margin: '0 20px' }}>◆</span></span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Feed */}
+            <div style={{ flex: 1, padding: isMobileView ? '12px' : '24px', width: '100%', overflowY: 'auto' }}>
+
+              {/* YouTube live */}
+              {youtubeLive?.videoId && (
+                <div style={{ marginBottom: '24px', borderRadius: '12px', overflow: 'hidden', border: `1px solid ${bdr}`, backgroundColor: surface }}>
+                  <div style={{ backgroundColor: '#111', padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#e53e3e', fontSize: '12px', fontWeight: 700 }}>● LIVE</span>
+                    <span style={{ color: '#9ca3af', fontSize: '12px' }}>{youtubeLive.title}</span>
+                  </div>
+                  <div style={{ position: 'relative', paddingBottom: '40%' }}>
+                    <iframe className="absolute inset-0 w-full h-full" src={`https://www.youtube.com/embed/${youtubeLive.videoId}?rel=0`} title="Live" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                  </div>
+                </div>
+              )}
+
+              {/* Hero */}
+              {!isMobileView && news.length > 0 && !loading && (() => {
+                const hero = news[0];
+                return (
+                  <div onClick={() => setSelectedNews(hero)}
+                    style={{ position: 'relative', borderRadius: '14px', overflow: 'visible', marginBottom: '28px', cursor: 'pointer', height: '320px', border: `1px solid ${bdr}` }}>
+                    <img src={hero.featuredImage || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200'} alt={hero.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.72) 45%, rgba(0,0,0,0.08) 100%)' }} />
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '22px 24px' }}>
+                      <span style={{ fontSize: `${11 * textScale}px`, fontWeight: 600, color: 'white', backgroundColor: getCatAccent(hero.category), padding: '3px 10px', borderRadius: '20px', textTransform: 'capitalize', letterSpacing: '0.04em', fontFamily: selectedFont.value }}>{selectedLanguage === "hi" ? (translations.hi[hero.category] || hero.category) : hero.category}</span>
+                      <h1 style={{ color: 'white', fontSize: `${20 * textScale}px`, fontWeight: 700, lineHeight: 1.35, margin: '10px 0 12px', fontFamily: selectedFont.value }}>{hero.title}</h1>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {/* <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <User style={{ width: '11px', height: '11px', color: 'white' }} />
+                          </div> */}
+                          {/* <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: `${12 * textScale}px`, fontFamily: selectedFont.value, fontWeight: 400 }}>{hero.authorName || 'NewsDesk'}</span>
+                          <span style={{ color: 'rgba(255,255,255,0.4)' }}>·</span> */}
+                          <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: `${11 * textScale}px`, fontFamily: selectedFont.value, fontWeight: 300 }}>{formatDate(hero.publishedAt)}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          {[Bookmark].map((Icon, i) => (
+                            <button key={i} onClick={(e) => e.stopPropagation()} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '6px', padding: '6px 8px', cursor: 'pointer', color: 'white', backdropFilter: 'blur(4px)' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = dark ? '#2e3347' : '#7c7c7c'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                              <Icon style={{ width: '13px', height: '13px' }} />
+                            </button>
+                          ))}
+                          <div ref={shareMenuRef} style={{ position: 'relative' }}>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowShareMenu(prev => prev === hero.id ? null : hero.id);
+                              }}
+                              style={{
+                                background: 'rgba(255,255,255,0.12)',
+                                border: 'none',
+                                borderRadius: '6px',
+                                padding: '6px 8px',
+                                cursor: 'pointer',
+                                color: 'white',
+                                backdropFilter: 'blur(4px)'
+                              }}
+                              onMouseEnter={e => e.currentTarget.style.backgroundColor = dark ? '#2e3347' : '#7c7c7c'}
+                              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                              <Share2 style={{ width: '13px', height: '13px' }} />
+                            </button>
+
+                            {showShareMenu === hero.id && (  
+                              <div
+                                onClick={(e) => e.stopPropagation()}
+                                style={{
+                                  position: 'absolute',
+                                  top: '110%',   
+                                  right: 0,
+                                  background: 'white',
+                                  border: '1px solid #E6E8EB',
+                                  borderRadius: '10px',
+                                  padding: '10px',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '8px',
+                                  zIndex: 100,
+                                  minWidth: '140px',
+                                  boxShadow: '0 10px 25px rgba(0,0,0,0.15)'
+                                }}
+                              >
+                                <button
+                                  onClick={() => shareOnWhatsApp(hero)}
+                                  style={{
+                                    border: 'none',
+                                    background: 'transparent',
+                                    padding: '8px 10px',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    borderRadius: '6px',
+                                    fontSize: '13px'
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
+                                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                >
+                                  WhatsApp
+                                </button>
+
+                                <button
+                                  onClick={() => shareOnTwitter(hero)}
+                                  style={{
+                                    border: 'none',
+                                    background: 'transparent',
+                                    padding: '8px 10px',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    borderRadius: '6px',
+                                    fontSize: '13px'
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
+                                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                >
+                                  Twitter
+                                </button>
+
+                                <button
+                                  onClick={() => shareOnFacebook(hero)}
+                                  style={{
+                                    border: 'none',
+                                    background: 'transparent',
+                                    padding: '8px 10px',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    borderRadius: '6px',
+                                    fontSize: '13px'
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
+                                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                >
+                                  Facebook
+                                </button>
+
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(
+                                      `${window.location.origin}/news/${hero.id}`
+                                    );
+                                    toast.success("Link copied!");
+                                  }}
+                                  style={{
+                                    border: 'none',
+                                    background: 'transparent',
+                                    padding: '8px 10px',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    borderRadius: '6px',
+                                    fontSize: '13px'
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
+                                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                >
+                                  Copy Link
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Grid */}
+              {loading && news.length === 0 ? (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <Loader style={{ width: '28px', height: '28px', color: ACCENT, margin: '0 auto 10px' }} />
+                    <p style={{ color: T3, fontSize: `${14 * textScale}px` }}>Loading articles...</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {isMobileView ? (
+                    //  MOBILE VIEW 
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      {news.map((item) => (
+                        <div
+                          key={item.id}
+                          onClick={() => setSelectedNews(item)}
+                          style={{
+                            display: 'flex',
+                            gap: '14px',
+                            padding: isMobileView ? '16px' : '24px',
+                            marginBottom: '16px',
+                            borderRadius: '22px',
+                            cursor: 'pointer',
+                            alignItems: 'flex-start',
+                            background: dark
+                              ? 'linear-gradient(145deg,#1d2233,#151926)'
+                              : 'linear-gradient(145deg,#ffffff,#f7f7f8)',
+                            border: dark
+                              ? '1px solid rgba(255,255,255,0.05)'
+                              : '1px solid rgba(0,0,0,0.05)',
+                            boxShadow: dark
+                              ? '0 10px 25px rgba(0,0,0,0.35)'
+                              : '0 8px 24px rgba(0,0,0,0.08)',
+                            transition: 'all 0.25s ease',
+                            position: 'relative',
+                            overflow: 'hidden'
+                          }}
+                          onTouchStart={(e) => {
+                            e.currentTarget.style.transform = 'scale(0.98)';
+                          }}
+                          onTouchEnd={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                          }}
+                        >
+                          
+                          {/* LEFT CONTENT */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+
+                            {/* CATEGORY */}
+                            <div
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                background: dark
+                                  ? 'rgba(59,175,218,0.15)'
+                                  : 'rgba(59,175,218,0.10)',
+                                color: ACCENT,
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                padding: '4px 8px',
+                                borderRadius: '30px',
+                                marginBottom: '10px',
+                                letterSpacing: '0.5px',
+                                textTransform: 'uppercase'
+                              }}
+                            >
+                              ● {selectedLanguage === "hi"
+                                ? (translations.hi[item.category] || item.category)
+                                : item.category}
+                            </div>
+
+                            {/* TITLE */}
+                            <p
+                              style={{
+                                fontSize:
+                                  window.innerWidth <= 500
+                                  ? '13px'
+                                  : window.innerWidth <= 700
+                                  ? '15px'
+                                  : window.innerWidth <= 1159
+                                  ? '20px'
+                                  : '22px',
+                                fontWeight: 800,
+                                color: dark ? '#fff' : '#111',
+                                lineHeight:
+                                  window.innerWidth <= 600
+                                    ? 1.45
+                                    : 1.35,
+                                marginBottom: '10px',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 3,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                                letterSpacing: '-0.3px',
+                                maxWidth: '90%'
+                              }}
+                            >
+                              {item.title}
+                            </p>
+                            <p
+                              style={{
+                                fontSize: isMobileView ? '11px' : '15px',
+                                color: T2,
+                                lineHeight: 1.6,
+                                marginBottom: '14px',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                                opacity: 0.9
+                              }}
+                            >
+                              {item.excerpt || item.summary || item.description}
+                            </p>
+
+                            {/* META */}
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                flexWrap: 'wrap'
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: '14px',
+                                  color: T3,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}
+                              >
+                                🕒 {formatDate(item.publishedAt)}
+                              </span>
+
+                              {item.views && (
+                                <span
+                                  style={{
+                                    fontSize: '11px',
+                                    color: T3
+                                  }}
+                                >
+                                  👁 {item.views}
+                                </span>
+                              )}
+
+                              {item.isBreaking && (
+                                <span
+                                  style={{
+                                    background: '#ef4444',
+                                    color: '#fff',
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    padding: '4px 8px',
+                                    borderRadius: '20px',
+                                    animation: 'pulse 1.2s infinite'
+                                  }}
+                                >
+                                  BREAKING
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* IMAGE */}
+                          <div
+                            style={{
+                              position: 'relative',
+                              flexShrink: 0
+                            }}
+                          >
+                            <img
+                              src={
+                                item.featuredImage ||
+                                'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=300'
+                              }
+                              style={{
+                                width: isMobileView ? '130px' : '220px',
+                                height: isMobileView ? '130px' : '160px',
+                                borderRadius: '22px',
+                                objectFit: 'cover',
+                                boxShadow: dark
+                                  ? '0 8px 20px rgba(0,0,0,0.4)'
+                                  : '0 8px 20px rgba(0,0,0,0.12)'
+                              }}
+                            />
+
+                            {/* IMAGE OVERLAY */}
+                            <div
+                              style={{
+                                position: 'absolute',
+                                inset: 0,
+                                borderRadius: '16px',
+                                background:
+                                  'linear-gradient(to top, rgba(0,0,0,0.15), transparent)'
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    //  DESKTOP VIEW 
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
+                      {news.slice(1).map((item, idx) => (
+                        <React.Fragment key={item.id}>
+                          <ArticleCard
+                            item={item}
+                            onClick={setSelectedNews}
+                            formatDate={formatDate}
+                            showShareMenu={showShareMenu}
+                            setShowShareMenu={setShowShareMenu}
+                            selectedLanguage={selectedLanguage}
+                          />
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  )}
+                  {hasMore && (
+                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '28px' }}>
+                      <button onClick={loadMore} disabled={loading}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 22px', borderRadius: '8px', border: `1px solid ${bdr}`, backgroundColor: surface, color: T2, fontSize: `${13 * textScale}px`, fontWeight: 500, cursor: 'pointer', fontFamily: selectedFont.value, transition: 'border-color 0.15s' }}
+                        onMouseEnter={e => e.currentTarget.style.borderColor = ACCENT}
+                        onMouseLeave={e => e.currentTarget.style.borderColor = bdr}>
+                        {loading ? <Loader style={{ width: '14px', height: '14px', color: ACCENT }} /> : <><span>{t.loadMore}</span><ChevronDown style={{ width: '14px', height: '14px' }} /></>}
+                      </button>
+                    </div>
+                  )}
+                  {news.length === 0 && !loading && (
+                    <div style={{ textAlign: 'center', padding: '60px 0' }}>
+                      <Newspaper style={{ width: '44px', height: '44px', color: T3, margin: '0 auto 12px' }} />
+                      <p style={{ color: T1, fontSize: `${15 * textScale}px`, fontWeight: 600, marginBottom: '4px' }}>{t.noArticles}</p>
+                      <p style={{ color: T3, fontSize: `${13 * textScale}px` }}>{searchQuery ? 'Try different search terms' : '{t.checkBackLater}'}</p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
 
           {/* ═══ LEFT SIDEBAR ══════════════════════════════════════════════════ */}
           <aside style={{
-            width: sidebarCollapsed ? '60px' : '250px',
-            minWidth: sidebarCollapsed ? '60px' : '250px',
+            display: isMobileView ? 'none' : 'flex',
+            width: sidebarCollapsed ? '60px' : '220px',
+            minWidth: sidebarCollapsed ? '60px' : '220px',
             backgroundColor: surface,
             borderRight: `1px solid ${bdr}`,
-            display: 'flex', flexDirection: 'column',
-            position: 'sticky', top: 0, height: '100vh',
+            flexDirection: 'column',
+            marginTop: '54px',
+            position: 'fixed', left: 0, top: 0, height: '100vh',
             transition: 'width 0.22s ease, min-width 0.22s ease',
             zIndex: 40, overflowY: 'auto', overflowX: 'hidden',
           }}>
 
-            {/* ── Logo row FIXED ── */}
+            {/* ── Hamburger row FIXED ── */}
             <div style={{
-              padding: '14.7px 10.7px 10.7px',
-              borderBottom: `1px solid ${bdr}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: sidebarCollapsed ? 'center' : 'space-between'
+              padding: '8px 0',
+              
+              // flexDirection: 'column',
+              
+              // justifyContent: sidebarCollapsed ? 'center' : 'space-between'
             }}>
-
-              {/* Logo */}
-              {/* <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '7px',
-                  backgroundColor: ACCENT,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <Newspaper style={{ width: '14px', height: '14px', color: 'white' }} />
-                </div>
-
-                {!sidebarCollapsed && (
-                  <span style={{
-                    fontSize: '17px',
-                    fontWeight: 800,
-                    color: T1,
-                    letterSpacing: '-0.3px'
-                  }}>
-                    NewsDesk
-                  </span>
-                )}
-              </div> */}
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-                <Image
-                  src="/logo.svg"
-                  alt="Logo"
-                  
-                  width = {130}
-                  height = {54}
-                  
-                  
-                />
-              </div>
 
               {/* Hamburger ONLY in expanded */}
               {!sidebarCollapsed && (
@@ -881,44 +2002,52 @@ export default function HomePage() {
                   style={{
                     background: 'none',
                     border: 'none',
+                    display: 'flex',
                     cursor: 'pointer',
-                    padding: '4px',
-                    borderRadius: '6px',
-                    color: T3
+                    padding: '8px 21px',
+                    // borderRadius: '6px',
+                    color: T3,
+                    // alignItems: 'center',
+                    gap: '8px',
                   }}
                   onMouseEnter={e => e.currentTarget.style.color = T2}
                   onMouseLeave={e => e.currentTarget.style.color = T3}
                 >
-                  <Menu style={{ width: '18px', height: '18px' }} />
+                  <Menu style={{ width: '20px', height: '20px' }} />
+                  <span>  </span> 
+                  <span style={{ fontSize: '15px', fontWeight: 500 }}>
+                    Menu
+                  </span>
                 </button>
+              )}
+            
+
+              {/* ── Collapsed layout (Logo → Hamburger BELOW) ── */}
+              {sidebarCollapsed && (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '8px 21px'
+                }}>
+                  <button
+                    onClick={() => setSidebarCollapsed(false)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: T3
+                    }}
+                  >
+                    <Menu style={{ width: '20px', height: '20px' }} />
+                  </button>
+                </div>
               )}
             </div>
 
-            {/* ── Collapsed layout (Logo → Hamburger BELOW) ── */}
-            {sidebarCollapsed && (
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '10px 0'
-              }}>
-                <button
-                  onClick={() => setSidebarCollapsed(false)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: T3
-                  }}
-                >
-                  <Menu style={{ width: '18px', height: '18px' }} />
-                </button>
-              </div>
-            )}
-
             {/* User profile */}
-            <div style={{ padding: '12px 14px', borderBottom: `1px solid ${bdr}`, flexShrink: 0 }}>
+            <div style={{ padding: '8px 14px', borderBottom: `1px solid ${bdr}`, flexShrink: 0 }}>
               {user ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -1019,7 +2148,7 @@ export default function HomePage() {
                         }}
                       >
                         {authLoading ? (
-                          <Loader2 style={{ animation: 'spin 1s linear infinite' }} />
+                          <div className="loader" style={{ width: '18px' }}></div>
                         ) : (
                           <>
                             <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="18" />
@@ -1264,419 +2393,60 @@ export default function HomePage() {
                 <Building style={{ width: '17px', height: '17px', flexShrink: 0 }} />
                 {!sidebarCollapsed && <><span style={{ fontSize: '14px', fontWeight: 500, flex: 1, textAlign: 'left' }}>{t.adminPanel}</span><ExternalLink style={{ width: '12px', height: '12px', opacity: 0.5 }} /></>}
               </button>
-            </nav>
 
-            {/* ── Font Toolbar (above dark mode toggle) ── */}
-            {!sidebarCollapsed && (
-              <>
-                
-                {/* Dark mode toggle */}
-                <div style={{ padding: '12px 16px', borderTop: `1px solid ${bdr}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {dark ? <Moon style={{ width: '14px', height: '14px', color: T3 }} /> : <Sun style={{ width: '14px', height: '14px', color: T3 }} />}
-                    <span style={{ fontSize: '13px', fontWeight: 500, color: T2 }}>
-                      {dark 
-                        ? (selectedLanguage === "hi" ? "डार्क मोड" : "Dark Mode") 
-                        : (selectedLanguage === "hi" ? "लाइट मोड" : "Light Mode")}
-                    </span>
-                  </div>
-                  <button onClick={toggleDark}
-                    style={{ width: '40px', height: '22px', borderRadius: '11px', border: 'none', cursor: 'pointer', backgroundColor: dark ? ACCENT : '#CBD5E0', position: 'relative', transition: 'background-color 0.2s', flexShrink: 0 }}>
-                    <span style={{ position: 'absolute', top: '3px', left: dark ? '21px' : '3px', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.3)', transition: 'left 0.2s' }} />
-                  </button>
-                </div>
-              </>
-            )}
-
-            {/* Collapsed state: just dark toggle icon */}
-            {sidebarCollapsed && (
-              <div style={{ padding: '12px', borderTop: `1px solid ${bdr}`, display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
-                <button onClick={toggleDark} style={{ padding: '8px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: 'transparent', color: T3 }} onMouseEnter={e => e.currentTarget.style.backgroundColor = hoverBg} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                  {dark ? <Moon style={{ width: '16px', height: '16px' }} /> : <Sun style={{ width: '16px', height: '16px' }} />}
-                </button>
-              </div>
-            )}
-          </aside>
-
-          {/* ═══ CENTER CONTENT ════════════════════════════════════════════════ */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, width: '100%' }}>
-
-            {/* Top nav bar */}
-            <header style={{ backgroundColor: surface, borderBottom: `1px solid ${bdr}`, padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '54px', position: 'sticky', top: 0, zIndex: 30 }}> 
-              <nav style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0  }}>
-                {navItems.map((item) => {
-                  const isActive = selectedCategory === item.slug;
-                  return (
-                    <button key={item.slug} onClick={() => setSelectedCategory(item.slug)}
-                      style={{ padding: '0 16px', height: '54px', border: 'none', cursor: 'pointer', backgroundColor: 'transparent', fontSize: `${14 * textScale}px`, fontWeight: isActive ? 600 : 500, fontFamily: selectedFont.value, color: isActive ? ACCENT : T3, borderBottom: `2px solid ${isActive ? ACCENT : 'transparent'}`, whiteSpace: 'nowrap', transition: 'all 0.15s', flexShrink: 0 }}
-                      onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = T2; }}
-                      onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = T3; }}>
-                      {item.label}
-                    </button>
-                  );
-                })}
-
-                {/* "More" dropdown for extra categories */}
-                {extraCategories.length > 0 && (
-                  <div ref={moreMenuRef} style={{ position: 'relative' }}>
-                    
-                    <button
-                      onClick={() => setShowMoreMenu(p => !p)}
-                      style={{
-                        padding: '0 14px',
-                        height: '54px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        backgroundColor: 'transparent',
-                        fontSize: `${14 * textScale}px`,
-                        fontWeight: isMoreActive ? 600 : 500,
-                        color: isMoreActive ? ACCENT : T3,
-                        borderBottom: isMoreActive
-                          ? `2px solid ${ACCENT}`
-                          : '2px solid transparent',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.color = ACCENT;
-                        e.currentTarget.style.textShadow = '0 0 8px rgba(59,175,218,0.6)';
-                      }}
-                      onMouseLeave={e => {
-                        if (!isMoreActive) {
-                          e.currentTarget.style.color = T3;
-                          e.currentTarget.style.textShadow = 'none';
-                        }
-                      }}
-                    >
-                      {t.more} <ChevronDown style={{ width: '13px', height: '13px' }} />
-                    </button>
-
-                    {showMoreMenu && (
-                      <div style={{
-                        position: 'absolute',
-                        top: '54px',
-                        left: 0,
-                        backgroundColor: surface,
-                        border: `1px solid ${bdr}`,
-                        borderRadius: '8px',
-                        minWidth: '180px',
-                        boxShadow: '0 8px 20px rgba(0,0,0,0.08)',
-                        zIndex: 100
-                      }}>
-                        {extraCategories.map(cat => {
-                          const isActive = selectedCategory === cat.slug;
-
-                          return (
-                            <button
-                              key={cat.slug}
-                              onClick={() => {
-                                setSelectedCategory(cat.slug);
-                                setShowMoreMenu(false);
-                              }}
-                              style={{
-                                width: '100%',
-                                textAlign: 'left',
-                                padding: '10px 14px',
-                                border: 'none',
-                                background: isActive ? (dark ? 'rgba(59,175,218,0.15)' : '#EBF8FF') : 'transparent',
-                                cursor: 'pointer',
-                                color: isActive ? ACCENT : T2,
-                                fontSize: `${13 * textScale}px`,
-                                fontWeight: isActive ? 600 : 500,
-                                transition: 'all 0.15s'
-                              }}
-                              onMouseEnter={e => { if (!isActive) e.currentTarget.style.backgroundColor = hoverBg;}}
-                              onMouseLeave={e => { if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';}}
-                            >
-                              {
-                                selectedLanguage === "hi"
-                                  ? (translations.hi[cat.slug] || cat.name)
-                                  : cat.name
-                              }
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                  </div>
-                )}
-              </nav>
-
-              {/* Header right */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '16px', flexShrink: 0 }}>
-                <button onClick={handleNotificationClick} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: surfaceAlt, color: T3, position: 'relative' }}>
-                  <Bell style={{ width: '16px', height: '16px' }} />
-                  {breakingNews.length > 0 && <span style={{ position: 'absolute', top: '6px', right: '6px', width: '7px', height: '7px', backgroundColor: '#e53e3e', borderRadius: '50%', border: `2px solid ${surface}` }} />}
-                </button>
-                <span></span>
-                <span></span>
-                {/* <button style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: surfaceAlt, color: T3 }}>
-                  <MessageCircle style={{ width: '16px', height: '16px' }} />
-                </button> */}
-                <form onSubmit={handleSearch}>
-                  <div style={{ position: 'relative' }}>
-                    <Search style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', width: '13px', height: '13px', color: T3 }} />
-                    <input type="search" placeholder={t.searchPlaceholder} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                      style={{ backgroundColor: surfaceAlt, border: `1px solid ${bdr}`, borderRadius: '8px', padding: '6px 12px 6px 28px', fontSize: '13px', color: T1, outline: 'none', width: '400px', fontFamily: selectedFont.value, transition: 'border-color 0.15s' }}
-                      onFocus={e => e.target.style.borderColor = ACCENT}
-                      onBlur={e => e.target.style.borderColor = bdr} />
-                  </div>
-                </form>
-              </div>
-              <div style={{ height: '24px', marginLeft: '16px'}} >
-                <span style={{ fontSize: '12px', color: T3, fontFamily: selectedFont.value }}>{new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-              </div>
-            </header>
-
-            {/* Breaking ticker */}
-            {breakingNews.length > 0 && (
-              <div style={{ backgroundColor: dark ? '#1a2535' : '#EBF8FF', borderBottom: `1px solid ${dark ? '#2a3d55' : '#BEE3F8'}`, padding: '6px 24px', overflow: 'hidden', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ backgroundColor: '#e53e3e', color: 'white', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: selectedFont.value, letterSpacing: '0.05em' }}>
-                  <span style={{ width: '5px', height: '5px', backgroundColor: 'white', borderRadius: '50%', display: 'inline-block', animation: 'pulse 1s infinite' }} />BREAKING
-                </span>
-                <div style={{ overflow: 'hidden', flex: 1 }}>
-                  <div className="animate-marquee" style={{ whiteSpace: 'nowrap', color: dark ? '#90cdf4' : '#2c5282', fontSize: `${13 * textScale}px`, fontWeight: 500, fontFamily: selectedFont.value }}>
-                    {[...breakingNews, ...breakingNews].map((item, i) => (
-                      <span key={`${item.id}-${i}`} style={{ marginRight: '48px' }}>{item.title}<span style={{ opacity: 0.4, margin: '0 20px' }}>◆</span></span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Feed */}
-            <div style={{ flex: 1, padding: '24px', width: isRightSidebarOpen ? `calc(100% - 288px)` : `100%`, overflowY: 'auto' }}>
-
-              {/* YouTube live */}
-              {youtubeLive?.videoId && (
-                <div style={{ marginBottom: '24px', borderRadius: '12px', overflow: 'hidden', border: `1px solid ${bdr}`, backgroundColor: surface }}>
-                  <div style={{ backgroundColor: '#111', padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#e53e3e', fontSize: '12px', fontWeight: 700 }}>● LIVE</span>
-                    <span style={{ color: '#9ca3af', fontSize: '12px' }}>{youtubeLive.title}</span>
-                  </div>
-                  <div style={{ position: 'relative', paddingBottom: '40%' }}>
-                    <iframe className="absolute inset-0 w-full h-full" src={`https://www.youtube.com/embed/${youtubeLive.videoId}?rel=0`} title="Live" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-                  </div>
-                </div>
-              )}
-
-              {/* Hero */}
-              {news.length > 0 && !loading && (() => {
-                const hero = news[0];
-                return (
-                  <div onClick={() => setSelectedNews(hero)}
-                    style={{ position: 'relative', borderRadius: '14px', overflow: 'visible', marginBottom: '28px', cursor: 'pointer', height: '320px', border: `1px solid ${bdr}` }}>
-                    <img src={hero.featuredImage || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200'} alt={hero.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.72) 45%, rgba(0,0,0,0.08) 100%)' }} />
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '22px 24px' }}>
-                      <span style={{ fontSize: `${11 * textScale}px`, fontWeight: 600, color: 'white', backgroundColor: getCatAccent(hero.category), padding: '3px 10px', borderRadius: '20px', textTransform: 'capitalize', letterSpacing: '0.04em', fontFamily: selectedFont.value }}>{selectedLanguage === "hi" ? (translations.hi[hero.category] || hero.category) : hero.category}</span>
-                      <h1 style={{ color: 'white', fontSize: `${20 * textScale}px`, fontWeight: 700, lineHeight: 1.35, margin: '10px 0 12px', fontFamily: selectedFont.value }}>{hero.title}</h1>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {/* <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <User style={{ width: '11px', height: '11px', color: 'white' }} />
-                          </div> */}
-                          {/* <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: `${12 * textScale}px`, fontFamily: selectedFont.value, fontWeight: 400 }}>{hero.authorName || 'NewsDesk'}</span>
-                          <span style={{ color: 'rgba(255,255,255,0.4)' }}>·</span> */}
-                          <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: `${11 * textScale}px`, fontFamily: selectedFont.value, fontWeight: 300 }}>{formatDate(hero.publishedAt)}</span>
-                        </div>
-                        <div style={{ display: 'flex', gap: '6px' }}>
-                          {[Bookmark].map((Icon, i) => (
-                            <button key={i} onClick={(e) => e.stopPropagation()} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '6px', padding: '6px 8px', cursor: 'pointer', color: 'white', backdropFilter: 'blur(4px)' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = dark ? '#2e3347' : '#7c7c7c'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                              <Icon style={{ width: '13px', height: '13px' }} />
-                            </button>
-                          ))}
-                          <div ref={shareMenuRef} style={{ position: 'relative' }}>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setShowShareMenu(prev => prev === hero.id ? null : hero.id);
-                              }}
-                              style={{
-                                background: 'rgba(255,255,255,0.12)',
-                                border: 'none',
-                                borderRadius: '6px',
-                                padding: '6px 8px',
-                                cursor: 'pointer',
-                                color: 'white',
-                                backdropFilter: 'blur(4px)'
-                              }}
-                              onMouseEnter={e => e.currentTarget.style.backgroundColor = dark ? '#2e3347' : '#7c7c7c'}
-                              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                            >
-                              <Share2 style={{ width: '13px', height: '13px' }} />
-                            </button>
-
-                            {showShareMenu === hero.id && (  
-                              <div
-                                onClick={(e) => e.stopPropagation()}
-                                style={{
-                                  position: 'absolute',
-                                  top: '110%',   
-                                  right: 0,
-                                  background: 'white',
-                                  border: '1px solid #E6E8EB',
-                                  borderRadius: '10px',
-                                  padding: '10px',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  gap: '8px',
-                                  zIndex: 100,
-                                  minWidth: '140px',
-                                  boxShadow: '0 10px 25px rgba(0,0,0,0.15)'
-                                }}
-                              >
-                                <button
-                                  onClick={() => shareOnWhatsApp(hero)}
-                                  style={{
-                                    border: 'none',
-                                    background: 'transparent',
-                                    padding: '8px 10px',
-                                    textAlign: 'center',
-                                    cursor: 'pointer',
-                                    borderRadius: '6px',
-                                    fontSize: '13px'
-                                  }}
-                                  onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
-                                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                >
-                                  WhatsApp
-                                </button>
-
-                                <button
-                                  onClick={() => shareOnTwitter(hero)}
-                                  style={{
-                                    border: 'none',
-                                    background: 'transparent',
-                                    padding: '8px 10px',
-                                    textAlign: 'center',
-                                    cursor: 'pointer',
-                                    borderRadius: '6px',
-                                    fontSize: '13px'
-                                  }}
-                                  onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
-                                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                >
-                                  Twitter
-                                </button>
-
-                                <button
-                                  onClick={() => shareOnFacebook(hero)}
-                                  style={{
-                                    border: 'none',
-                                    background: 'transparent',
-                                    padding: '8px 10px',
-                                    textAlign: 'center',
-                                    cursor: 'pointer',
-                                    borderRadius: '6px',
-                                    fontSize: '13px'
-                                  }}
-                                  onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
-                                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                >
-                                  Facebook
-                                </button>
-
-                                <button
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(
-                                      `${window.location.origin}/news/${hero.id}`
-                                    );
-                                    toast.success("Link copied!");
-                                  }}
-                                  style={{
-                                    border: 'none',
-                                    background: 'transparent',
-                                    padding: '8px 10px',
-                                    textAlign: 'center',
-                                    cursor: 'pointer',
-                                    borderRadius: '6px',
-                                    fontSize: '13px'
-                                  }}
-                                  onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
-                                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                >
-                                  Copy Link
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* Grid */}
-              {loading && news.length === 0 ? (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <Loader2 style={{ width: '28px', height: '28px', color: ACCENT, animation: 'spin 1s linear infinite', margin: '0 auto 10px' }} />
-                    <p style={{ color: T3, fontSize: `${14 * textScale}px` }}>Loading articles...</p>
-                  </div>
-                </div>
-              ) : (
+              {/* ── Font Toolbar (above dark mode toggle) ── */}
+              {!sidebarCollapsed && (
                 <>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
-                    {news.slice(1).map((item, idx) => (
-                      <React.Fragment key={item.id}>
-                        <ArticleCard
-                          item={item}
-                          onClick={setSelectedNews}
-                          formatDate={formatDate}
-                          showShareMenu={showShareMenu}
-                          setShowShareMenu={setShowShareMenu}
-                          selectedLanguage={selectedLanguage}
-                        />
-                        {(idx + 1) % 6 === 0 && idx !== news.length - 2 && (
-                          <div style={{ gridColumn: '1 / -1' }}><NativeAd /></div>
-                        )}
-                      </React.Fragment>
-                    ))}
+                  
+                  {/* Dark mode toggle */}
+                  <div style={{ padding: '12px 16px', borderTop: `1px solid ${bdr}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {dark ? <Moon style={{ width: '14px', height: '14px', color: T3 }} /> : <Sun style={{ width: '14px', height: '14px', color: T3 }} />}
+                      <span style={{ fontSize: '13px', fontWeight: 500, color: T2 }}>
+                        {dark 
+                          ? (selectedLanguage === "hi" ? "डार्क मोड" : "Dark Mode") 
+                          : (selectedLanguage === "hi" ? "लाइट मोड" : "Light Mode")}
+                      </span>
+                    </div>
+                    <button onClick={toggleDark}
+                      style={{ width: '40px', height: '22px', borderRadius: '11px', border: 'none', cursor: 'pointer', backgroundColor: dark ? ACCENT : '#CBD5E0', position: 'relative', transition: 'background-color 0.2s', flexShrink: 0 }}>
+                      <span style={{ position: 'absolute', top: '3px', left: dark ? '21px' : '3px', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.3)', transition: 'left 0.2s' }} />
+                    </button>
                   </div>
-                  {hasMore && (
-                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '28px' }}>
-                      <button onClick={loadMore} disabled={loading}
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 22px', borderRadius: '8px', border: `1px solid ${bdr}`, backgroundColor: surface, color: T2, fontSize: `${13 * textScale}px`, fontWeight: 500, cursor: 'pointer', fontFamily: selectedFont.value, transition: 'border-color 0.15s' }}
-                        onMouseEnter={e => e.currentTarget.style.borderColor = ACCENT}
-                        onMouseLeave={e => e.currentTarget.style.borderColor = bdr}>
-                        {loading ? <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite', color: ACCENT }} /> : <><span>{t.loadMore}</span><ChevronDown style={{ width: '14px', height: '14px' }} /></>}
-                      </button>
-                    </div>
-                  )}
-                  {news.length === 0 && !loading && (
-                    <div style={{ textAlign: 'center', padding: '60px 0' }}>
-                      <Newspaper style={{ width: '44px', height: '44px', color: T3, margin: '0 auto 12px' }} />
-                      <p style={{ color: T1, fontSize: `${15 * textScale}px`, fontWeight: 600, marginBottom: '4px' }}>{t.noArticles}</p>
-                      <p style={{ color: T3, fontSize: `${13 * textScale}px` }}>{searchQuery ? 'Try different search terms' : '{t.checkBackLater}'}</p>
-                    </div>
-                  )}
                 </>
               )}
-            </div>
-          </div>
+
+              {/* Collapsed state: just dark toggle icon */}
+              {sidebarCollapsed && (
+                <div style={{ padding: '12px', borderTop: `1px solid ${bdr}`, display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
+                  <button onClick={toggleDark} style={{ padding: '8px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: 'transparent', color: T3 }} onMouseEnter={e => e.currentTarget.style.backgroundColor = hoverBg} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                    {dark ? <Moon style={{ width: '16px', height: '16px' }} /> : <Sun style={{ width: '16px', height: '16px' }} />}
+                  </button>
+                </div>
+              )}
+            </nav>
+
+            
+          </aside>
 
           {/* ═══ RIGHT SIDEBAR ════════════════════════════════════════════════ */}
           <aside
             style={{
+              display: isMobileView ? 'none' : 'flex',
               width: isRightSidebarOpen ? '288px' : '0px',
               minWidth: isRightSidebarOpen ? '288px' : '0px',
               marginTop: '54px',
               backgroundColor: surface,
               borderLeft: isRightSidebarOpen ? `1px solid ${bdr}` : 'none',
               padding: isRightSidebarOpen ? '20px 18px' : '0px',
-              display: 'flex',
               flexDirection: 'column',
               gap: '22px',
               position: 'fixed',
               right: 0,
               top: 0,
-              height: '93vh',
-              overflow: 'hidden',
+              height: 'calc(100vh - 54px)', // accounts for header
+              overflowY: 'auto',
+              overflowX: 'hidden',
               transition: 'all 0.3s ease',
               zIndex: 50
             }}
@@ -1888,7 +2658,7 @@ export default function HomePage() {
         <SubscriptionPlans open={subscriptionDialogOpen} onClose={() => setSubscriptionDialogOpen(false)} />
 
         <style jsx global>{`
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Nunito+Sans:wght@300;400;600;700;800&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Nunito+Sans:wght@300;400;600;700;800&display=swap');
           * { box-sizing: border-box; margin: 0; padding: 0; }
           @keyframes spin { to { transform: rotate(360deg); } }
           @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
@@ -1900,6 +2670,409 @@ export default function HomePage() {
           input[type="search"]::-webkit-search-cancel-button { display: none; }
         `}</style>
       </FontCtx.Provider>
+      {/* ═══ RESPONSIVE TABLET / MOBILE FOOTER ═════════════════════ */}
+      {windowWidth < 1160 && (
+      <footer
+        style={{
+          backgroundColor: dark ? '#111827' : '#ffffff',
+          borderTop: `1px solid ${bdr}`,
+          padding:
+            windowWidth <= 725
+              ? '28px 14px 14px'
+              : '40px 24px 18px',
+          overflowX: 'hidden',
+          width: '100%',
+          boxSizing: 'border-box'
+        }}
+      >
+        {/* MAIN */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns:
+              windowWidth <= 725
+                ? '1fr'
+                : windowWidth <= 900
+                ? '1fr'
+                : '1.2fr 0.9fr',
+            gap: windowWidth <= 725 ? '24px' : '30px',
+            width: '100%',
+            overflow: 'hidden'
+          }}
+        >
+
+          {/* LEFT SIDE */}
+          <div>
+
+            {/* CATEGORIES */}
+            <div>
+              <h3
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 700,
+                  color: T1,
+                  marginBottom: '14px'
+                }}
+              >
+                {selectedLanguage === "hi"
+                  ? "कैटेगरी"
+                  : "Categories"}
+              </h3>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '10px 20px'
+                }}
+              >
+                {categories.map((cat) => (
+                  <button
+                    key={cat.slug}
+                    onClick={() => setSelectedCategory(cat.slug)}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      padding: 0,
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      color: T2,
+                      fontSize: '13px'
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.color = ACCENT;
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.color = T2;
+                    }}
+                  >
+                    {
+                      selectedLanguage === "hi"
+                        ? (translations.hi[cat.slug] || cat.name)
+                        : cat.name
+                    }
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* TAGS */}
+            <div style={{ marginTop: '28px' }}>
+              <h3
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 700,
+                  color: T1,
+                  marginBottom: '14px'
+                }}
+              >
+                {selectedLanguage === "hi"
+                  ? "लोकप्रिय टैग"
+                  : "Popular Tags"}
+              </h3>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '10px 20px'
+                }}
+              >
+                {(allTags.length > 0
+                  ? allTags
+                  : ['Politics', 'India', 'Sports', 'Tech']
+                ).slice(0, 12).map((tag) => (
+                  <button
+                    key={tag}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      padding: 0,
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      color: T2,
+                      fontSize: '13px'
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.color = ACCENT;
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.color = T2;
+                    }}
+                  >
+                    #{tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* TRENDING */}
+            <div style={{ marginTop: '28px' }}>
+              <h3
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 700,
+                  color: T1,
+                  marginBottom: '14px'
+                }}
+              >
+                {selectedLanguage === "hi"
+                  ? "ट्रेंडिंग टॉपिक"
+                  : "Trending Topics"}
+              </h3>
+
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px'
+                }}
+              >
+                {(breakingNews.length > 0
+                  ? breakingNews
+                  : news
+                ).slice(0, 5).map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => setSelectedNews(item)}
+                    style={{
+                      cursor: 'pointer',
+                      color: T2,
+                      fontSize: '13px',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  >
+                    {item.title}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* MOBILE RIGHT SECTION MOVED BELOW */}
+            {windowWidth <= 725 && (
+              <div style={{ marginTop: '34px' }}>
+
+                {/* NEWSLETTER */}
+                <h3
+                  style={{
+                    fontSize: '16px',
+                    fontWeight: 700,
+                    color: T1,
+                    marginBottom: '14px'
+                  }}
+                >
+                  {selectedLanguage === "hi"
+                    ? "न्यूज़लेटर"
+                    : "Newsletter"}
+                </h3>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px'
+                  }}
+                >
+                  <input
+                    type="email"
+                    placeholder={
+                      selectedLanguage === "hi"
+                        ? "ईमेल दर्ज करें"
+                        : "Enter your email"
+                    }
+                    style={{
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      padding: '11px 12px',
+                      borderRadius: '10px',
+                      border: `1px solid ${bdr}`,
+                      backgroundColor: dark ? '#1f2937' : '#fff',
+                      color: T1,
+                      outline: 'none'
+                    }}
+                  />
+
+                  <button
+                    style={{
+                      width: '100%',
+                      padding: '11px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      backgroundColor: ACCENT,
+                      color: '#fff',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {selectedLanguage === "hi"
+                      ? "सब्सक्राइब"
+                      : "Subscribe"}
+                  </button>
+                </div>
+
+                {/* LOGO */}
+                <div style={{ marginTop: '26px' }}>
+                  <Image
+                    src="/logo.svg"
+                    alt="Logo"
+                    width={120}
+                    height={40}
+                  />
+                </div>
+
+                {/* CONTACTS */}
+                <div
+                  style={{
+                    marginTop: '18px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    color: T2,
+                    fontSize: '13px'
+                  }}
+                >
+                  <div>📧 support@newsdesk.com</div>
+                  <div>📍 Gurgaon, India</div>
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '14px',
+                      marginTop: '6px',
+                      fontSize: '18px'
+                    }}
+                  >
+                    <span style={{ cursor: 'pointer' }}>📘</span>
+                    <span style={{ cursor: 'pointer' }}>📷</span>
+                    <span style={{ cursor: 'pointer' }}>🐦</span>
+                    <span style={{ cursor: 'pointer' }}>▶️</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT SIDE */}
+          {windowWidth > 725 && (
+            <div>
+
+              {/* NEWSLETTER */}
+              <h3
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 700,
+                  color: T1,
+                  marginBottom: '14px'
+                }}
+              >
+                {selectedLanguage === "hi"
+                  ? "न्यूज़लेटर"
+                  : "Newsletter"}
+              </h3>
+
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px'
+                }}
+              >
+                <input
+                  type="email"
+                  placeholder={
+                    selectedLanguage === "hi"
+                      ? "ईमेल दर्ज करें"
+                      : "Enter your email"
+                  }
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '11px 12px',
+                    borderRadius: '10px',
+                    border: `1px solid ${bdr}`,
+                    backgroundColor: dark ? '#1f2937' : '#fff',
+                    color: T1,
+                    outline: 'none'
+                  }}
+                />
+
+                <button
+                  style={{
+                    width: '100%',
+                    padding: '11px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    backgroundColor: ACCENT,
+                    color: '#fff',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {selectedLanguage === "hi"
+                    ? "सब्सक्राइब"
+                    : "Subscribe"}
+                </button>
+              </div>
+
+              {/* LOGO */}
+              <div style={{ marginTop: '34px' }}>
+                <Image
+                  src="/logo.svg"
+                  alt="Logo"
+                  width={120}
+                  height={40}
+                />
+              </div>
+
+              {/* CONTACTS */}
+              <div
+                style={{
+                  marginTop: '18px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                  color: T2,
+                  fontSize: '13px'
+                }}
+              >
+                <div>📧 support@newsdesk.com</div>
+                <div>📍 Gurgaon, India</div>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '14px',
+                    marginTop: '6px',
+                    fontSize: '18px'
+                  }}
+                >
+                  <span style={{ cursor: 'pointer' }}>📘</span>
+                  <span style={{ cursor: 'pointer' }}>📷</span>
+                  <span style={{ cursor: 'pointer' }}>🐦</span>
+                  <span style={{ cursor: 'pointer' }}>▶️</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* BOTTOM */}
+        <div
+          style={{
+            marginTop: '28px',
+            borderTop: `1px solid ${bdr}`,
+            paddingTop: '14px',
+            textAlign: 'center',
+            color: T3,
+            fontSize: '12px'
+          }}
+        >
+          © 2026 NewsDesk. All rights reserved.
+        </div>
+      </footer>
+      )}
     </DarkCtx.Provider>
   );
 }

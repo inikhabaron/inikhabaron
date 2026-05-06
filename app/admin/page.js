@@ -544,6 +544,9 @@ function NewsListView({
 }) {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [dropdownPosition, setDropdownPosition] = useState({});
+  const [openTagsId, setOpenTagsId] = useState(null);
+  const dropdownRef = useRef(null);
   const [page, setPage] = useState(1);
   const perPage = 6;
 
@@ -575,6 +578,30 @@ function NewsListView({
   const toggleAll = () => setSelectedIds(allSelected ? [] : paginated.map(p => p.id));
 
   useEffect(() => { setPage(1); }, [newsStatusFilter, searchQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // If dropdown is open AND click is outside
+      if (
+        openMenuId !== null &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setOpenMenuId(null);
+      }
+      if (
+        openTagsId !== null &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setOpenTagsId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openMenuId, openTagsId]);
 
   return (
     <div style={{ padding: 24 }}>
@@ -623,9 +650,13 @@ function NewsListView({
               <thead>
                 <tr style={{ background: '#f9fafb', borderBottom: '1px solid #f3f4f6' }}>
                   <th style={{ padding: '11px 16px', width: 40 }}>
-                    <div style={{ width: 16, height: 16, border: '1.5px solid #d1d5db', borderRadius: 4, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: allSelected ? '#2563eb' : '#fff' }}
-                      onClick={toggleAll}>
-                      {allSelected && <Check size={10} color="#fff" />}
+                    <div style={{ width: 16, height: 16,
+                    //  border: '1.5px solid #d1d5db', borderRadius: 4, cursor: 'pointer', 
+                     display: 'flex', alignItems: 'center', justifyContent: 'center', background: allSelected ? '#2563eb' : '#f9fafb' }}
+                      // onClick={toggleAll}
+                      >
+                      {allSelected && <Check size={10} color="#fff" 
+                      />}
                     </div>
                   </th>
                   {['Title / Description', 'Author', 'Tags', 'Date', 'Status', ''].map((h, i) => (
@@ -634,13 +665,25 @@ function NewsListView({
                 </tr>
               </thead>
               <tbody>
-                {paginated.map(item => (
+                {paginated.map(item => {
+                  const tagsToShow = [
+                    item.category,
+                    ...(Array.isArray(item.tags) ? item.tags : [])
+                  ].filter(Boolean);
+
+                  const visibleTags = tagsToShow.slice(0, 2);
+                  const extra = tagsToShow.length - visibleTags.length;
+
+                  return (
                   <tr key={item.id} style={{ borderBottom: '1px solid #f3f4f6' }}
                     onMouseEnter={e => e.currentTarget.style.background = '#fafafa'}
                     onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
                     <td style={{ padding: '13px 16px' }}>
-                      <div style={{ width: 16, height: 16, border: '1.5px solid #d1d5db', borderRadius: 4, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: selectedIds.includes(item.id) ? '#2563eb' : '#fff' }}
-                        onClick={() => toggleSelect(item.id)}>
+                      <div style={{ width: 16, height: 16, 
+                      // border: '1.5px solid #d1d5db', borderRadius: 4, cursor: 'pointer', 
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', background: selectedIds.includes(item.id) ? '#2563eb' : '#fff' }}
+                        // onClick={() => toggleSelect(item.id)}
+                        >
                         {selectedIds.includes(item.id) && <Check size={10} color="#fff" />}
                       </div>
                     </td>
@@ -655,13 +698,75 @@ function NewsListView({
                       <div style={{ fontSize: 11, color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.excerpt}</div>
                     </td>
                     <td style={{ padding: '13px 14px', fontSize: 13, color: '#374151', whiteSpace: 'nowrap' }}>{item.authorName || '-'}</td>
-                    <td style={{ padding: '13px 14px' }}>
+                    <td style={{ padding: '13px 14px' }}>                                             
                       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                        {(Array.isArray(item.tags) ? item.tags : []).slice(0, 2).map(t => (
-                          <span key={t} style={DS.tag}>{t}</span>
-                        ))}
-                        {Array.isArray(item.tags) && item.tags.length > 2 && (
-                          <span style={{ ...DS.tag, background: '#e0e7ff', color: '#4338ca' }}>+{item.tags.length - 2} more</span>
+                        {visibleTags.map((t, i) => {
+                          const isCategory = i === 0 && item.category;
+
+                          return (
+                            <span
+                              key={i}
+                              style={
+                                isCategory
+                                  ? {
+                                      ...DS.tag,
+                                      background: '#e0f2fe',
+                                      color: '#0369a1',
+                                      fontWeight: 600
+                                    }
+                                  : DS.tag
+                              }
+                            >
+                              {isCategory
+                                ? t.charAt(0).toUpperCase() + t.slice(1)
+                                : t}
+                            </span>
+                          );
+                        })}
+
+                        {extra > 0 && (
+                          <div style={{ position: 'relative' }}>
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenTagsId(openTagsId === item.id ? null : item.id);
+                              }}
+                              style={{
+                                ...DS.tag,
+                                background: '#e0e7ff',
+                                color: '#4338ca',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              +{extra} more
+                            </span>
+
+                            {openTagsId === item.id && (
+                              <div
+                                ref={dropdownRef}
+                                style={{
+                                  position: 'absolute',
+                                  top: -7,
+                                  left: 65,
+                                  background: '#fff',
+                                  border: '1px solid #e5e7eb',
+                                  borderRadius: 8,
+                                  boxShadow: '0 6px 16px rgba(0,0,0,0.1)',
+                                  padding: 8,
+                                  zIndex: 50,
+                                  minWidth: 150
+                                }}
+                              >
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                  {tagsToShow.slice(2).map((tag, idx) => (
+                                    <span key={idx} style={DS.tag}>
+                                      {tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
                     </td>
@@ -673,11 +778,35 @@ function NewsListView({
                     </td>
                     <td style={{ padding: '13px 14px' }}>
                       <div style={{ position: 'relative' }}>
-                        <button style={DS.btn('ghost')} onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}>
+                        <button style={DS.btn('ghost')} 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const dropdownHeight = 180; // approx height of menu
+                          const spaceBelow = window.innerHeight - rect.bottom;
+
+                          let top;
+                          
+                          if (spaceBelow < dropdownHeight) {
+                            // OPEN UP
+                            top = rect.top - dropdownHeight;
+                          } else {
+                            //  OPEN DOWN
+                            top = rect.bottom + 5;
+                          }
+
+                          setDropdownPosition({
+                            top,
+                            left: rect.right - 200 // adjust width
+                          });
+
+                          setOpenMenuId(openMenuId === item.id ? null : item.id);
+                        }}
+                          >
                           <MoreVertical size={15} />
                         </button>
                         {openMenuId === item.id && (
-                          <div style={{ position: 'absolute', right: 0, top: '100%', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 50, minWidth: 190, overflow: 'hidden' }}>
+                          <div ref={dropdownRef} style={{ position: 'fixed', top: dropdownPosition.top, left: dropdownPosition.left, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 500, minWidth: 190, overflow: 'hidden', transform: 'translateY(0)', transition: 'all 0.15s ease' }}>
                             <div style={{ padding: '4px 0' }}>
                               {/* Edit */}
                               {((currentUser?.role === 'admin') ||
@@ -727,7 +856,7 @@ function NewsListView({
                       </div>
                     </td>
                   </tr>
-                ))}
+                )})}
                 {paginated.length === 0 && (
                   <tr>
                     <td colSpan={7} style={{ padding: '48px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>
@@ -1171,7 +1300,10 @@ export default function AdminPage() {
         seoKeywords: newsForm.seoKeywords.split(',').map(t => t.trim()).filter(Boolean),
         authorId: currentUser?.id || 'admin',
         authorName: currentUser?.name || newsForm.authorName,
-        status: newsForm.status,
+        // status: newsForm.status,
+        status: currentUser?.role === 'admin'
+          ? newsForm.status
+          : 'draft',
       };
       const method = editingNews ? 'PUT' : 'POST';
       const url = editingNews ? `/api/admin/news/${editingNews.id}` : '/api/admin/news';
