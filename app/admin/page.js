@@ -12,7 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
   Plus, Edit, Trash2, Check, X, Eye, Clock, FileText, Users,
-  BarChart3, Home, Send, AlertCircle, Tag, Image as ImageIcon,
+  BarChart3, Home, Send, AlertCircle, Tag, LayoutGrid, Image as ImageIcon,
   Loader2, ChevronRight, CheckCircle, XCircle, History, TrendingUp,
   Upload, LogOut, Search, ChevronDown, Pencil, Video, MoreVertical,
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List,
@@ -300,7 +300,8 @@ function Sidebar({ activeTab, onTabChange, currentUser, isOpen, onClose, isMobil
     { id: 'dashboard', icon: BarChart3, label: 'Dashboard', roles: null },
     { id: 'news', icon: FileText, label: 'Posts', roles: null },
     { id: 'livestream', icon: Video, label: 'Live Stream', roles: null },
-    { id: 'categories', icon: Tag, label: 'Categories', roles: ['admin', 'editor'] },
+    { id: 'categories', icon: LayoutGrid, label: 'Categories', roles: ['admin', 'editor'] },
+    { id: 'tags', icon: Tag, label: 'Tags', roles: ['admin', 'editor'] },
     { id: 'users', icon: Users, label: 'Users', roles: ['admin'] },
   ];
 
@@ -955,6 +956,190 @@ function CategoriesView({ categories, loading, onAdd, onEdit, onDelete }) {
   );
 }
 
+// ─── TAGS VIEW ─────────────────────────────────────────────────────────────
+function TagsView({ tags, loading, onAdd, onEdit, onDelete }) {
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <div style={{ padding: 24 }}>
+      
+      {/* TOP BUTTONS */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 20
+        }}
+      >
+        <h2
+          style={{
+            fontSize: 20,
+            fontWeight: 700,
+            color: '#111827',
+            margin: 0
+          }}
+        >
+          Tags
+        </h2>
+
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            style={DS.btn('primary')}
+            onClick={onAdd}
+          >
+            <Plus size={15} />
+            Add Tag
+          </button>
+        </div>
+      </div>
+
+      {/* GRID */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))',
+          gap: 16
+        }}
+      >
+        {tags.map(tag => (
+          <div key={tag.id} style={DS.card}>
+            <div style={{ padding: 18 }}>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  marginBottom: 10
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 14,
+                      height: 14,
+                      borderRadius: '50%',
+                      background: tag.color || '#8b5cf6',
+                      flexShrink: 0
+                    }}
+                  />
+
+                  <span
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: '#111827'
+                    }}
+                  >
+                    {tag.name}
+                  </span>
+                </div>
+
+                <span
+                  style={{
+                    background: tag.isActive
+                      ? '#d1fae5'
+                      : '#f3f4f6',
+                    color: tag.isActive
+                      ? '#065f46'
+                      : '#6b7280',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    padding: '3px 8px',
+                    borderRadius: 20
+                  }}
+                >
+                  {tag.isActive ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+
+              <p
+                style={{
+                  fontSize: 13,
+                  color: '#6b7280',
+                  margin: '0 0 6px'
+                }}
+              >
+                {tag.description || 'No description'}
+              </p>
+
+              <p
+                style={{
+                  fontSize: 11,
+                  color: '#9ca3af',
+                  margin: '0 0 14px'
+                }}
+              >
+                Slug:{' '}
+                <code
+                  style={{
+                    background: '#f3f4f6',
+                    padding: '1px 5px',
+                    borderRadius: 4
+                  }}
+                >
+                  {tag.slug}
+                </code>
+              </p>
+
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 8,
+                  justifyContent: 'flex-end'
+                }}
+              >
+                <button
+                  style={{
+                    ...DS.btn('outline'),
+                    padding: '6px 12px'
+                  }}
+                  onClick={() => onEdit(tag)}
+                >
+                  <Edit size={13} />
+                  Edit
+                </button>
+
+                <button
+                  style={{
+                    ...DS.btn('danger'),
+                    padding: '6px 12px'
+                  }}
+                  onClick={() => onDelete(tag.id)}
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+
+            </div>
+          </div>
+        ))}
+
+        {tags.length === 0 && (
+          <div
+            style={{
+              gridColumn: '1/-1',
+              padding: '48px',
+              textAlign: 'center',
+              color: '#9ca3af',
+              fontSize: 13
+            }}
+          >
+            No tags found
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── USERS VIEW ──────────────────────────────────────────────────────────────────
 function UsersView({ users, loading, onAdd, onEdit, onDelete, formatDate }) {
   if (loading) return <LoadingSpinner />;
@@ -1109,6 +1294,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [news, setNews] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [tags, setTags] = useState([]);
   const [users, setUsers] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1117,9 +1303,11 @@ export default function AdminPage() {
 
   const [editingNews, setEditingNews] = useState(null);
   const [editingCategory, setEditingCategory] = useState(null);
+  const [editingTag, setEditingTag] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [isNewsDialogOpen, setIsNewsDialogOpen] = useState(false);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [isTagDialogOpen, setIsTagDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [versionHistory, setVersionHistory] = useState([]);
@@ -1133,6 +1321,10 @@ export default function AdminPage() {
 
   const [categoryForm, setCategoryForm] = useState({
     name: '', slug: '', description: '', color: '#3B82F6', order: 0, isActive: true,
+  });
+
+  const [tagForm, setTagForm] = useState({
+    name: '', slug: '', description: '', color: '#8b5cf6', isActive: true,
   });
 
   const [userForm, setUserForm] = useState({
@@ -1222,6 +1414,18 @@ export default function AdminPage() {
     } catch (error) { console.error('Error fetching categories:', error); }
   }, []);
 
+  const fetchTags = useCallback(async () => {
+    try {
+      const res = await authFetch('/api/admin/tags', {
+        method: 'GET'
+      });
+      const data = await res.json();
+      setTags(data.tags || []);
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+    }
+  }, []);
+
   const fetchUsers = useCallback(async () => {
     try {
       const res = await authFetch('/api/admin/users', { method: 'GET' });
@@ -1255,7 +1459,7 @@ export default function AdminPage() {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      await Promise.all([fetchCategories()]);
+      await Promise.all([fetchCategories(), fetchTags()]);
       if (activeTab === 'dashboard') await fetchAnalytics();
       else if (activeTab === 'news') await fetchNews();
       else if (activeTab === 'users' && currentUser?.role === 'admin') await fetchUsers();
@@ -1417,6 +1621,52 @@ export default function AdminPage() {
     } catch (error) { toast.error('Failed to delete'); }
   };
 
+  // ── Code 1: Tag CRUD ──
+
+  const handleSaveTag = async () => {
+    try {
+      const method = editingTag ? 'PUT' : 'POST';
+      const url = editingTag
+        ? `/api/admin/tags/${editingTag.id}`
+        : '/api/admin/tags';
+      const res = await authFetch(url, {
+        method,
+        body: JSON.stringify(tagForm)
+      });
+      if (!res.ok) throw new Error();
+      toast.success(
+        editingTag
+          ? 'Tag updated'
+          : 'Tag created'
+      );
+      setIsTagDialogOpen(false);
+      setTagForm({
+        name: '',
+        slug: '',
+        description: '',
+        color: '#8b5cf6',
+        isActive: true,
+      });
+      setEditingTag(null);
+      fetchTags();
+    } catch {
+      toast.error('Failed to save tag');
+    }
+  };
+
+  const handleDeleteTag = async (id) => {
+    if (!confirm('Are you sure?')) return;
+    try {
+      await authFetch(`/api/admin/tags/${id}`, {
+        method: 'DELETE'
+      });
+      toast.success('Tag deleted');
+      fetchTags();
+    } catch {
+      toast.error('Failed to delete');
+    }
+  };
+
   // ── Code 1: User CRUD ──
   const handleSaveUser = async () => {
     try {
@@ -1473,6 +1723,15 @@ export default function AdminPage() {
             onDelete={handleDeleteCategory}
           />
         );
+        case 'tags':
+          return (
+            <TagsView tags={tags} loading={loading}
+              onAdd={() => {
+                setEditingTag(null); setTagForm({ name: '', slug: '', description: '', color: '#8b5cf6', isActive: true }); setIsTagDialogOpen(true); }}
+              onEdit={(tag) => { setEditingTag(tag); setTagForm({ name: tag.name, slug: tag.slug, description: tag.description || '', color: tag.color || '#8b5cf6', isActive: tag.isActive }); setIsTagDialogOpen(true); }}
+              onDelete={handleDeleteTag}
+            />
+          );
       case 'users':
         return (
           <UsersView users={users} loading={loading} formatDate={formatDate}
@@ -1791,6 +2050,112 @@ export default function AdminPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCategoryDialogOpen(false)}>Cancel</Button>
             <Button onClick={handleSaveCategory} disabled={!categoryForm.name}>{editingCategory ? 'Update' : 'Create'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isTagDialogOpen}
+        onOpenChange={setIsTagDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editingTag ? 'Edit Tag' : 'Create Tag'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Name *</Label>
+              <Input
+                value={tagForm.name}
+                onChange={(e) =>
+                  setTagForm({
+                    ...tagForm,
+                    name: e.target.value,
+                    slug: e.target.value
+                      .toLowerCase()
+                      .replace(/[^a-z0-9]+/g, '-')
+                  })
+                }
+                placeholder="Tag name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Slug</Label>
+              <Input
+                value={tagForm.slug}
+                onChange={(e) =>
+                  setTagForm({
+                    ...tagForm,
+                    slug: e.target.value
+                  })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                value={tagForm.description}
+                onChange={(e) =>
+                  setTagForm({
+                    ...tagForm,
+                    description: e.target.value
+                  })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Color</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="color"
+                  value={tagForm.color}
+                  onChange={(e) =>
+                    setTagForm({
+                      ...tagForm,
+                      color: e.target.value
+                    })
+                  }
+                  className="w-12 h-10 p-1"
+                />
+                <Input
+                  value={tagForm.color}
+                  onChange={(e) =>
+                    setTagForm({
+                      ...tagForm,
+                      color: e.target.value
+                    })
+                  }
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={tagForm.isActive}
+                onCheckedChange={(v) =>
+                  setTagForm({
+                    ...tagForm,
+                    isActive: v
+                  })
+                }
+              />
+              <Label>Active</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsTagDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveTag}
+              disabled={!tagForm.name}
+            >
+              {editingTag ? 'Update' : 'Create'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

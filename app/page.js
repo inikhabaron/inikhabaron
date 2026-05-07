@@ -146,20 +146,6 @@ const getSessionId = () => {
 const DarkCtx    = React.createContext(false);
 const FontCtx    = React.createContext({ font: FONT_OPTIONS[0], scale: 1 });
 
-// ─── Ad Components ────────────────────────────────────────────────────────────
-// const ProgrammaticAd = ({ placement, size = '728x90' }) => {
-//   const dark = React.useContext(DarkCtx);
-//   useEffect(() => {
-//     fetch('/api/ads/impression', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adId: `prog_${placement}_${Date.now()}`, adType: 'programmatic', placement, sessionId: getSessionId(), estimatedRevenue: 0.002 }) }).catch(() => {});
-//   }, [placement]);
-//   const [, height] = size.split('x').map(Number);
-//   return (
-//     <div style={{ height, width: '100%', backgroundColor: dark ? '#1e2130' : '#F5F6F8', border: `1px dashed ${dark ? '#2e3347' : '#E6E8EB'}`, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-//       <span style={{ fontSize: '11px', fontWeight: 500, color: '#8A8F98', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Advertisement</span>
-//     </div>
-//   );
-// };
-
 const ProgrammaticAd = ({ placement, size = "728x90" }) => {
   const dark = React.useContext(DarkCtx);
 
@@ -216,27 +202,6 @@ const ProgrammaticAd = ({ placement, size = "728x90" }) => {
     </div>
   );
 };
-
-// const NativeAd = () => {
-//   const dark = React.useContext(DarkCtx);
-//   useEffect(() => {
-//     fetch('/api/ads/impression', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adId: `native_${Date.now()}`, adType: 'native', placement: 'in-article', sessionId: getSessionId(), estimatedRevenue: 0.005 }) }).catch(() => {});
-//   }, []);
-//   return (
-//     <div style={{ backgroundColor: dark ? '#1e2130' : '#F5F6F8', border: `1px solid ${dark ? '#2e3347' : '#E6E8EB'}`, borderRadius: '10px', padding: '14px 16px' }}>
-//       <span style={{ fontSize: '10px', fontWeight: 600, color: '#8A8F98', backgroundColor: dark ? '#2e3347' : '#E6E8EB', padding: '2px 8px', borderRadius: '4px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Sponsored</span>
-//       <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
-//         <div style={{ width: '52px', height: '52px', borderRadius: '8px', backgroundColor: dark ? '#2e3347' : '#dde0e6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-//           <ImageIcon style={{ width: '20px', height: '20px', color: '#8A8F98' }} />
-//         </div>
-//         <div>
-//           <p style={{ fontSize: '13px', fontWeight: 600, color: dark ? '#d1d5db' : '#333', marginBottom: '3px' }}>Premium Content Partner</p>
-//           <p style={{ fontSize: '12px', color: '#8A8F98', lineHeight: 1.5 }}>Discover exclusive offers from our trusted partners.</p>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
 
 const NativeAd = () => {
   const dark = React.useContext(DarkCtx);
@@ -347,13 +312,7 @@ const ArticleCard = ({ item, onClick, formatDate, showShareMenu, setShowShareMen
         <h3 style={{ fontSize: `${15 * scale}px`, fontWeight: 700, color: dark ? '#e2e8f0' : '#2d3748', lineHeight: 1.4, marginBottom: '5px', marginTop: '5px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</h3>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-            {/* <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: dark ? '#2e3347' : '#F0F2F5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <User style={{ width: '11px', height: '11px', color: '#8A8F98' }} />
-            </div> */}
-            {/* <span style={{ fontSize: `${12 * scale}px`, fontWeight: 400, color: '#8A8F98', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {item.authorName || 'NewsDesk'}
-              </span> */}
-            {/* <span style={{ color: dark ? '#3e4557' : '#D1D5DB', fontSize: '14px' }}>·</span> */}
+            
             <span style={{ fontSize: `${11 * scale}px`, fontWeight: 300, color: '#8A8F98', flexShrink: 0, whiteSpace: 'nowrap' }}>{formatDate(item.publishedAt)}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
@@ -555,6 +514,7 @@ export default function HomePage() {
   const [news, setNews] = useState([]);
   const [breakingNews, setBreakingNews] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [tags, setTags] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNews, setSelectedNews] = useState(null);
@@ -588,21 +548,10 @@ export default function HomePage() {
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [windowWidth, setWindowWidth] = useState(1200);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
 
   const t = translations[selectedLanguage];
-
-  // if (!languageLoaded) {
-  //   return (
-  //     <div style={{
-  //       height: "100vh",
-  //       display: "flex",
-  //       justifyContent: "center",
-  //       alignItems: "center"
-  //     }}>
-  //       Loading...
-  //     </div>
-  //   );
-  // }
 
   const [showShareMenu, setShowShareMenu] = useState(null);
   const shareMenuRef = useRef(null);
@@ -714,6 +663,8 @@ export default function HomePage() {
   const handleAppleSignIn = async () => { setAuthLoading(true); const r = await signInWithApple(); if (r.error) toast.error(r.error); else { setUser(r.user); setAuthDialogOpen(false); toast.success('Signed in!'); } setAuthLoading(false); };
 
   const fetchCategories = useCallback(async () => { try { const r = await fetch('/api/categories'); const d = await r.json(); setCategories(d.categories || []); } catch (e) { console.error(e); } }, []);
+  const fetchTags = useCallback(async () => { try { const res = await fetch('/api/tags'); const data = await res.json(); const filtered = (data.tags || []).filter( tag => tag.active && tag.popular ); setTags(filtered); } catch (err) { console.error(err); }
+}, []);
   const fetchNews = useCallback(async (cat = 'all', search = '', pageNum = 1) => {
     try {
       setLoading(true);
@@ -730,7 +681,7 @@ export default function HomePage() {
   const fetchYoutubeLive = useCallback(async () => { try { const r = await fetch('/api/youtube/live'); const d = await r.json(); if (d.configured) setYoutubeLive(d); } catch (e) { console.error(e); } }, []);
   const seedData = useCallback(async () => { try { await fetch('/api/seed', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }); } catch (e) { console.error(e); } }, []);
 
-  useEffect(() => { const init = async () => { await seedData(); await fetchCategories(); await fetchBreakingNews(); await fetchNews(); fetchYoutubeLive(); }; init(); }, [seedData, fetchCategories, fetchBreakingNews, fetchNews, fetchYoutubeLive]);
+  useEffect(() => { const init = async () => { await seedData(); await fetchCategories(); await fetchTags(); await fetchBreakingNews(); await fetchNews(); fetchYoutubeLive(); }; init(); }, [seedData, fetchCategories, fetchTags, fetchBreakingNews, fetchNews, fetchYoutubeLive]);
   useEffect(() => { setPage(1); fetchNews(selectedCategory, searchQuery, 1); }, [selectedCategory, fetchNews, searchQuery]);
 
   const handleSearch = (e) => { e.preventDefault(); setPage(1); fetchNews(selectedCategory, searchQuery, 1); };
@@ -817,14 +768,55 @@ export default function HomePage() {
 
   const permission = await Notification.requestPermission();
 
-  if (permission === "granted") {
-    new Notification("Subscribed ✅", {
-      body: "You will receive breaking news alerts!",
-    });
-  } else {
-    alert("Permission denied ❌");
-  }
-};
+    if (permission === "granted") {
+      new Notification("Subscribed ✅", {
+        body: "You will receive breaking news alerts!",
+      });
+    } else {
+      alert("Permission denied ❌");
+    }
+  };
+
+  // Newsletter subscription handler
+
+  const handleNewsletterSubscribe = async () => {
+    if (!newsletterEmail.trim()) {
+      toast.error(
+        selectedLanguage === 'hi'
+          ? 'ईमेल दर्ज करें'
+          : 'Please enter email'
+      );
+      return;
+    }
+    try {
+      setNewsletterLoading(true);
+
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: newsletterEmail
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(
+          selectedLanguage === 'hi'
+            ? 'सफलतापूर्वक सब्सक्राइब किया गया'
+            : 'Subscribed successfully'
+        );
+        setNewsletterEmail('');
+      } else {
+        toast.error(data.error || 'Something went wrong');
+      }
+    } catch (err) {
+      toast.error('Server error');
+    } finally {
+      setNewsletterLoading(false);
+    }
+  };
 
   // ── Palette ───────────────────────────────────────────────────────────────────
   const bg         = dark ? '#141620'   : '#F5F6F8';
@@ -881,7 +873,7 @@ export default function HomePage() {
     slug: cat.slug,
   }));
 
-  const allTags = [...new Set(news.flatMap(n => n.tags || []))].slice(0, 14);
+  const allTags = tags;
 
   // Inject dynamic font Google link
   useEffect(() => {
@@ -1015,19 +1007,21 @@ export default function HomePage() {
                                   padding: '10px',
                                   borderRadius: '8px',
                                   border: `1px solid ${bdr}`,
-                                  // backgroundColor: 'rgba(59,175,218,0.12)',
+                                  backgroundColor: dark ? 'rgba(59,175,218,0.12)' : '#EBF8FF',
+                                  color: ACCENT,
                                   cursor: 'pointer',
                                   fontSize: '13px',
-                                  fontWeight: 600
+                                  fontWeight: 600,
+                                  transition: 'all 0.2s ease'
                                 }}
                                 onMouseEnter={e => {
-                                  e.currentTarget.style.backgroundColor = 'ACCENT';
+                                  e.currentTarget.style.backgroundColor = ACCENT;
                                   e.currentTarget.style.color = '#fff';
                                   e.currentTarget.style.transform = 'scale(1.02)';
                                 }}
                                 onMouseLeave={e => {
                                   e.currentTarget.style.backgroundColor = dark ? 'rgba(59,175,218,0.12)' : '#EBF8FF';
-                                  e.currentTarget.style.color = 'ACCENT';
+                                  e.currentTarget.style.color = ACCENT;
                                   e.currentTarget.style.transform = 'scale(1)';
                                 }}
                               >
@@ -1128,33 +1122,7 @@ export default function HomePage() {
                 <>
 
                   {/* ============================ Desktop view ======================================= */}
-                  
-                  {/* Logo */}
-                  {/* <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{
-                      width: '28px',
-                      height: '28px',
-                      borderRadius: '7px',
-                      backgroundColor: ACCENT,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <Newspaper style={{ width: '14px', height: '14px', color: 'white' }} />
-                    </div>
-
-                    {!sidebarCollapsed && (
-                      <span style={{
-                        fontSize: '17px',
-                        fontWeight: 800,
-                        color: T1,
-                        letterSpacing: '-0.3px'
-                      }}>
-                        NewsDesk
-                      </span>
-                    )}
-                  </div> */}
-                  
+                                    
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1280,18 +1248,6 @@ export default function HomePage() {
                     </button>
                     <span></span>
                     <span></span>
-                    {/* <button style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: surfaceAlt, color: T3 }}>
-                      <MessageCircle style={{ width: '16px', height: '16px' }} />
-                    </button> */}
-                    {/* <form onSubmit={handleSearch}>
-                      <div style={{ position: 'relative', width: window.innerWidth < 1040 ? '100px' : 'clamp(150px, 35vw, 400px)', transition: 'all 0.03s ease' }}>
-                        <Search style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', width: '13px', height: '13px', color: T3 }} />
-                        <input type="search" placeholder={t.searchPlaceholder} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                          style={{ backgroundColor: surfaceAlt, border: `1px solid ${bdr}`, borderRadius: '8px', padding: '6px 12px 6px 28px', fontSize: '13px', color: T1, outline: 'none', width: '100%', fontFamily: selectedFont.value, transition: 'border-color 0.15s' }}
-                          onFocus={e => e.target.style.borderColor = ACCENT}
-                          onBlur={e => e.target.style.borderColor = bdr} />
-                      </div>
-                    </form> */}
                     
                     <form onSubmit={handleSearch}>
                       <div
@@ -1440,7 +1396,7 @@ export default function HomePage() {
                         'चारधाम यात्रा'
                       ]).map(tag => (
                         <button
-                          key={tag}
+                          key={tag.id || tagName || index}
                           onClick={() => {
                             setSearchQuery(tag);
                             setIsSearchActive(true);
@@ -1456,7 +1412,7 @@ export default function HomePage() {
                             cursor: 'pointer'
                           }}
                         >
-                          {tag} →
+                          {typeof tag === 'string' ? tag : tag.name} →
                         </button>
                       ))}
                     </div>
@@ -1989,10 +1945,6 @@ export default function HomePage() {
             {/* ── Hamburger row FIXED ── */}
             <div style={{
               padding: '8px 0',
-              
-              // flexDirection: 'column',
-              
-              // justifyContent: sidebarCollapsed ? 'center' : 'space-between'
             }}>
 
               {/* Hamburger ONLY in expanded */}
@@ -2005,9 +1957,8 @@ export default function HomePage() {
                     display: 'flex',
                     cursor: 'pointer',
                     padding: '8px 21px',
-                    // borderRadius: '6px',
+                    borderRadius: '6px',
                     color: T3,
-                    // alignItems: 'center',
                     gap: '8px',
                   }}
                   onMouseEnter={e => e.currentTarget.style.color = T2}
@@ -2187,16 +2138,6 @@ export default function HomePage() {
                         <Apple size={16} />
                         Continue with Apple
                       </button>
-
-                      {/* FOOTER TEXT */}
-                      {/* <p style={{
-                        textAlign: 'center',
-                        fontSize: '12px',
-                        color: T3,
-                        marginTop: '10px'
-                      }}>
-                        By continuing, you agree to our Terms & Privacy Policy
-                      </p> */}
                     </div>
                   </DialogContent>
                 </Dialog>
@@ -2220,41 +2161,6 @@ export default function HomePage() {
               })}
 
               <div style={{ height: '1px', backgroundColor: bdr, margin: '10px 4px' }} />
-
-              {/* {[
-                { label: 'Account', icon: User, action: null },
-                { label: 'Help & Support', icon: HelpCircle, action: null },
-              ].map(({ label, icon: Icon, action }) => (
-                <button
-                  key={label}
-                  onClick={action || undefined}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    width: '100%',
-                    padding: '9px 10px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    marginBottom: '2px',
-                    backgroundColor: 'transparent',
-                    color: T3,
-                    justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.backgroundColor = hoverBg;
-                    e.currentTarget.style.color = T2;
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = T3;
-                  }}
-                >
-                  <Icon style={{ width: '17px', height: '17px' }} />
-                  {!sidebarCollapsed && <span>{label}</span>}
-                </button>
-              ))} */}
 
               {/* SETTINGS DROPDOWN */}
               <div>
@@ -2542,45 +2448,41 @@ export default function HomePage() {
                 {/* <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: T3, fontSize: '18px', lineHeight: 1, padding: '2px' }}>+</button> */}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
-                {(allTags.length > 0 ? allTags : selectedLanguage === "hi"? [
-                                                                              'राजनीति',
-                                                                              'विज्ञापन',
-                                                                              'समाचार',
-                                                                              'विकास',
-                                                                              'डिजाइन',
-                                                                              'वित्त',
-                                                                              'फुटबॉल',
-                                                                              'भविष्य',
-                                                                              'यात्रा',
-                                                                              'तकनीक',
-                                                                              'भोजन',
-                                                                              'वास्तुकला',
-                                                                              'टेनिस',
-                                                                              'वीडियो'
-                                                                            ]
-                                                                          : [
-                                                                              'Politics',
-                                                                              'Advertising',
-                                                                              'News',
-                                                                              'Development',
-                                                                              'Design',
-                                                                              'Finance',
-                                                                              'Football',
-                                                                              'Future',
-                                                                              'Travel',
-                                                                              'Technology',
-                                                                              'Food',
-                                                                              'Architecture',
-                                                                              'Tennis',
-                                                                              'Video'
-                                                                            ]).map((tag) => (
-                  <button key={tag}
-                    style={{ padding: '4px 11px', borderRadius: '20px', border: `1px solid ${bdr}`, backgroundColor: 'transparent', color: T2, fontSize: `${12 * textScale}px`, fontWeight: 400, cursor: 'pointer', transition: 'all 0.15s', fontFamily: selectedFont.value }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = ACCENT; e.currentTarget.style.color = ACCENT; e.currentTarget.style.backgroundColor = dark ? 'rgba(59,175,218,0.08)' : '#EBF8FF'; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = bdr; e.currentTarget.style.color = T2; e.currentTarget.style.backgroundColor = 'transparent'; }}>
-                    {tag}
-                  </button>
-                ))}
+                {(allTags.length > 0 ? allTags : selectedLanguage === "hi"? [ 'राजनीति', 'विज्ञापन', 'विकास', 'डिजाइन', 'वित्त', 'फुटबॉल', 'भविष्य', 'यात्रा', 'तकनीक', 'भोजन', 'वास्तुकला', 'टेनिस', 'वीडियो', 'एआई', 'नवाचार', 'खेल', 'स्थानीय', 'चैंपियनशिप', 'नीति', 'अर्थव्यवस्था', 'व्यापार', 'शेयर', 'बाजार', 'सिनेमा', 'मनोरंजन', 'फिल्में' ] : [ 'politics', 'advertising', 'development', 'design', 'finance', 'football', 'future', 'travel', 'technology', 'food', 'architecture', 'tennis', 'video', 'AI', 'innovation', 'sports', 'local', 'championship', 'policy', 'economy', 'business', 'stocks', 'markets', 'cinema', 'entertainment', 'movies' ]).map((tag, index) => {
+                  const tagName =
+                    typeof tag === 'string'
+                      ? tag
+                      : tag.name;
+                  const tagColor =
+                    typeof tag === 'string'
+                      ? ACCENT
+                      : (tag.color || ACCENT);
+                  return (
+                    <button
+                      key={tag.id || tagName || index}
+                      onClick={() => {
+                        setSearchQuery(tagName);
+                        fetchNews(selectedCategory, tagName, 1);
+                      }}
+                      style={{
+                        padding: '4px 11px',
+                        borderRadius: '20px',
+                        border: `1px solid ${tagColor}`,
+                        backgroundColor: dark
+                          ? 'rgba(59,175,218,0.08)'
+                          : '#EBF8FF',
+                        color: tagColor,
+                        fontSize: `${12 * textScale}px`,
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                        fontFamily: selectedFont.value
+                      }}
+                    >
+                      #{tagName}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -2595,62 +2497,326 @@ export default function HomePage() {
         </div>
 
         {/* ═══ ARTICLE MODAL ═══════════════════════════════════════════════════════ */}
+
         <Dialog open={!!selectedNews} onOpenChange={handleCloseArticle}>
-          <DialogContent style={{ maxWidth: '720px', maxHeight: '90vh', padding: 0, overflow: 'hidden', borderRadius: '16px', backgroundColor: surface }}>
+          <DialogContent
+            style={{
+              width: isMobileView ? '100vw' : '720px',
+              maxWidth: '100vw',
+              height: isMobileView ? '100dvh' : '91vh',
+              maxHeight: '100dvh',
+              padding: 0,
+              overflow: 'fixed',
+              zIndex: 900,
+              border: '5px solid #e7fafe',
+              borderRadius: isMobileView ? '0px' : '25px',
+              backgroundColor: surface,
+              marginTop: isMobileView ? '0px' : '25px',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.35)'
+            }}
+          > 
             {selectedNews && (
-              <ScrollArea style={{ maxHeight: '90vh' }} ref={contentRef} onScroll={handleScroll}>
-                <div style={{ position: 'relative', aspectRatio: '16/9' }}>
-                  <img src={selectedNews.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800'} alt={selectedNews.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                  <span style={{ position: 'absolute', top: '16px', left: '16px', backgroundColor: getCatAccent(selectedNews.category), color: 'white', fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: '20px', textTransform: 'capitalize', fontFamily: selectedFont.value }}>{selectedLanguage === "hi" ? (translations.hi[selectedNews.category] || selectedNews.category) : selectedNews.category}</span>
-                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px', backgroundColor: 'rgba(0,0,0,0.15)' }}>
-                    <div style={{ height: '100%', backgroundColor: ACCENT, width: `${scrollPosition}%`, transition: 'width 0.3s' }} />
-                  </div>
-                </div>
-                <div style={{ padding: '24px 28px', backgroundColor: surface }}>
-                  <h1 style={{ fontSize: `${22 * textScale}px`, fontWeight: 700, lineHeight: 1.35, marginBottom: '16px', color: T1, fontFamily: selectedFont.value }}>{selectedNews.title}</h1>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px', paddingBottom: '16px', borderBottom: `1px solid ${bdr}`, flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                      <div style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <User style={{ width: '13px', height: '13px', color: 'white' }} />
-                      </div>
-                      <span style={{ fontSize: `${13 * textScale}px`, fontWeight: 600, color: T2, fontFamily: selectedFont.value }}>{selectedNews.authorName || 'NewsDesk'}</span>
-                    </div>
-                    <span style={{ fontSize: `${12 * textScale}px`, color: T3, display: 'flex', alignItems: 'center', gap: '4px', fontFamily: selectedFont.value, fontWeight: 300 }}><Clock style={{ width: '12px', height: '12px' }} />{formatDate(selectedNews.publishedAt)}</span>
-                    <span style={{ fontSize: `${12 * textScale}px`, color: T3, display: 'flex', alignItems: 'center', gap: '4px', fontFamily: selectedFont.value, fontWeight: 300 }}><Eye style={{ width: '12px', height: '12px' }} />{selectedNews.views?.toLocaleString() || 0} views</span>
-                  </div>
-                  {selectedNews.tags?.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px', marginBottom: '18px' }}>
-                      {selectedNews.tags.map(tag => <span key={tag} style={{ padding: '3px 10px', borderRadius: '20px', border: `1px solid ${bdr}`, fontSize: `${12 * textScale}px`, color: T3, fontFamily: selectedFont.value }}>#{tag}</span>)}
-                    </div>
-                  )}
-                  <div style={{ marginBottom: '20px' }}><NativeAd /></div>
-                  {/* <div style={{ fontSize: `${15 * textScale}px`, lineHeight: 1.85, color: T2, fontFamily: selectedFont.value, fontWeight: 400, whiteSpace: 'pre-wrap' }}>{selectedNews.content}</div> */}
+              <div
+                ref={contentRef}
+                onScroll={handleScroll}
+                style={{
+                  height: '100%',
+                  overflowY: 'auto',
+                  overflowX: 'hidden',
+                  borderRadius: isMobileView ? '0px' : '25px',
+                  WebkitOverflowScrolling: 'touch',
+                  backgroundColor: surface
+                }}
+              >
+
+                {/* IMAGE SECTION */}
+                <div
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    height: isMobileView ? 'auto' : 'auto'
+                  }}
+                >
+                  <img
+                    src={
+                      selectedNews.featuredImage ||
+                      'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800'
+                    }
+                    alt={selectedNews.title}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      display: 'block'
+                    }}
+                  />
+
+                  {/* CATEGORY */}
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: '14px',
+                      left: '14px',
+                      backgroundColor: getCatAccent(selectedNews.category),
+                      color: 'white',
+                      fontSize: isMobileView ? '10px' : '11px',
+                      fontWeight: 600,
+                      padding: '4px 10px',
+                      borderRadius: '20px',
+                      textTransform: 'capitalize',
+                      fontFamily: selectedFont.value
+                    }}
+                  >
+                    {selectedLanguage === 'hi'
+                      ? translations.hi[selectedNews.category] ||
+                        selectedNews.category
+                      : selectedNews.category}
+                  </span>
+
+                  {/* SCROLL PROGRESS */}
                   <div
                     style={{
-                      fontSize: `${15 * textScale}px`,
-                      lineHeight: 1.85,
-                      color: T2,
-                      fontFamily: selectedFont.value,
-                      fontWeight: 400
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: '3px',
+                      backgroundColor: 'rgba(0,0,0,0.15)'
                     }}
-                    dangerouslySetInnerHTML={{ __html: selectedNews.content }}
-                  />
-                  {selectedNews.corrections?.length > 0 && (
-                    <div style={{ marginTop: '20px', padding: '14px', backgroundColor: dark ? 'rgba(234,179,8,0.08)' : '#fefce8', border: '1px solid #fde68a', borderRadius: '8px' }}>
-                      <p style={{ fontSize: '12px', fontWeight: 700, color: '#92400e', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}><AlertCircle style={{ width: '13px', height: '13px' }} />Corrections</p>
-                      {selectedNews.corrections.map(c => <p key={c.id} style={{ fontSize: '12px', color: '#92400e', marginBottom: '4px' }}>{c.text}</p>)}
+                  >
+                    <div
+                      style={{
+                        height: '100%',
+                        backgroundColor: ACCENT,
+                        width: `${scrollPosition}%`,
+                        transition: 'width 0.3s'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* CONTENT */}
+                <div
+                  style={{
+                    padding: isMobileView ? '16px' : '24px 28px',
+                    backgroundColor: surface
+                  }}
+                >
+
+                  {/* TITLE */}
+                  <h1
+                    style={{
+                      fontSize: isMobileView
+                        ? `${20 * textScale}px`
+                        : `${22 * textScale}px`,
+                      fontWeight: 700,
+                      lineHeight: 1.4,
+                      marginBottom: '16px',
+                      color: T1,
+                      fontFamily: selectedFont.value
+                    }}
+                  >
+                    {selectedNews.title}
+                  </h1>
+
+                  {/* META */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                      gap: '12px',
+                      marginBottom: '18px',
+                      paddingBottom: '16px',
+                      borderBottom: `1px solid ${bdr}`
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '7px'
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '50%',
+                          backgroundColor: ACCENT,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <User
+                          style={{
+                            width: '13px',
+                            height: '13px',
+                            color: 'white'
+                          }}
+                        />
+                      </div>
+
+                      <span
+                        style={{
+                          fontSize: `${13 * textScale}px`,
+                          fontWeight: 600,
+                          color: T2,
+                          fontFamily: selectedFont.value
+                        }}
+                      >
+                        {selectedNews.authorName || 'NewsDesk'}
+                      </span>
+                    </div>
+
+                    <span
+                      style={{
+                        fontSize: `${12 * textScale}px`,
+                        color: T3,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <Clock style={{ width: '12px', height: '12px' }} />
+                      {formatDate(selectedNews.publishedAt)}
+                    </span>
+
+                    <span
+                      style={{
+                        fontSize: `${12 * textScale}px`,
+                        color: T3,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <Eye style={{ width: '12px', height: '12px' }} />
+                      {selectedNews.views?.toLocaleString() || 0} views
+                    </span>
+                  </div>
+
+                  {/* TAGS */}
+                  {selectedNews.tags?.length > 0 && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '7px',
+                        marginBottom: '18px'
+                      }}
+                    >
+                      {selectedNews.tags.map(tag => (
+                        <span
+                          key={tag.id || tagName || index}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '20px',
+                            border: `1px solid ${bdr}`,
+                            fontSize: `${12 * textScale}px`,
+                            color: T3,
+                            fontFamily: selectedFont.value
+                          }}
+                        >
+                          #{tagName}
+                        </span>
+                      ))}
                     </div>
                   )}
-                  <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: `1px solid ${bdr}` }}>
-                    <p style={{ fontSize: '11px', fontWeight: 600, color: T3, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '10px', fontFamily: selectedFont.value }}>Share this article</p>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      {[{ label: 'WhatsApp', bg: '#25d366', fn: () => shareOnWhatsApp(selectedNews) }, { label: 'Twitter', bg: '#1da1f2', fn: () => shareOnTwitter(selectedNews) }, { label: 'Facebook', bg: '#1877f2', fn: () => shareOnFacebook(selectedNews) }].map(s => (
-                        <button key={s.label} onClick={s.fn} style={{ padding: '7px 14px', borderRadius: '8px', border: 'none', backgroundColor: s.bg, color: 'white', fontSize: `${13 * textScale}px`, fontWeight: 600, cursor: 'pointer', fontFamily: selectedFont.value }}>{s.label}</button>
+
+                  {/* AD */}
+                  <div style={{ marginBottom: '20px' }}>
+                    <NativeAd />
+                  </div>
+
+                  {/* CONTENT */}
+                  <div
+                    style={{
+                      fontSize: isMobileView
+                        ? `${16 * textScale}px`
+                        : `${15 * textScale}px`,
+                      lineHeight: 1.9,
+                      color: T2,
+                      fontFamily: selectedFont.value,
+                      fontWeight: 400,
+                      wordBreak: 'break-word'
+                    }}
+                    dangerouslySetInnerHTML={{
+                      __html: selectedNews.content
+                    }}
+                  />
+
+                  {/* SHARE */}
+                  <div
+                    style={{
+                      marginTop: '20px',
+                      paddingTop: '16px',
+                      borderTop: `1px solid ${bdr}`
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.07em',
+                        color: T3,
+                        marginBottom: '10px',
+                        fontFamily: selectedFont.value
+                      }}
+                    >
+                      Share this article
+                    </p>
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '8px'
+                      }}
+                    >
+                      {[
+                        {
+                          label: 'WhatsApp',
+                          bg: '#25d366',
+                          fn: () => shareOnWhatsApp(selectedNews)
+                        },
+                        {
+                          label: 'Twitter',
+                          bg: '#1da1f2',
+                          fn: () => shareOnTwitter(selectedNews)
+                        },
+                        {
+                          label: 'Facebook',
+                          bg: '#1877f2',
+                          fn: () => shareOnFacebook(selectedNews)
+                        }
+                      ].map(s => (
+                        <button
+                          key={s.label}
+                          onClick={s.fn}
+                          style={{
+                            flex: isMobileView ? '1' : 'unset',
+                            minWidth: '110px',
+                            padding: '10px 14px',
+                            borderRadius: '10px',
+                            border: 'none',
+                            backgroundColor: s.bg,
+                            color: 'white',
+                            fontSize: `${13 * textScale}px`,
+                            fontWeight: 600,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {s.label}
+                        </button>
                       ))}
                     </div>
                   </div>
+
                 </div>
-              </ScrollArea>
+              </div>
             )}
           </DialogContent>
         </Dialog>
@@ -2781,28 +2947,42 @@ export default function HomePage() {
                 {(allTags.length > 0
                   ? allTags
                   : ['Politics', 'India', 'Sports', 'Tech']
-                ).slice(0, 12).map((tag) => (
-                  <button
-                    key={tag}
-                    style={{
-                      border: 'none',
-                      background: 'transparent',
-                      padding: 0,
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      color: T2,
-                      fontSize: '13px'
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.color = ACCENT;
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.color = T2;
-                    }}
-                  >
-                    #{tag}
-                  </button>
-                ))}
+                ).slice(0, 12).map((tag, index) => {
+                  const tagName =
+                    typeof tag === 'string'
+                      ? tag
+                      : tag.name;
+                  const tagColor =
+                    typeof tag === 'string'
+                      ? ACCENT
+                      : (tag.color || ACCENT);
+                  return (
+                    <button
+                      key={tag.id || tagName || index}
+                      onClick={() => {
+                        setSearchQuery(tagName);
+                        fetchNews(selectedCategory, tagName, 1);
+                      }}
+                      style={{
+                        border: 'none',
+                        background: 'transparent',
+                        padding: 0,
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        color: tagColor,
+                        fontSize: '13px'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.color = ACCENT;
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.color = T2;
+                      }}
+                    >
+                      #{tagName}
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
@@ -2877,6 +3057,8 @@ export default function HomePage() {
                 >
                   <input
                     type="email"
+                    value={newsletterEmail}
+                    onChange={(e) => setNewsletterEmail(e.target.value)}
                     placeholder={
                       selectedLanguage === "hi"
                         ? "ईमेल दर्ज करें"
@@ -2894,7 +3076,9 @@ export default function HomePage() {
                     }}
                   />
 
-                  <button
+                 <button
+                    onClick={handleNewsletterSubscribe}
+                    disabled={newsletterLoading}
                     style={{
                       width: '100%',
                       padding: '11px',
@@ -2903,12 +3087,13 @@ export default function HomePage() {
                       backgroundColor: ACCENT,
                       color: '#fff',
                       fontWeight: 600,
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      opacity: newsletterLoading ? 0.7 : 1
                     }}
                   >
-                    {selectedLanguage === "hi"
-                      ? "सब्सक्राइब"
-                      : "Subscribe"}
+                    {newsletterLoading
+                      ? (selectedLanguage === "hi" ? "लोड हो रहा..." : "Loading...")
+                      : (selectedLanguage === "hi" ? "सब्सक्राइब" : "Subscribe")}
                   </button>
                 </div>
 
@@ -2981,6 +3166,8 @@ export default function HomePage() {
               >
                 <input
                   type="email"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
                   placeholder={
                     selectedLanguage === "hi"
                       ? "ईमेल दर्ज करें"
@@ -2997,8 +3184,9 @@ export default function HomePage() {
                     outline: 'none'
                   }}
                 />
-
                 <button
+                  onClick={handleNewsletterSubscribe}
+                  disabled={newsletterLoading}
                   style={{
                     width: '100%',
                     padding: '11px',
@@ -3007,12 +3195,13 @@ export default function HomePage() {
                     backgroundColor: ACCENT,
                     color: '#fff',
                     fontWeight: 600,
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    opacity: newsletterLoading ? 0.7 : 1
                   }}
                 >
-                  {selectedLanguage === "hi"
-                    ? "सब्सक्राइब"
-                    : "Subscribe"}
+                  {newsletterLoading
+                    ? (selectedLanguage === "hi" ? "लोड हो रहा..." : "Loading...")
+                    : (selectedLanguage === "hi" ? "सब्सक्राइब" : "Subscribe")}
                 </button>
               </div>
 

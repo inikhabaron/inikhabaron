@@ -683,6 +683,22 @@ export async function GET(request) {
       return NextResponse.json({ subscribers, count: subscribers.length }, { headers: corsHeaders });
     }
 
+    // ===== TAGS =====
+
+    if (path === 'admin/tags') {
+      const tagsCollection = await getCollection('tags');
+
+      const tags = await tagsCollection
+        .find({})
+        .sort({ createdAt: -1 })
+        .toArray();
+
+      return NextResponse.json(
+        { tags },
+        { headers: corsHeaders }
+      );
+    }
+
     return NextResponse.json({ error: 'Not found' }, { status: 404, headers: corsHeaders });
 
   } catch (error) {
@@ -1593,6 +1609,30 @@ export async function POST(request) {
       return NextResponse.json({ success: true, message: 'Database seeded successfully' }, { headers: corsHeaders });
     }
 
+    // ===== TAGS =====
+
+    if (path === 'admin/tags') {
+      const tagsCollection = await getCollection('tags');
+
+      const tag = {
+        id: uuidv4(),
+        name: body.name,
+        slug:
+          body.slug ||
+          body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        color: body.color || '#2563EB',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await tagsCollection.insertOne(tag);
+
+      return NextResponse.json(
+        { success: true, tag },
+        { status: 201, headers: corsHeaders }
+      );
+    }
+
     return NextResponse.json({ error: 'Not found' }, { status: 404, headers: corsHeaders });
 
   } catch (error) {
@@ -1770,6 +1810,34 @@ export async function PUT(request) {
       return NextResponse.json({ success: true }, { headers: corsHeaders });
     }
 
+    // ===== UPDATE TAG =====
+
+    if (path.match(/^admin\/tags\/[a-zA-Z0-9-]+$/)) {
+      const tagId = path.split('/')[2];
+      const tagsCollection = await getCollection('tags');
+      const updateData = {
+        ...body,
+        updatedAt: new Date(),
+      };
+      delete updateData.id;
+      delete updateData._id;
+      const result = await tagsCollection.updateOne(
+        { id: tagId },
+        { $set: updateData }
+      );
+      if (result.matchedCount === 0) {
+        return NextResponse.json(
+          { error: 'Tag not found' },
+          { status: 404, headers: corsHeaders }
+        );
+      }
+      const updatedTag = await tagsCollection.findOne({ id: tagId });
+      return NextResponse.json(
+        { success: true, tag: updatedTag },
+        { headers: corsHeaders }
+      );
+    }
+
     return NextResponse.json({ error: 'Not found' }, { status: 404, headers: corsHeaders });
 
   } catch (error) {
@@ -1821,6 +1889,18 @@ export async function DELETE(request) {
       
       await usersCollection.deleteOne({ id: userId });
       return NextResponse.json({ success: true }, { headers: corsHeaders });
+    }
+
+    // ===== DELETE TAG =====
+
+    if (path.match(/^admin\/tags\/[a-zA-Z0-9-]+$/)) {
+      const tagId = path.split('/')[2];
+      const tagsCollection = await getCollection('tags');
+      await tagsCollection.deleteOne({ id: tagId });
+      return NextResponse.json(
+        { success: true },
+        { headers: corsHeaders }
+      );
     }
 
     return NextResponse.json({ error: 'Not found' }, { status: 404, headers: corsHeaders });
