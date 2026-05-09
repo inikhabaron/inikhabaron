@@ -2707,21 +2707,28 @@ export default function HomePage() {
                         marginBottom: '18px'
                       }}
                     >
-                      {selectedNews.tags.map(tag => (
-                        <span
-                          key={tag.id || tagName || index}
-                          style={{
-                            padding: '4px 10px',
-                            borderRadius: '20px',
-                            border: `1px solid ${bdr}`,
-                            fontSize: `${12 * textScale}px`,
-                            color: T3,
-                            fontFamily: selectedFont.value
-                          }}
-                        >
-                          #{tagName}
-                        </span>
-                      ))}
+                      {selectedNews.tags.map((tag, index) => {
+                        const tagName =
+                          typeof tag === 'string'
+                            ? tag
+                            : tag.name || '';
+
+                        return (
+                          <span
+                            key={tag.id || tagName || index}
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '20px',
+                              border: `1px solid ${bdr}`,
+                              fontSize: `${12 * textScale}px`,
+                              color: T3,
+                              fontFamily: selectedFont.value
+                            }}
+                          >
+                            #{tagName}
+                          </span>
+                        );
+                      })}
                     </div>
                   )}
 
