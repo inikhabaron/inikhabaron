@@ -905,7 +905,7 @@ export default function HomePage() {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, width: '100%', paddingLeft: isMobileView ? '0px' : (sidebarCollapsed ? '60px' : '220px'), paddingRight: isMobileView ? '0px' : (isRightSidebarOpen ? '288px' : '0px'), }}>
 
             {/* Top nav bar */}
-            <header style={{ backgroundColor: surface, borderBottom: `1px solid ${bdr}`, display: 'flex', flexDirection: isMobileView ? 'column' : 'row', alignItems: isMobileView ? 'stretch' : 'center', justifyContent: 'space-between', width: '100%', height: isMobileView ? '102px' : '60px', position: 'fixed', left: 0, top: 0, zIndex: 100 }}> 
+            <header style={{ backgroundColor: surface, borderBottom: `1px solid ${bdr}`, display: 'flex', flexDirection: isMobileView ? 'column' : 'row', alignItems: isMobileView ? 'stretch' : 'center', justifyContent: 'space-between', width: '100%', height: isMobileView ? '130px' : '65px', position: 'fixed', left: 0, top: 0, zIndex: 100 }}> 
 
               {/* Mobile view */}
 
@@ -939,8 +939,8 @@ export default function HomePage() {
                     <Image
                       src="/logo.svg"
                       alt="Logo"
-                      width={90}
-                      height={36}
+                      width={110}
+                      height={50}
                     />
                   </div>
 
@@ -1147,8 +1147,8 @@ export default function HomePage() {
                     <Image
                       src="/logo.svg"
                       alt="Logo"
-                      width={90}
-                      height={36}
+                      width={110}
+                      height={50}
                     />
                   </div>
                   
@@ -1157,7 +1157,7 @@ export default function HomePage() {
                       const isActive = selectedCategory === item.slug;
                       return (
                         <button key={item.slug} onClick={() => setSelectedCategory(item.slug)}
-                          style={{ padding: '0 16px', height: '60px', border: 'none', cursor: 'pointer', backgroundColor: 'transparent', fontSize: `${14 * textScale}px`, fontWeight: isActive ? 600 : 500, fontFamily: selectedFont.value, color: isActive ? ACCENT : T3, borderBottom: `2px solid ${isActive ? ACCENT : 'transparent'}`, whiteSpace: 'nowrap', transition: 'all 0.15s', flexShrink: 0 }}
+                          style={{ padding: '0 16px', height: '65px', border: 'none', cursor: 'pointer', backgroundColor: 'transparent', fontSize: `${14 * textScale}px`, fontWeight: isActive ? 600 : 500, fontFamily: selectedFont.value, color: isActive ? ACCENT : T3, borderBottom: `2px solid ${isActive ? ACCENT : 'transparent'}`, whiteSpace: 'nowrap', transition: 'all 0.15s', flexShrink: 0 }}
                           onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = T2; }}
                           onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = T3; }}>
                           {item.label}
@@ -1173,7 +1173,7 @@ export default function HomePage() {
                           onClick={() => setShowMoreMenu(p => !p)}
                           style={{
                             padding: '0 14px',
-                            height: '60px',
+                            height: '65px',
                             border: 'none',
                             cursor: 'pointer',
                             backgroundColor: 'transparent',
@@ -1205,7 +1205,7 @@ export default function HomePage() {
                         {showMoreMenu && (
                           <div style={{
                             position: 'absolute',
-                            top: '60px',
+                            top: '65px',
                             left: 0,
                             backgroundColor: surface,
                             border: `1px solid ${bdr}`,
@@ -1521,7 +1521,7 @@ export default function HomePage() {
 
             {/* Breaking ticker */}
             {breakingNews.length > 0 && (
-              <div style={{ backgroundColor: dark ? '#1a2535' : '#EBF8FF', borderBottom: `1px solid ${dark ? '#2a3d55' : '#BEE3F8'}`, padding: '6px 24px', overflow: 'hidden', display: 'flex', alignItems: 'center', gap: '12px', marginTop: isMobileView ? '120px' : '60px' }}>
+              <div style={{ backgroundColor: dark ? '#1a2535' : '#EBF8FF', borderBottom: `1px solid ${dark ? '#2a3d55' : '#BEE3F8'}`, padding: '6px 24px', overflow: 'hidden', display: 'flex', alignItems: 'center', gap: '12px', marginTop: isMobileView ? '130px' : '65px' }}>
                 <span style={{ backgroundColor: '#e53e3e', color: 'white', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: selectedFont.value, letterSpacing: '0.05em' }}>
                   <span style={{ width: '5px', height: '5px', backgroundColor: 'white', borderRadius: '50%', display: 'inline-block', animation: 'pulse 1s infinite' }} />BREAKING
                 </span>
@@ -1950,7 +1950,7 @@ export default function HomePage() {
             backgroundColor: surface,
             borderRight: `1px solid ${bdr}`,
             flexDirection: 'column',
-            marginTop: '60px',
+            marginTop: '65px',
             position: 'fixed', left: 0, top: 0, height: '100vh',
             transition: 'width 0.22s ease, min-width 0.22s ease',
             zIndex: 40, overflowY: 'auto', overflowX: 'hidden',
@@ -2355,7 +2355,7 @@ export default function HomePage() {
               display: isMobileView ? 'none' : 'flex',
               width: isRightSidebarOpen ? '288px' : '0px',
               minWidth: isRightSidebarOpen ? '288px' : '0px',
-              marginTop: '60px',
+              marginTop: '65px',
               backgroundColor: surface,
               borderLeft: isRightSidebarOpen ? `1px solid ${bdr}` : 'none',
               padding: isRightSidebarOpen ? '20px 18px' : '0px',
@@ -2364,7 +2364,7 @@ export default function HomePage() {
               position: 'fixed',
               right: 0,
               top: 0,
-              height: 'calc(100vh - 60px)', // accounts for header
+              height: 'calc(100vh - 65px)', // accounts for header
               overflowY: 'auto',
               overflowX: 'hidden',
               transition: 'all 0.3s ease',
@@ -2722,7 +2722,7 @@ export default function HomePage() {
                       }}
                     >
                       {selectedNews.tags.map(tag => {
-                        const tagName = typeof tag === 'string' ? tag : tag.name || '';
+                        // const tagName = typeof tag === 'string' ? tag : tag.name || '';
 
                         return (
                           <span
