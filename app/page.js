@@ -3005,7 +3005,19 @@ export default function HomePage() {
             </div>
 
             {/* TRENDING */}
-            <div style={{ marginTop: '28px' }}>
+            <div 
+              style={{ 
+                marginTop: '28px', 
+                width:
+                  windowWidth <= 320 ? '68%'
+                    : windowWidth <= 335 ? '70%'
+                    : windowWidth <= 357 ? '73%' 
+                    : windowWidth <= 379 ? '78%'
+                    : windowWidth <= 397 ? '83%'
+                    : windowWidth <= 418 ? '87%'
+                    : windowWidth <= 430 ? '92%'
+                    : windowWidth <= 460 ? '95%' : '100%',
+             }}>
               <h3
                 style={{
                   fontSize: '16px',
@@ -3072,7 +3084,15 @@ export default function HomePage() {
                     display: 'flex',
                     flexDirection: 'column',
                     gap: windowWidth <= 360 ? '6px' : '10px',
-                    width: '100%',
+                    width: 
+                    windowWidth <= 320 ? '68%'
+                    : windowWidth <= 335 ? '70%'
+                    : windowWidth <= 357 ? '73%' 
+                    : windowWidth <= 379 ? '78%'
+                    : windowWidth <= 397 ? '83%'
+                    : windowWidth <= 418 ? '87%'
+                    : windowWidth <= 430 ? '92%'
+                    : windowWidth <= 460 ? '95%' : '100%',
                     maxWidth: '100%'
                   }}
                 >
