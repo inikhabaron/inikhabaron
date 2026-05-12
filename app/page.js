@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
@@ -926,9 +926,16 @@ export default function HomePage() {
                     <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '12px',
+                    gap: '10px',
                     marginRight: '20px'
                   }}>
+                    <Image
+                      src="/LOGO1.jpeg"
+                      alt="Logo mark"
+                      width={36}
+                      height={36}
+                      style={{ boxShadow: '0 0 10px rgba(255, 255, 255, 0.8)' }}
+                    />
                     <Image
                       src="/logo.svg"
                       alt="Logo"
@@ -1126,10 +1133,17 @@ export default function HomePage() {
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '12px',
+                    gap: '10px',
                     marginRight: '20px',
                     paddingLeft: '20px',
                   }}>
+                    <Image
+                      src="/LOGO1.jpeg"
+                      alt="Logo mark"
+                      width={36}
+                      height={36}
+                      style={{ boxShadow: '0 0 10px rgba(255, 255, 255, 0.8)' }}
+                    />
                     <Image
                       src="/logo.svg"
                       alt="Logo"
@@ -2707,15 +2721,12 @@ export default function HomePage() {
                         marginBottom: '18px'
                       }}
                     >
-                      {selectedNews.tags.map((tag, index) => {
-                        const tagName =
-                          typeof tag === 'string'
-                            ? tag
-                            : tag.name || '';
+                      {selectedNews.tags.map(tag => {
+                        const tagName = typeof tag === 'string' ? tag : tag.name || '';
 
                         return (
                           <span
-                            key={tag.id || tagName || index}
+                            key={tag.id || tagName}
                             style={{
                               padding: '4px 10px',
                               borderRadius: '20px',
@@ -3039,15 +3050,16 @@ export default function HomePage() {
 
             {/* MOBILE RIGHT SECTION MOVED BELOW */}
             {windowWidth <= 725 && (
-              <div style={{ marginTop: '34px' }}>
+              <div style={{ marginTop: '34px', width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
 
                 {/* NEWSLETTER */}
                 <h3
                   style={{
-                    fontSize: '16px',
+                    fontSize: windowWidth <= 360 ? '15px' : '16px',
                     fontWeight: 700,
                     color: T1,
-                    marginBottom: '14px'
+                    marginBottom: windowWidth <= 360 ? '10px' : '14px',
+                    lineHeight: 1.3
                   }}
                 >
                   {selectedLanguage === "hi"
@@ -3059,7 +3071,9 @@ export default function HomePage() {
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '10px'
+                    gap: windowWidth <= 360 ? '6px' : '10px',
+                    width: '100%',
+                    maxWidth: '100%'
                   }}
                 >
                   <input
@@ -3073,13 +3087,16 @@ export default function HomePage() {
                     }
                     style={{
                       width: '100%',
+                      maxWidth: '100%',
+                      display: 'block',
                       boxSizing: 'border-box',
-                      padding: '11px 12px',
+                      padding: windowWidth <= 360 ? '9px 10px' : '11px 12px',
                       borderRadius: '10px',
                       border: `1px solid ${bdr}`,
                       backgroundColor: dark ? '#1f2937' : '#fff',
                       color: T1,
-                      outline: 'none'
+                      outline: 'none',
+                      fontSize: windowWidth <= 360 ? '11px' : '14px'
                     }}
                   />
 
@@ -3088,14 +3105,18 @@ export default function HomePage() {
                     disabled={newsletterLoading}
                     style={{
                       width: '100%',
-                      padding: '11px',
+                      maxWidth: '100%',
+                      display: 'block',
+                      padding: windowWidth <= 360 ? '9px' : '11px',
                       borderRadius: '10px',
                       border: 'none',
                       backgroundColor: ACCENT,
                       color: '#fff',
                       fontWeight: 600,
                       cursor: 'pointer',
-                      opacity: newsletterLoading ? 0.7 : 1
+                      opacity: newsletterLoading ? 0.7 : 1,
+                      fontSize: windowWidth <= 360 ? '11px' : '14px',
+                      whiteSpace: 'nowrap'
                     }}
                   >
                     {newsletterLoading
@@ -3105,7 +3126,14 @@ export default function HomePage() {
                 </div>
 
                 {/* LOGO */}
-                <div style={{ marginTop: '26px' }}>
+                <div style={{ marginTop: '26px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Image
+                    src="/LOGO1.jpeg"
+                    alt="Logo mark"
+                    width={40}
+                    height={40}
+                    style={{ boxShadow: '0 0 10px rgba(255, 255, 255, 0.8)' }}
+                  />
                   <Image
                     src="/logo.svg"
                     alt="Logo"
@@ -3148,7 +3176,11 @@ export default function HomePage() {
 
           {/* RIGHT SIDE */}
           {windowWidth > 725 && (
-            <div>
+            <div style={{
+              width: '100%',
+              maxWidth: '100%',
+              overflow: 'hidden'
+            }}>
 
               {/* NEWSLETTER */}
               <h3
@@ -3156,7 +3188,8 @@ export default function HomePage() {
                   fontSize: '16px',
                   fontWeight: 700,
                   color: T1,
-                  marginBottom: '14px'
+                  marginBottom: '14px',
+                  lineHeight: 1.3
                 }}
               >
                 {selectedLanguage === "hi"
@@ -3168,7 +3201,9 @@ export default function HomePage() {
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '10px'
+                  gap: '10px',
+                  width: '100%',
+                  maxWidth: '100%'
                 }}
               >
                 <input
@@ -3182,13 +3217,16 @@ export default function HomePage() {
                   }
                   style={{
                     width: '100%',
+                    maxWidth: '100%',
+                    display: 'block',
                     boxSizing: 'border-box',
                     padding: '11px 12px',
                     borderRadius: '10px',
                     border: `1px solid ${bdr}`,
                     backgroundColor: dark ? '#1f2937' : '#fff',
                     color: T1,
-                    outline: 'none'
+                    outline: 'none',
+                    fontSize: '14px'
                   }}
                 />
                 <button
@@ -3196,14 +3234,18 @@ export default function HomePage() {
                   disabled={newsletterLoading}
                   style={{
                     width: '100%',
-                    padding: '11px',
+                    maxWidth: '100%',
+                    display: 'block',
+                    boxSizing: 'border-box',
+                    padding: '11px 12px',
                     borderRadius: '10px',
                     border: 'none',
                     backgroundColor: ACCENT,
                     color: '#fff',
                     fontWeight: 600,
                     cursor: 'pointer',
-                    opacity: newsletterLoading ? 0.7 : 1
+                    opacity: newsletterLoading ? 0.7 : 1,
+                    whiteSpace: 'nowrap'
                   }}
                 >
                   {newsletterLoading
@@ -3213,7 +3255,14 @@ export default function HomePage() {
               </div>
 
               {/* LOGO */}
-              <div style={{ marginTop: '34px' }}>
+              <div style={{ marginTop: '34px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Image
+                  src="/LOGO1.jpeg"
+                  alt="Logo mark"
+                  width={40}
+                  height={40}
+                  style={{ boxShadow: '0 0 10px rgba(255, 255, 255, 0.8)' }}
+                />
                 <Image
                   src="/logo.svg"
                   alt="Logo"
