@@ -2964,7 +2964,7 @@ export default function HomePage() {
               >
                 {(allTags.length > 0
                   ? allTags
-                  : ['Politics', 'India', 'Sports', 'Tech']
+                  : selectedLanguage === "hi"? [ 'राजनीति', 'विज्ञापन', 'विकास', 'डिजाइन', 'वित्त', 'फुटबॉल', 'भविष्य', 'यात्रा', 'तकनीक', 'भोजन', 'वास्तुकला', 'टेनिस', 'वीडियो', 'एआई', 'नवाचार', 'खेल', 'स्थानीय', 'चैंपियनशिप', 'नीति', 'अर्थव्यवस्था', 'व्यापार', 'शेयर', 'बाजार', 'सिनेमा', 'मनोरंजन', 'फिल्में', 'थलसेना', 'नौसेना', 'TMC' ] : [ 'politics', 'advertising', 'development', 'design', 'finance', 'football', 'future', 'travel', 'technology', 'food', 'architecture', 'tennis', 'video', 'AI', 'innovation', 'sports', 'local', 'championship', 'policy', 'economy', 'business', 'stocks', 'markets', 'cinema', 'entertainment', 'movies', 'army', 'navy', 'TMC' ]
                 ).slice(0, 12).map((tag, index) => {
                   const tagName =
                     typeof tag === 'string'
