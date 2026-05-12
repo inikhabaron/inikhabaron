@@ -2462,7 +2462,7 @@ export default function HomePage() {
                 {/* <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: T3, fontSize: '18px', lineHeight: 1, padding: '2px' }}>+</button> */}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
-                {(allTags.length > 0 ? allTags : selectedLanguage === "hi"? [ 'राजनीति', 'विज्ञापन', 'विकास', 'डिजाइन', 'वित्त', 'फुटबॉल', 'भविष्य', 'यात्रा', 'तकनीक', 'भोजन', 'वास्तुकला', 'टेनिस', 'वीडियो', 'एआई', 'नवाचार', 'खेल', 'स्थानीय', 'चैंपियनशिप', 'नीति', 'अर्थव्यवस्था', 'व्यापार', 'शेयर', 'बाजार', 'सिनेमा', 'मनोरंजन', 'फिल्में', 'थलसेना', 'नौसेना', 'TMC' ] : [ 'politics', 'advertising', 'development', 'design', 'finance', 'football', 'future', 'travel', 'technology', 'food', 'architecture', 'tennis', 'video', 'AI', 'innovation', 'sports', 'local', 'championship', 'policy', 'economy', 'business', 'stocks', 'markets', 'cinema', 'entertainment', 'movies', 'army', 'navy', 'TMC' ]).map((tag, index) => {
+                {(allTags.length > 0 ? allTags : selectedLanguage === "hi"? [ 'राजनीति', 'विज्ञापन', 'विकास', 'डिजाइन', 'वित्त', 'फुटबॉल', 'भविष्य', 'यात्रा', 'तकनीक', 'भोजन', 'वास्तुकला', 'टेनिस', 'वीडियो', 'एआई', 'नवाचार', 'खेल', 'स्थानीय', 'चैंपियनशिप', 'नीति', 'अर्थव्यवस्था', 'व्यापार', 'शेयर', 'बाजार', 'सिनेमा', 'मनोरंजन', 'फिल्में', 'थलसेना', 'नौसेना', 'TMC', 'राष्ट्रीय' ] : [ 'politics', 'advertising', 'development', 'design', 'finance', 'football', 'future', 'travel', 'technology', 'food', 'architecture', 'tennis', 'video', 'AI', 'innovation', 'sports', 'local', 'championship', 'policy', 'economy', 'business', 'stocks', 'markets', 'cinema', 'entertainment', 'movies', 'army', 'navy', 'TMC', 'national' ]).map((tag, index) => {
                   const tagName =
                     typeof tag === 'string'
                       ? tag
@@ -2722,7 +2722,7 @@ export default function HomePage() {
                       }}
                     >
                       {selectedNews.tags.map(tag => {
-                        // const tagName = typeof tag === 'string' ? tag : tag.name || '';
+                        const tagName = typeof tag === 'string' ? tag : tag.name || '';
 
                         return (
                           <span
@@ -2964,7 +2964,7 @@ export default function HomePage() {
               >
                 {(allTags.length > 0
                   ? allTags
-                  : selectedLanguage === "hi"? [ 'राजनीति', 'विज्ञापन', 'विकास', 'डिजाइन', 'वित्त', 'फुटबॉल', 'भविष्य', 'यात्रा', 'तकनीक', 'भोजन', 'वास्तुकला', 'टेनिस', 'वीडियो', 'एआई', 'नवाचार', 'खेल', 'स्थानीय', 'चैंपियनशिप', 'नीति', 'अर्थव्यवस्था', 'व्यापार', 'शेयर', 'बाजार', 'सिनेमा', 'मनोरंजन', 'फिल्में', 'थलसेना', 'नौसेना', 'TMC' ] : [ 'politics', 'advertising', 'development', 'design', 'finance', 'football', 'future', 'travel', 'technology', 'food', 'architecture', 'tennis', 'video', 'AI', 'innovation', 'sports', 'local', 'championship', 'policy', 'economy', 'business', 'stocks', 'markets', 'cinema', 'entertainment', 'movies', 'army', 'navy', 'TMC' ]
+                  : selectedLanguage === "hi"? [ 'राजनीति', 'विज्ञापन', 'विकास', 'डिजाइन', 'वित्त', 'फुटबॉल', 'भविष्य', 'यात्रा', 'तकनीक', 'भोजन', 'वास्तुकला', 'टेनिस', 'वीडियो', 'एआई', 'नवाचार', 'खेल', 'स्थानीय', 'चैंपियनशिप', 'नीति', 'अर्थव्यवस्था', 'व्यापार', 'शेयर', 'बाजार', 'सिनेमा', 'मनोरंजन', 'फिल्में', 'थलसेना', 'नौसेना', 'TMC', 'राष्ट्रीय' ] : [ 'politics', 'advertising', 'development', 'design', 'finance', 'football', 'future', 'travel', 'technology', 'food', 'architecture', 'tennis', 'video', 'AI', 'innovation', 'sports', 'local', 'championship', 'policy', 'economy', 'business', 'stocks', 'markets', 'cinema', 'entertainment', 'movies', 'army', 'navy', 'TMC', 'national' ]
                 ).slice(0, 12).map((tag, index) => {
                   const tagName =
                     typeof tag === 'string'
