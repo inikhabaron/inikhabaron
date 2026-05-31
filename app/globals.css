@@ -1,0 +1,353 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+input, textarea, select, button {
+  font-family: inherit;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.ql-toolbar {
+  border: none !important;
+  border-bottom: 1px solid #f3f4f6 !important;
+}
+
+.ql-container {
+  border: none !important;
+}
+
+.ql-editor {
+  min-height: 180px;
+  font-size: 14px;
+  color: #111827;
+}
+
+@media (max-width: 768px) {
+  .db-sidebar {
+    transform: translateX(-230px);
+  }
+  .db-sidebar.open {
+    transform: translateX(0);
+  }
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+        "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
+        "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+        monospace;
+}
+
+.App {
+    text-align: center;
+}
+
+.App-logo {
+    height: 40vmin;
+    pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .App-logo {
+        animation: App-logo-spin infinite 20s linear;
+    }
+}
+
+.App-header {
+    background-color: #0f0f10;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+    color: white;
+}
+
+.App-link {
+    color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* CUSTOM LOADER */
+.loader {
+  width: 50px;
+  --b: 8px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  padding: 1px;
+  background: conic-gradient(#0000 10%, #2eb9f5) content-box;
+
+  -webkit-mask:
+    repeating-conic-gradient(#0000 0deg, #000 1deg 20deg, #0000 21deg 36deg),
+    radial-gradient(farthest-side, #0000 calc(100% - var(--b) - 1px), #000 calc(100% - var(--b)));
+
+  -webkit-mask-composite: destination-in;
+          mask-composite: intersect;
+
+  animation: l4 1s infinite steps(10);
+}
+
+@keyframes l4 {
+  to { transform: rotate(1turn); }
+}
+
+
+
+@layer base {
+  :root {
+        --background: 0 0% 100%;
+        --foreground: 222.2 84% 4.9%;
+        --card: 0 0% 100%;
+        --card-foreground: 222.2 84% 4.9%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 222.2 84% 4.9%;
+        --primary: 222.2 47.4% 11.2%;
+        --primary-foreground: 210 40% 98%;
+        --secondary: 210 40% 96.1%;
+        --secondary-foreground: 222.2 47.4% 11.2%;
+        --muted: 210 40% 96.1%;
+        --muted-foreground: 215.4 16.3% 46.9%;
+        --accent: 210 40% 96.1%;
+        --accent-foreground: 222.2 47.4% 11.2%;
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 210 40% 98%;
+        --border: 214.3 31.8% 91.4%;
+        --input: 214.3 31.8% 91.4%;
+        --ring: 222.2 84% 4.9%;
+        --chart-1: 12 76% 61%;
+        --chart-2: 173 58% 39%;
+        --chart-3: 197 37% 24%;
+        --chart-4: 43 74% 66%;
+        --chart-5: 27 87% 67%;
+        --radius: 0.5rem;
+        --sidebar-background: 0 0% 98%;
+        --sidebar-foreground: 240 5.3% 26.1%;
+        --sidebar-primary: 240 5.9% 10%;
+        --sidebar-primary-foreground: 0 0% 98%;
+        --sidebar-accent: 240 4.8% 95.9%;
+        --sidebar-accent-foreground: 240 5.9% 10%;
+        --sidebar-border: 220 13% 91%;
+        --sidebar-ring: 217.2 91.2% 59.8%;
+    }
+  .dark {
+        --background: 222.2 84% 4.9%;
+        --foreground: 210 40% 98%;
+        --card: 222.2 84% 4.9%;
+        --card-foreground: 210 40% 98%;
+        --popover: 222.2 84% 4.9%;
+        --popover-foreground: 210 40% 98%;
+        --primary: 210 40% 98%;
+        --primary-foreground: 222.2 47.4% 11.2%;
+        --secondary: 217.2 32.6% 17.5%;
+        --secondary-foreground: 210 40% 98%;
+        --muted: 217.2 32.6% 17.5%;
+        --muted-foreground: 215 20.2% 65.1%;
+        --accent: 217.2 32.6% 17.5%;
+        --accent-foreground: 210 40% 98%;
+        --destructive: 0 62.8% 30.6%;
+        --destructive-foreground: 210 40% 98%;
+        --border: 217.2 32.6% 17.5%;
+        --input: 217.2 32.6% 17.5%;
+        --ring: 212.7 26.8% 83.9%;
+        --chart-1: 220 70% 50%;
+        --chart-2: 160 60% 45%;
+        --chart-3: 30 80% 55%;
+        --chart-4: 280 65% 60%;
+        --chart-5: 340 75% 55%;
+        --sidebar-background: 240 5.9% 10%;
+        --sidebar-foreground: 240 4.8% 95.9%;
+        --sidebar-primary: 224.3 76.3% 48%;
+        --sidebar-primary-foreground: 0 0% 100%;
+        --sidebar-accent: 240 3.7% 15.9%;
+        --sidebar-accent-foreground: 240 4.8% 95.9%;
+        --sidebar-border: 240 3.7% 15.9%;
+        --sidebar-ring: 217.2 91.2% 59.8%;
+    }
+}
+
+
+
+@layer base {
+  * {
+    @apply border-border;
+    }
+  body {
+    @apply bg-background text-foreground;
+    }
+}
+
+/* ── Editorial design tokens ────────────────────────────────────────── */
+:root {
+  --editorial-red: #D72638;
+  --accent-blue: #3BAFDA;
+  --reading-col: 680px;
+}
+
+/* Section labels used across the feed */
+.editorial-section-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  user-select: none;
+}
+
+.editorial-section-label::before {
+  content: '';
+  display: block;
+  width: 3px;
+  height: 16px;
+  background: var(--editorial-red);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* Skeleton shimmer for loading states */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(to right, #f0f2f5 0%, #e4e6ea 20%, #f0f2f5 40%);
+  background-size: 1200px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+/* Card image zoom – used on ArticleCard hover via JS */
+.card-img-zoom {
+  transition: transform 0.4s ease;
+}
+.card-img-zoom:hover {
+  transform: scale(1.06);
+}
+
+/* Improved article body – supplements the inline JS styles */
+.news-article-body code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+  background: rgba(0,0,0,0.06);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+/* Masthead pulse animation for breaking dot */
+@keyframes masthead-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.85); }
+}
+
+.breaking-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  background: #fff;
+  border-radius: 50%;
+  animation: masthead-pulse 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+/* Smooth reading progress bar */
+.reading-progress-bar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: transparent;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+/* Featured card (horizontal, second story) */
+.featured-card {
+  transition: box-shadow 0.22s ease;
+}
+.featured-card:hover {
+  box-shadow: 0 8px 28px rgba(0,0,0,0.13) !important;
+}
+
+/* Mobile card touch feedback */
+.mobile-card-item {
+  transition: opacity 0.1s ease;
+}
+.mobile-card-item:active {
+  opacity: 0.65;
+}
+
+/* ─── Marquee animation ──────────────────────────────────────────────── */
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  display: inline-block;
+  animation: marquee 30s linear infinite;
+}
+
+/* ─── Article body (CMS HTML content) ───────────────────────────────── */
+.news-article-body > * + *  { margin-top: 1.1em; }
+.news-article-body p        { margin: 0 0 1.1em; }
+.news-article-body p:last-child { margin-bottom: 0; }
+.news-article-body h2       { font-size: 1.5em; font-weight: 800; line-height: 1.3; letter-spacing: -0.01em; margin: 1.6em 0 0.6em; }
+.news-article-body h3       { font-size: 1.25em; font-weight: 700; line-height: 1.35; margin: 1.4em 0 0.5em; }
+.news-article-body ul,
+.news-article-body ol       { padding-left: 1.4em; margin: 0 0 1.1em; }
+.news-article-body li       { margin: 0.35em 0; }
+.news-article-body li::marker { color: #3BAFDA; }
+.news-article-body blockquote { margin: 1.6em 0; padding: 0.25em 0 0.25em 1.1em; border-left: 4px solid #3BAFDA; font-style: italic; font-size: 1.08em; opacity: 0.92; }
+.news-article-body a        { color: #3BAFDA; text-decoration: underline; text-underline-offset: 3px; }
+.news-article-body a:hover  { color: #2B9FC8; }
+.news-article-body strong   { font-weight: 700; }
+.news-article-body img,
+.news-article-body video,
+.news-article-body iframe   { display: block; max-width: 100%; height: auto; margin: 1.4em auto; border-radius: 12px; }
+.news-article-body > p:first-of-type::first-letter { font-size: 3.4em; font-weight: 800; float: left; line-height: 0.9; padding: 0.06em 0.1em 0 0; color: #3BAFDA; }

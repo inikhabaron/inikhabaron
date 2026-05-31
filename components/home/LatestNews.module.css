@@ -1,0 +1,148 @@
+.sidebar {
+  background-color: #ffffff;
+  border: 1px solid #E8EAED;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 1000px;
+  overflow-y: auto;
+}
+
+.dark {
+  background-color: #161B27;
+  border-color: #252E40;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.headerBar {
+  width: 3px;
+  height: 16px;
+  background-color: #D72638;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.headerTitle {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #111827;
+  margin: 0;
+}
+
+.dark .headerTitle {
+  color: #E8ECF0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  cursor: pointer;
+  border-bottom: 1px solid #F0F2F5;
+  transition: opacity 0.15s;
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.item:hover {
+  opacity: 0.75;
+}
+
+.itemDark {
+  border-bottom-color: #252E40;
+}
+
+.itemContent {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.itemCat {
+  font-size: 10px;
+  font-weight: 700;
+  color: #3BAFDA;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.itemTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333333;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}
+
+.itemTitleDark {
+  color: #d1d5db;
+}
+
+.itemDate {
+  font-size: 11px;
+  color: #8A8F98;
+}
+
+.itemThumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.itemImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.viewAll {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #D72638;
+  background: transparent;
+  color: #D72638;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+}
+
+.viewAll:hover {
+  background-color: #D72638;
+  color: white;
+}
+
+.viewAllDark {
+  border-color: #D72638;
+  color: #D72638;
+}
