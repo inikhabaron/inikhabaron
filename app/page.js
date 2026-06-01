@@ -248,24 +248,26 @@ export default function HomePage() {
           {/* Breaking news ticker */}
           
           {breakingNews.length > 0 && (
-            <div className="kn-breaking-ticker" style={{ height: '46px', background: dark ? '#150e0e' : '#FFF5F5', borderTop: `1px solid ${dark ? '#3a1f1f' : '#FED7D7'}`, borderBottom: `1px solid ${dark ? '#3a1f1f' : '#FED7D7'}`, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
-              {/* Breaking Label */}
-              <div className="kn-breaking-label" style={{ marginLeft: '12px', minWidth: '105px', height: '24px', background: '#D72638', color: '#fff', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, letterSpacing: '1px' }}>
-                ● BREAKING
-              </div>
-              {/* News Scroll */}
-              <div className="kn-marquee-wrap" style={{ flex: 1, overflow: 'hidden', marginLeft: '20px'}}>
-                <div className="animate-marquee">
-                  {[...breakingNews, ...breakingNews].map((item, i) => (
-                    <span key={`${item.id}-${i}`}
-                      style={{ color: dark ? '#FCA5A5' : '#991B1B', fontSize: '15px', fontWeight: 500, marginRight: '55px', whiteSpace: 'nowrap' }}>
-                      {item.title}
-                      <span
-                        style={{ color: dark ? '#FCA5A5' : '#991B1B', marginLeft: '22px', marginRight: '22px', fontSize: '14px' }}>
-                        ◆
+            <div className="kn-breaking-ticker" style={{ height: '46px', background: dark ? '#150e0e' : '#FFF5F5', borderTop: `1px solid ${dark ? '#3a1f1f' : '#FED7D7'}`, borderBottom: `1px solid ${dark ? '#3a1f1f' : '#FED7D7'}` }}>
+              <div style={{ maxWidth: '1400px', margin: '0 auto', height: '100%', display: 'flex', alignItems: 'center' }}>
+                {/* Breaking Label */}
+                <div className="kn-breaking-label" style={{ minWidth: '105px', height: '24px', background: '#D72638', color: '#fff', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, letterSpacing: '1px' }}>
+                  ● BREAKING
+                </div>
+                {/* News Scroll */}
+                <div className="kn-marquee-wrap" style={{ flex: 1, overflow: 'hidden', marginLeft: '20px', marginRight: '10px' }}>
+                  <div className="animate-marquee">
+                    {[...breakingNews, ...breakingNews].map((item, i) => (
+                      <span key={`${item.id}-${i}`}
+                        style={{ color: dark ? '#FCA5A5' : '#991B1B', fontSize: '15px', fontWeight: 500, marginRight: '55px', whiteSpace: 'nowrap' }}>
+                        {item.title}
+                        <span
+                          style={{ color: dark ? '#FCA5A5' : '#991B1B', marginLeft: '22px', marginRight: '22px', fontSize: '14px' }}>
+                          ◆
+                        </span>
                       </span>
-                    </span>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

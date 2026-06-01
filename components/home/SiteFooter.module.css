@@ -15,7 +15,7 @@
 }
 
 .newsletterInner {
-  max-width: 1425px;
+  max-width: 1400px;
   padding: 0 10px;
   margin: 0 auto;
   display: flex;
@@ -115,7 +115,7 @@
 }
 
 .mainInner {
-  max-width: 1425px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 10px;
   display: grid;

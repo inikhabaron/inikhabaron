@@ -9,7 +9,7 @@
    PAGE LAYOUT
 ───────────────────────────────────────────────────────────────── */
 .kn-page          { min-height: 100vh; }
-.kn-content-wrap  { max-width: 1425px; margin: 0 auto; }
+.kn-content-wrap  { max-width: 1400px; margin: 0 auto; }
 
 /* Breaking ticker */
 .kn-ticker         { display: flex; align-items: center; gap: 12px; padding: 6px 20px; overflow: hidden; }
@@ -169,7 +169,7 @@
    SITE FOOTER
 ───────────────────────────────────────────────────────────────── */
 .kn-footer-newsletter  { background: linear-gradient(135deg,#1a2744,#2d4a8a); padding: 24px; }
-.kn-footer-nl-inner    { max-width: 1425px; margin: 0 auto; padding: 0 10px; display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.kn-footer-nl-inner    { max-width: 1400px; margin: 0 auto; padding: 0 10px; display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
 .kn-footer-nl-text     { display: flex; align-items: center; gap: 16px; color: #fff; }
 .kn-footer-nl-icon     { font-size: 28px; flex-shrink: 0; }
 .kn-footer-nl-heading  { font-size: 15px; font-weight: 700; color: #fff; margin: 0 0 4px; }
@@ -180,7 +180,7 @@
 .kn-footer-nl-btn:hover { background: #b91c2c; }
 .kn-footer-nl-btn:disabled { opacity: .7; }
 .kn-footer-main        { padding: 40px 24px 28px; }
-.kn-footer-main-inner  { max-width: 1425px; margin: 0 auto; padding: 0 10px; display: grid; grid-template-columns: 2fr 1fr 1fr 1.3fr 1.3fr; gap: 32px; }
+.kn-footer-main-inner  { max-width: 1400px; margin: 0 auto; padding: 0 10px; display: grid; grid-template-columns: 2fr 1fr 1fr 1.3fr 1.3fr; gap: 32px; }
 .kn-footer-brand       { display: flex; flex-direction: column; gap: 14px; }
 .kn-footer-logo-row    { display: flex; align-items: center; gap: 10px; }
 .kn-footer-desc        { font-size: 13px; line-height: 1.6; margin: 0; }

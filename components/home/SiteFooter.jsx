@@ -75,7 +75,7 @@ export default function SiteFooter({ dark, categories, selectedLanguage, onCateg
               {selectedLanguage === 'hi' ? 'खबरON भारत का प्रमुख न्यूज प्लेटफार्म है जो देश-दुनिया की हर खबर आप तक पहुँचाता है।' : "KhabarON is India's leading news platform."}
             </p>
             
-            <div className="kn-footer-social-row">
+            <div className="kn-footer-social-row" style={{ color: dark ? 'rgb(255, 255, 255)' : 'rgb(1, 1, 1)' }}>
               <button className="kn-footer-social-btn">
                 <FaFacebookF size={14} />
               </button>

@@ -3,6 +3,7 @@
   align-items: center;
   gap: 12px;
   padding: 8px 24px;
+  width: 100%;
   background-color: #ffffff;
   border-bottom: 1px solid #E8EAED;
   overflow-x: auto;
