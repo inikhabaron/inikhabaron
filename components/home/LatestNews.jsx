@@ -33,9 +33,9 @@ export default function LatestNews({ items, onArticleClick, dark, selectedLangua
         </div>
       ))}
 
-      <button className="kn-latest-view-all">
+      {/* <button className="kn-latest-view-all">
         {selectedLanguage === 'hi' ? 'सभी खबरें देखें' : 'View All News'} &rsaquo;
-      </button>
+      </button> */}
     </aside>
   );
 }

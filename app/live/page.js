@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { Newspaper, Crown, ChevronDown } from 'lucide-react';
 
 // ─── Layout & UI components ───────────────────────────────────────────────────
-import Header from '@/components/home/Header';
+import LiveNewsHeader from '@/components/home/LiveNewsHeader';
 import TrendingBar from '@/components/home/TrendingBar';
 import LiveCard from '@/components/home/LiveCard';
 import HorizontalArticleCard from '@/components/home/HorizontalArticleCard';
@@ -227,8 +227,8 @@ export default function HomePage() {
           />
         )}
 
-        {/* Header */}
-        <Header
+        {/* Live News Header */}
+        <LiveNewsHeader
           dark={dark} toggleDark={toggleDark}
           selectedLanguage={selectedLanguage} setSelectedLanguage={setSelectedLanguage}
           translations={translations}

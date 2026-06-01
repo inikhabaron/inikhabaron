@@ -2,7 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Search, Sun, Moon, User, Home, LogOut as LogOutIcon, Bell, ChevronDown } from 'lucide-react';
-import { FaChromecast, FaRegUser, FaFacebookF, FaXTwitter, FaYoutube, FaInstagram } from 'react-icons/fa6';
+import { FaHouseChimney, FaRegUser, FaFacebookF, FaXTwitter, FaYoutube, FaInstagram } from 'react-icons/fa6';
 import styles from './Header.module.css';
 
 const ACCENT        = '#3BAFDA';
@@ -272,16 +272,16 @@ export default function Header({
               )}
             </button>
 
-            {/* LIVE */}
-            <button onClick={() => window.location.href = '/live'}
+            {/* HOME */}
+            <button onClick={() => window.location.href = '/'}
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, minWidth: '40px' }}>
               <span
                 style={{ width: '18px', height: '18px', borderRadius: '50%', background: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '8px', fontWeight: 700 }}>
-                <FaChromecast size={20} color={T2} />
+                <FaHouseChimney size={20} color={T2} />
               </span>
               <span
                 style={{ fontSize: '10px', color: T3, whiteSpace: 'nowrap' }}>
-                LIVE
+                HOME
               </span>
             </button>
 
