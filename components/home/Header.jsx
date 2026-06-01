@@ -159,7 +159,7 @@ export default function Header({
       {/* ── TIER 1: Top utility bar ────────────────────────────────────────── */}
       <div style={{ backgroundColor: TOP_BAR_BG, height: '36px', overflow: 'hidden' }}>
         <div style={{
-          maxWidth: '1400px', margin: '0 auto', height: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
+          maxWidth: '1300px', margin: '0 auto', height: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
         }}>
           {/* Date */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -208,7 +208,7 @@ export default function Header({
       {/* ── TIER 2: Logo / brand area ──────────────────────────────────────── */}
       <div style={{ backgroundColor: dark ? '#161B27' : '#ffffff', borderBottom: `1px solid ${bdr}`, height: '120px' }}>
         <div style={{ 
-          maxWidth: '1400px', margin: '0 auto', height: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '20px'
+          maxWidth: '1300px', margin: '0 auto', height: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '20px'
         }}>
           {/* Left: INI logo */}
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
@@ -220,7 +220,7 @@ export default function Header({
           </div>
 
           {/* Center: Main logo + tagline */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', marginLeft: '100px', alignItems: 'center', gap: '2px', flex: 1 }}>
             <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', padding: '4px 10px', display: 'inline-flex', alignItems: 'center' }}>
               <Image src="/khabaron-logo2.png" alt="KhabarON" width={300} height={83} priority style={{ objectFit: 'contain' }} />
             </div>
@@ -238,7 +238,7 @@ export default function Header({
                 onChange={e => setSearchQuery(e.target.value)}
                 onFocus={e => (e.target.style.borderColor = ACCENT)}
                 onBlur={e => (e.target.style.borderColor = bdr)}
-                style={{ width: '200px', padding: '7px 12px 7px 30px', borderRadius: '8px', border: `1px solid ${bdr}`, backgroundColor: dark ? '#252E40' : '#F5F6F8', color: T1, fontSize: '13px', outline: 'none', transition: 'border-color 0.15s' }}
+                style={{ width: '250px', padding: '7px 12px 7px 30px', borderRadius: '8px', border: `1px solid ${bdr}`, backgroundColor: dark ? '#252E40' : '#F5F6F8', color: T1, fontSize: '13px', outline: 'none', transition: 'border-color 0.15s' }}
               />
             </form>
 
@@ -305,7 +305,7 @@ export default function Header({
       <nav className="hide-scrollbar" style={{ backgroundColor: NAV_BG, height: '48px' }}>
         <div className="hide-scrollbar"
           style={{
-            maxWidth: '1400px', margin: '0 auto', height: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '2px', overflowX: 'auto'
+            maxWidth: '1300px', margin: '0 auto', height: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '2px', overflowX: 'auto'
           }}
         >
           {navItems.map(item => {

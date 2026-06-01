@@ -10,7 +10,7 @@ export default function TrendingBar({ tags, selectedLanguage, onTagClick, dark }
 
   return (
     <div className="kn-trending" style={{ backgroundColor: dark ? '#161B27' : '#ffffff', borderBottomColor: dark ? '#252E40' : '#E8EAED' }}>
-      <div style={{ maxWidth: '1400px', margin: '0 auto', width: '100%', display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ maxWidth: '1300px', margin: '0 auto', width: '100%', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <span className="kn-trending-badge">
           {selectedLanguage === 'hi' ? 'ट्रेंडिंग' : 'Trending'}
         </span>

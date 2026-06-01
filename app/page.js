@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { auth, signInWithGoogle, signInWithApple, logOut } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { toast } from 'sonner';
@@ -16,7 +17,7 @@ import ArticleCard from '@/components/home/ArticleCard';
 import LatestNews from '@/components/home/LatestNews';
 import CategoryShowcase from '@/components/home/CategoryShowcase';
 import SiteFooter from '@/components/home/SiteFooter';
-import ArticleModal from '@/components/home/ArticleModal';
+// import ArticleModal from '@/components/home/ArticleModal';
 import AuthDialog from '@/components/home/AuthDialog';
 import SubscriptionPlans from '@/components/home/SubscriptionPlans';
 import MobileSearch from '@/components/home/MobileSearch';
@@ -41,7 +42,7 @@ export default function HomePage() {
   // ── UI state ─────────────────────────────────────────────────────────────
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedNews, setSelectedNews] = useState(null);
+  // const [selectedNews, setSelectedNews] = useState(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -70,6 +71,8 @@ export default function HomePage() {
   const [showShareMenu, setShowShareMenu] = useState(null);
 
   const shareMenuRef = useRef(null);
+  const router = useRouter();
+  const goToArticle = (item) => router.push(`/news/${item.id}`);
   const t = translations[selectedLanguage];
 
   // ── Effects ───────────────────────────────────────────────────────────────
@@ -174,12 +177,12 @@ export default function HomePage() {
   const shareOnTwitter = (item) => { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(item.title)}&url=${encodeURIComponent(window.location.origin + '/news/' + item.id)}`, '_blank'); trackShare(item.id, 'twitter'); };
   const shareOnFacebook = (item) => { window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/news/' + item.id)}`, '_blank'); trackShare(item.id, 'facebook'); };
 
-  const handleSaveProgress = async (scrollPct) => {
-    if (!selectedNews || !userId || scrollPct <= 0) return;
-    try {
-      await fetch('/api/users/reading-history', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, newsId: selectedNews.id, newsTitle: selectedNews.title, newsExcerpt: selectedNews.excerpt, newsFeaturedImage: selectedNews.featuredImage, newsCategory: selectedNews.category, scrollPosition: scrollPct, readPercentage: scrollPct }) });
-    } catch (e) { console.error(e); }
-  };
+  // const handleSaveProgress = async (scrollPct) => {
+  //   if (!selectedNews || !userId || scrollPct <= 0) return;
+  //   try {
+  //     await fetch('/api/users/reading-history', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, newsId: selectedNews.id, newsTitle: selectedNews.title, newsExcerpt: selectedNews.excerpt, newsFeaturedImage: selectedNews.featuredImage, newsCategory: selectedNews.category, scrollPosition: scrollPct, readPercentage: scrollPct }) });
+  //   } catch (e) { console.error(e); }
+  // };
 
   const handleNewsletterSubscribe = async () => {
     if (!newsletterEmail.trim()) { toast.error(selectedLanguage === 'hi' ? 'ईमेल दर्ज करें' : 'Please enter email'); return; }
@@ -222,7 +225,7 @@ export default function HomePage() {
             selectedCategory={selectedCategory}
             onClose={() => setShowMobileSearch(false)}
             onSearch={(q) => { setPage(1); fetchNews(selectedCategory, q, 1); }}
-            onArticleClick={setSelectedNews}
+            onArticleClick={goToArticle}
             formatDate={formatDate}
           />
         )}
@@ -249,7 +252,7 @@ export default function HomePage() {
           
           {breakingNews.length > 0 && (
             <div className="kn-breaking-ticker" style={{ height: '46px', background: dark ? '#150e0e' : '#FFF5F5', borderTop: `1px solid ${dark ? '#3a1f1f' : '#FED7D7'}`, borderBottom: `1px solid ${dark ? '#3a1f1f' : '#FED7D7'}` }}>
-              <div style={{ maxWidth: '1400px', margin: '0 auto', height: '100%', display: 'flex', alignItems: 'center' }}>
+              <div style={{ maxWidth: '1300px', margin: '0 auto', height: '100%', display: 'flex', alignItems: 'center' }}>
                 {/* Breaking Label */}
                 <div className="kn-breaking-label" style={{ minWidth: '105px', height: '24px', background: '#D72638', color: '#fff', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, letterSpacing: '1px' }}>
                   ● BREAKING
@@ -307,7 +310,7 @@ export default function HomePage() {
               /* ── Mobile list ──────────────────────────────────────────── */
               <div className="kn-mobile-list">
                 {news.map(item => (
-                  <div key={item.id} onClick={() => setSelectedNews(item)} className="kn-mobile-item" style={{ borderBottom: `1px solid ${bdr}` }}>
+                  <div key={item.id} onClick={() => goToArticle(item)} className="kn-mobile-item" style={{ borderBottom: `1px solid ${bdr}` }}>
                     <div className="kn-mobile-item-text">
                       <div className="kn-mobile-item-cat-row">
                         <span className="kn-mobile-item-cat-dot" style={{ backgroundColor: getCatAccent(item.category) }} />
@@ -333,7 +336,7 @@ export default function HomePage() {
                 {/* Left column */}
                 <div>
                   {news.length > 0 && (
-                    <HeroCard item={news[0]} onClick={setSelectedNews} {...sharedCardProps} />
+                    <HeroCard item={news[0]} onClick={goToArticle} {...sharedCardProps} />
                   )}
 
                   {news.length > 2 && (
@@ -347,7 +350,7 @@ export default function HomePage() {
 
                   <div className="kn-horizontal-grid">
                     {news.slice(2, 6).map(item => (
-                      <HorizontalArticleCard key={item.id} item={item} onClick={setSelectedNews} {...sharedCardProps} />
+                      <HorizontalArticleCard key={item.id} item={item} onClick={goToArticle} {...sharedCardProps} />
                     ))}
                   </div>
 
@@ -361,7 +364,7 @@ export default function HomePage() {
                       </div>
                       <div className="kn-article-grid">
                         {news.slice(5).map(item => (
-                          <ArticleCard key={item.id} item={item} onClick={setSelectedNews} formatDate={formatDate} showShareMenu={showShareMenu} setShowShareMenu={setShowShareMenu} selectedLanguage={selectedLanguage} onShareWhatsApp={shareOnWhatsApp} onShareTwitter={shareOnTwitter} onShareFacebook={shareOnFacebook} />
+                          <ArticleCard key={item.id} item={item} onClick={goToArticle} formatDate={formatDate} showShareMenu={showShareMenu} setShowShareMenu={setShowShareMenu} selectedLanguage={selectedLanguage} onShareWhatsApp={shareOnWhatsApp} onShareTwitter={shareOnTwitter} onShareFacebook={shareOnFacebook} />
                         ))}
                       </div>
                     </>
@@ -393,7 +396,7 @@ export default function HomePage() {
                     </div>
                   )} */}
 
-                  <LatestNews items={breakingNews.length > 0 ? breakingNews : news} onArticleClick={setSelectedNews} dark={dark} selectedLanguage={selectedLanguage} formatDate={formatDate} />
+                  <LatestNews items={breakingNews.length > 0 ? breakingNews : news} onArticleClick={goToArticle} dark={dark} selectedLanguage={selectedLanguage} formatDate={formatDate} />
 
                   <button onClick={() => setSubscriptionOpen(true)} className="kn-premium-btn" style={{ backgroundColor: ACCENT, color: 'white' }} onMouseEnter={e => (e.currentTarget.style.backgroundColor = ACCENT_H)} onMouseLeave={e => (e.currentTarget.style.backgroundColor = ACCENT)}>
                     <Crown style={{ width: '14px', height: '14px', color: '#fde68a' }} />
@@ -425,7 +428,7 @@ export default function HomePage() {
         {/* ── Dialogs ─────────────────────────────────────────────────────── */}
         <AuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} onGoogleSignIn={handleGoogleSignIn} onAppleSignIn={handleAppleSignIn} loading={authLoading} bdr={bdr} />
 
-        <ArticleModal article={selectedNews} onClose={() => setSelectedNews(null)} isMobileView={isMobileView} selectedLanguage={selectedLanguage} surface={surface} bdr={bdr} T1={T1} T2={T2} T3={T3} onShareWhatsApp={shareOnWhatsApp} onShareTwitter={shareOnTwitter} onShareFacebook={shareOnFacebook} onSaveProgress={handleSaveProgress} formatDate={formatDate} />
+        {/* <ArticleModal article={selectedNews} onClose={() => setSelectedNews(null)} isMobileView={isMobileView} selectedLanguage={selectedLanguage} surface={surface} bdr={bdr} T1={T1} T2={T2} T3={T3} onShareWhatsApp={shareOnWhatsApp} onShareTwitter={shareOnTwitter} onShareFacebook={shareOnFacebook} onSaveProgress={handleSaveProgress} formatDate={formatDate} /> */}
 
         <SubscriptionPlans open={subscriptionOpen} onClose={() => setSubscriptionOpen(false)} />
 

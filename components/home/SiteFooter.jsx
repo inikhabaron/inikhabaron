@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import Image from 'next/image';
+import { Mail } from "lucide-react";
 import { getCatLabel } from '@/lib/news-utils';
 import {
   FaFacebookF,
@@ -45,7 +46,9 @@ export default function SiteFooter({ dark, categories, selectedLanguage, onCateg
       <div className="kn-footer-newsletter">
         <div className="kn-footer-nl-inner">
           <div className="kn-footer-nl-text">
-            <span className="kn-footer-nl-icon">✉</span>
+            <div className="kn-footer-nl-icon">
+              <Mail size={48} strokeWidth={2.2} />
+            </div>
             <div>
               <p className="kn-footer-nl-heading">{selectedLanguage === 'hi' ? 'लेटेस्ट खबरों के लिए हमारे न्यूज़लेटर को सब्सक्राइब करें' : 'Subscribe to our newsletter for the latest news'}</p>
               <p className="kn-footer-nl-sub">{selectedLanguage === 'hi' ? 'हर बड़ी खबर सीधे आपके ईमेल पर' : 'Get top stories delivered to your inbox'}</p>
