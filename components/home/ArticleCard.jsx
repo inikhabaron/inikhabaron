@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useRef, useContext } from 'react';
+import React, { useState, useRef, useContext, useEffect } from 'react';
 import { Bookmark, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
@@ -15,6 +15,30 @@ export default function ArticleCard({
   const catLabel = getCatLabel(item.category, selectedLanguage);
   const wordCount = ((item.content || '').replace(/<[^>]+>/g, '') + ' ' + (item.excerpt || '')).split(/\s+/).filter(Boolean).length;
   const readTime = Math.max(1, Math.ceil(wordCount / 200));
+  const shareMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        shareMenuRef.current &&
+        !shareMenuRef.current.contains(event.target)
+      ) {
+        setShowShareMenu(null);
+      }
+    };
+
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+    };
+  }, []);
 
   return (
     <div
@@ -48,9 +72,9 @@ export default function ArticleCard({
             <span style={{ fontSize: `${10 * scale}px`, color: '#8A8F98', whiteSpace: 'nowrap' }}>· {readTime} min</span>
           </div>
           <div className="kn-card-actions">
-            <button onClick={(e) => e.stopPropagation()} className="kn-card-action-btn">
+            {/* <button onClick={(e) => e.stopPropagation()} className="kn-card-action-btn">
               <Bookmark style={{ width: '14px', height: '14px' }} />
-            </button>
+            </button> */}
             <div style={{ position: 'relative' }}>
               <button
                 onClick={(e) => { e.stopPropagation(); setShowShareMenu(p => p === item.id ? null : item.id); }}
@@ -59,19 +83,16 @@ export default function ArticleCard({
                 <Share2 style={{ width: '13px', height: '13px' }} />
               </button>
               {showShareMenu === item.id && (
-                <div onClick={(e) => e.stopPropagation()} className="kn-share-menu" style={{ backgroundColor: dark ? '#161B27' : '#fff', borderColor: dark ? '#252E40' : '#E8EAED' }}>
+                <div ref={shareMenuRef} onClick={(e) => e.stopPropagation()} className="kn-share-menu" style={{ backgroundColor: dark ? '#161B27' : '#fff', borderColor: dark ? '#252E40' : '#E8EAED' }}>
                   {[
-                    { label: 'WhatsApp', fn: () => onShareWhatsApp(item) },
-                    { label: 'Twitter',  fn: () => onShareTwitter(item) },
-                    { label: 'Facebook', fn: () => onShareFacebook(item) },
-                    { label: 'Copy Link', fn: () => { navigator.clipboard.writeText(`${window.location.origin}/news/${item.id}`); toast.success('Link copied!'); } },
+                    { label: 'WhatsApp', className:'share-whatsapp', fn: () => onShareWhatsApp(item) },
+                    { label: 'Twitter', className:'share-twitter',  fn: () => onShareTwitter(item) },
+                    { label: 'Facebook', className:'share-facebook', fn: () => onShareFacebook(item) },
+                    { label: 'Copy Link', className:'share-copy-link', fn: () => { navigator.clipboard.writeText(`${window.location.origin}/news/${item.id}`); toast.success('Link copied!'); } },
                   ].map(s => (
                     <button
                       key={s.label} onClick={s.fn}
-                      className="kn-share-item"
-                      style={{ color: dark ? '#E8ECF0' : '#333' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = dark ? '#252E40' : '#f3f4f6')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                      className={`kn-share-item ${s.className || ''}`}
                     >
                       {s.label}
                     </button>

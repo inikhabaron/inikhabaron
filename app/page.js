@@ -311,20 +311,21 @@ export default function HomePage() {
               <div className="kn-mobile-list">
                 {news.map(item => (
                   <div key={item.id} onClick={() => goToArticle(item)} className="kn-mobile-item" style={{ borderBottom: `1px solid ${bdr}` }}>
-                    <div className="kn-mobile-item-text">
-                      <div className="kn-mobile-item-cat-row">
-                        <span className="kn-mobile-item-cat-dot" style={{ backgroundColor: getCatAccent(item.category) }} />
-                        <span style={{ fontSize: '10px', fontWeight: 700, color: getCatAccent(item.category), textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                          {getCatLabel(item.category, selectedLanguage)}
-                        </span>
-                        {item.isBreaking && <span style={{ backgroundColor: EDITORIAL_RED, color: '#fff', fontSize: '9px', fontWeight: 700, padding: '1px 5px', borderRadius: '2px' }}>LIVE</span>}
-                      </div>
-                      <p style={{ fontSize: '14px', fontWeight: 700, color: dark ? '#E8ECF0' : '#111827', lineHeight: 1.4, marginBottom: '7px', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</p>
-                      <span style={{ fontSize: '11px', color: T3 }}>{formatDate(item.publishedAt)}</span>
-                    </div>
                     <div className="kn-mobile-thumb">
                       <img src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=300'} alt={item.title} />
                     </div>
+                    <div className="kn-mobile-item-text" style={{ marginLeft: '12px' }}>
+                      <div className="kn-mobile-item-cat-row">
+                        <span className="kn-mobile-item-cat-dot" style={{ backgroundColor: getCatAccent(item.category) }} />
+                        <span style={{ fontSize: '10px', fontWeight: 700, color: getCatAccent(item.category), textTransform: 'uppercase', letterSpacing: '0.07em', marginLeft: '10px' }}>
+                          {getCatLabel(item.category, selectedLanguage)}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '14px', fontWeight: 700, color: dark ? '#E8ECF0' : '#111827', lineHeight: 1.4, marginBottom: '7px', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</p>
+                      <span style={{ fontSize: '11px', color: T3, marginLeft: '10px' }}>{formatDate(item.publishedAt)}</span> 
+                      {item.isBreaking && <span style={{ backgroundColor: EDITORIAL_RED, color: '#fff', fontSize: '9px', fontWeight: 700, padding: '1px 5px', marginLeft: '10px', borderRadius: '2px' }}>LIVE</span>}
+                    </div>
+                    
                   </div>
                 ))}
               </div>

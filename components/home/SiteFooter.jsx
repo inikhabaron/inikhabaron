@@ -152,7 +152,7 @@ export default function SiteFooter({ dark, categories, selectedLanguage, onCateg
 
       {/* Copyright */}
       <div className="kn-footer-copyright" style={{ borderTopColor: dark ? '#252E40' : '#E8EAED' }}>
-        <p style={{ color: T3 }}>© 2024 खबरON. {selectedLanguage === 'hi' ? 'सभी अधिकार सुरक्षित।' : 'All rights reserved.'}</p>
+        <p style={{ color: T3 }}>© 2026 खबरON. {selectedLanguage === 'hi' ? 'सभी अधिकार सुरक्षित।' : 'All rights reserved.'}</p>
       </div>
     </footer>
   );

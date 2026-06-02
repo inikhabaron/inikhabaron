@@ -1,9 +1,10 @@
 'use client';
 import React, { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Search, Sun, Moon, User, Home, LogOut as LogOutIcon, Bell, ChevronDown } from 'lucide-react';
+import { Search, Sun, Moon, User, Home, LogOut as LogOutIcon, Bell, ChevronDown, ChevronLeft, ChevronRight, Video } from 'lucide-react';
 import { FaChromecast, FaRegUser, FaFacebookF, FaXTwitter, FaYoutube, FaInstagram } from 'react-icons/fa6';
 import styles from './Header.module.css';
+import { useRouter } from "next/navigation";
 
 const ACCENT        = '#3BAFDA';
 const EDITORIAL_RED = '#D72638';
@@ -24,6 +25,7 @@ export default function Header({
 }) {
   const profileRef  = useRef(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     function handleOutside(e) {
@@ -54,7 +56,7 @@ export default function Header({
     { label: selectedLanguage === 'hi' ? 'साहित्य'      : 'Literature',        slug: 'literature' },
     { label: selectedLanguage === 'hi' ? 'आध्यात्म'     : 'Spirituality',         slug: 'spirituality' },
     { label: selectedLanguage === 'hi' ? 'लोकरुचि'      : 'Lifestyle',        slug: 'lifestyle' },
-    { label: selectedLanguage === 'hi' ? 'स्थानीय'     : 'Local',         slug: 'local' }
+    { label: selectedLanguage === 'hi' ? 'स्थानीय'     : 'Local',         slug: 'local' },
   ];
 
   const mobileNavItems = [
@@ -64,6 +66,48 @@ export default function Header({
       slug: cat.slug,
     })),
   ];
+
+  const navScrollRef = useRef(null);
+
+  const [clicked, setClicked] = useState(null);
+
+  const scrollCategories = (dir) => {
+    setClicked(dir);
+
+    setTimeout(() => {
+      setClicked(null);
+    }, 500);
+
+    const container = navScrollRef.current;
+    if (!container) return;
+
+    const amount = container.clientWidth * 0.45;
+
+    const start = container.scrollLeft;
+    const end =
+      dir === "left"
+        ? start - amount
+        : start + amount;
+
+    const duration = 3000;
+    const startTime = performance.now();
+
+    function animate(time) {
+      const elapsed = time - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+
+      container.scrollLeft =
+        start + (end - start) * easeOut;
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    }
+
+    requestAnimationFrame(animate);
+  };
 
   const topBarDate = new Date().toLocaleDateString(
     selectedLanguage === 'hi' ? 'hi-IN' : 'en-US',
@@ -117,7 +161,7 @@ export default function Header({
         {/* Mobile top row */}
         <div style={{ height: '56px', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', borderBottom: `1px solid ${bdr}` }}>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '6px' }}>
-            <Image src="/LOGO1.jpeg" alt="INI" width={22} height={22} style={{ borderRadius: '3px', opacity: 0.9 }} />
+            <Image src="/LOGO1.jpeg" alt="INI" width={40} height={40} style={{ borderRadius: '3px', opacity: 0.9 }} />
             <div style={{ backgroundColor: '#ffffff', borderRadius: '6px', padding: '2px 6px', display: 'inline-flex' }}>
               <Image src="/khabaron-logo.jpeg" alt="KhabarON" width={100} height={34} priority style={{ objectFit: 'contain' }} />
             </div>
@@ -220,7 +264,7 @@ export default function Header({
           </div>
 
           {/* Center: Main logo + tagline */}
-          <div style={{ display: 'flex', flexDirection: 'column', marginLeft: '100px', alignItems: 'center', gap: '2px', flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', marginLeft: '150px', alignItems: 'center', gap: '2px', flex: 1 }}>
             <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', padding: '4px 10px', display: 'inline-flex', alignItems: 'center' }}>
               <Image src="/khabaron-logo2.png" alt="KhabarON" width={300} height={83} priority style={{ objectFit: 'contain' }} />
             </div>
@@ -256,7 +300,7 @@ export default function Header({
             >
               <FaRegUser size={20} color={T2} />
               <span style={{ fontSize: '10px', color: T3, whiteSpace: 'nowrap' }}>
-                Admin
+                {selectedLanguage === 'hi' ? 'एडमिन' : 'Admin'}
               </span>
             </button>
 
@@ -265,7 +309,7 @@ export default function Header({
               style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, minWidth: '28px' }}>
               <Bell size={20} color={T2} />
               <span style={{ fontSize: '10px', color: T3, whiteSpace: 'nowrap' }}>
-                Bell
+                {selectedLanguage === 'hi' ? 'बेल' : 'Bell'}
               </span>
               {breakingNews.length > 0 && (
                 <span style={{ position: 'absolute', top: '-2px', right: '-2px', width: '7px', height: '7px', backgroundColor: EDITORIAL_RED, borderRadius: '50%' }} />
@@ -273,7 +317,7 @@ export default function Header({
             </button>
 
             {/* LIVE */}
-            <button onClick={() => window.location.href = '/live'}
+            {/* <button onClick={() => window.location.href = '/live'}
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, minWidth: '40px' }}>
               <span
                 style={{ width: '18px', height: '18px', borderRadius: '50%', background: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '8px', fontWeight: 700 }}>
@@ -283,7 +327,7 @@ export default function Header({
                 style={{ fontSize: '10px', color: T3, whiteSpace: 'nowrap' }}>
                 LIVE
               </span>
-            </button>
+            </button> */}
 
             {/* Login / Profile */}
             <div style={{ position: 'relative' }}>
@@ -302,54 +346,82 @@ export default function Header({
       </div>
 
       {/* ── TIER 3: Navigation bar ─────────────────────────────────────────── */}
-      <nav className="hide-scrollbar" style={{ backgroundColor: NAV_BG, height: '48px' }}>
-        <div className="hide-scrollbar"
-          style={{
-            maxWidth: '1300px', margin: '0 auto', height: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '2px', overflowX: 'auto'
-          }}
-        >
-          {navItems.map(item => {
-            const isActive = selectedCategory === item.slug;
-            return (
-              <button
-                key={item.slug}
-                onClick={() => setSelectedCategory(item.slug)}
-                style={{
-                  display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '5px',
-                  padding: '6px 14px', borderRadius: '4px', border: 'none', cursor: 'pointer',
-                  flexShrink: 0, whiteSpace: 'nowrap', transition: 'background-color 0.15s',
-                  backgroundColor: isActive ? EDITORIAL_RED : 'transparent',
-                  color: 'white', fontSize: '13.5px', fontWeight: isActive ? 600 : 400,
-                }}
-                onMouseEnter={e => { if (!isActive) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'; }}
-                onMouseLeave={e => { if (!isActive) e.currentTarget.style.backgroundColor = 'transparent'; }}
-              >
-                {item.icon && <Home size={14} style={{ flexShrink: 0 }} />}
-                {item.label}
-              </button>
-            );
-          })}
+      <nav>
+        <div className={styles.navBar}  >
+          <div className={styles.navBarInner}>
 
-          {/* More dropdown
-          <div style={{ position: 'relative', marginLeft: 'auto', flexShrink: 0 }}>
-            <button
-              onClick={() => setShowMoreMenu(p => !p)}
-              style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '4px', padding: '6px 14px', borderRadius: '4px', border: 'none', cursor: 'pointer', backgroundColor: 'transparent', color: 'rgba(255,255,255,0.8)', fontSize: '13.5px', whiteSpace: 'nowrap' }}>
-              ≡ {selectedLanguage === 'hi' ? 'और' : 'More'}
+            {/* HOME FIXED LEFT */}
+
+            <button className={`${styles.navFixedBtn} ${styles.navItemActive}`}
+              onClick={() => router.push("/")} >
+              <Home size={16} />
             </button>
-            {showMoreMenu && (
-              <div style={{ position: 'absolute', top: '48px', right: 0, backgroundColor: surface, border: `1px solid ${bdr}`, borderRadius: '8px', minWidth: '160px', boxShadow: '0 8px 20px rgba(0,0,0,0.12)', zIndex: 200, overflow: 'hidden' }}>
-                <button
-                  onClick={() => { window.location.href = '/admin'; setShowMoreMenu(false); }}
-                  style={{ width: '100%', textAlign: 'left', padding: '10px 14px', border: 'none', background: 'transparent', cursor: 'pointer', color: T2, fontSize: '13px' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = dark ? '#252E40' : '#F5F6F8')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                >
-                  Admin Panel
-                </button>
+
+            {/* LEFT SCROLL */}
+
+            <button className={`${styles.navArrow} ${ clicked === "left" ? styles.clicked : "" }`}
+              onClick={() => scrollCategories("left")} >
+              <ChevronLeft size={18} />
+            </button>
+
+            {/* CATEGORIES */}
+
+            <div className={styles.navCategoriesWrapper}>
+                <div
+                ref={navScrollRef}
+                className={styles.navCategories} >
+                {navItems.map((item) => {
+                  const isActive = selectedCategory === item.slug;
+
+                  return (
+                    <button
+                      key={item.slug}
+                      className={`${styles.navItem} ${ isActive ? styles.navItemActive : "" }`}
+                      onClick={() => setSelectedCategory(item.slug)}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
               </div>
-            )}
-          </div> */}
+            </div>
+
+            {/* RIGHT SCROLL */}
+
+            <button className={styles.navArrow}
+              onClick={() => scrollCategories("right")} >
+              <ChevronRight size={18} />
+            </button>
+
+            {/* LIVE VIDEO FIXED RIGHT */}
+
+            <button className={styles.liveVideoBtn}
+              onClick={() => router.push("/live")} >
+              {selectedLanguage === 'hi' ? 'वीडियो' : 'Video'}
+            </button>
+
+
+            {/* More dropdown
+            <div style={{ position: 'relative', marginLeft: 'auto', flexShrink: 0 }}>
+              <button
+                onClick={() => setShowMoreMenu(p => !p)}
+                style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '4px', padding: '6px 14px', borderRadius: '4px', border: 'none', cursor: 'pointer', backgroundColor: 'transparent', color: 'rgba(255,255,255,0.8)', fontSize: '13.5px', whiteSpace: 'nowrap' }}>
+                ≡ {selectedLanguage === 'hi' ? 'और' : 'More'}
+              </button>
+              {showMoreMenu && (
+                <div style={{ position: 'absolute', top: '48px', right: 0, backgroundColor: surface, border: `1px solid ${bdr}`, borderRadius: '8px', minWidth: '160px', boxShadow: '0 8px 20px rgba(0,0,0,0.12)', zIndex: 200, overflow: 'hidden' }}>
+                  <button
+                    onClick={() => { window.location.href = '/admin'; setShowMoreMenu(false); }}
+                    style={{ width: '100%', textAlign: 'left', padding: '10px 14px', border: 'none', background: 'transparent', cursor: 'pointer', color: T2, fontSize: '13px' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = dark ? '#252E40' : '#F5F6F8')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    Admin Panel
+                  </button>
+                </div>
+              )}
+            </div> */}
+          </div>
         </div>
       </nav>
     </header>
