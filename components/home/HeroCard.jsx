@@ -50,6 +50,7 @@ export default function HeroCard({ item, onClick, formatDate, selectedLanguage, 
             ref={shareMenuRef}
             onClick={(e) => e.stopPropagation()}
             className="kn-hero-share-menu"
+            style={{ backgroundColor: dark ? '#161B27' : '#fff', borderColor: dark ? '#252E40' : '#E8EAED' }}
           >
             {[
               {
