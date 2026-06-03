@@ -426,7 +426,7 @@ export default function HomePage() {
           <SiteFooter dark={dark} categories={categories} selectedLanguage={selectedLanguage} onCategoryClick={setSelectedCategory} newsletterEmail={newsletterEmail} setNewsletterEmail={setNewsletterEmail} onNewsletterSubscribe={handleNewsletterSubscribe} newsletterLoading={newsletterLoading} />
         </div>
 
-        {/* ── Dialogs ─────────────────────────────────────────────────────── */}
+        {/* -- Dialogs ---------------------------------------------------- */}
         <AuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} onGoogleSignIn={handleGoogleSignIn} onAppleSignIn={handleAppleSignIn} loading={authLoading} bdr={bdr} />
 
         {/* <ArticleModal article={selectedNews} onClose={() => setSelectedNews(null)} isMobileView={isMobileView} selectedLanguage={selectedLanguage} surface={surface} bdr={bdr} T1={T1} T2={T2} T3={T3} onShareWhatsApp={shareOnWhatsApp} onShareTwitter={shareOnTwitter} onShareFacebook={shareOnFacebook} onSaveProgress={handleSaveProgress} formatDate={formatDate} /> */}

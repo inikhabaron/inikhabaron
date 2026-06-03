@@ -7,7 +7,7 @@
 ```
          HIGH IMPACT
               ↑
-              │  [1] NO INDEXES ✅ FIXED
+              │  [1] NO INDEXES ✅ FIXED (auto-init on DB connect)
               │  [2] PLAIN TEXT PASSWORDS ✅ FIXED
               │  [3] FORGEABLE TOKENS ✅ FIXED
               │  
@@ -16,22 +16,27 @@
               │  [6] NO RATE LIMITING ✅ FIXED
               │  
               │  [7] BROKEN PUBLISHING ✅ FIXED
-              │  [10] N+1 QUERIES ★★★☆☆
-              │  [11] NO CACHING ★★★☆☆
+              │  [10] N+1 QUERIES ✅ OK
+              │  [11] NO CACHING ✅ FIXED
               │  
               │  [8] NO CONNECTION POOL ✅ FIXED
-              │  [9] NO ERROR BOUNDARIES ★★★☆☆
+              │  [9] NO ERROR BOUNDARIES ✅ FIXED
               │  
-              │  [12] IMAGE OPTIMIZATION ★★★★☆
-              │  [14] UNNECESSARY RERENDERS ★★★★☆
+              │  [12] IMAGE OPTIMIZATION ✅ FIXED
+              │  [14] UNNECESSARY RERENDERS ✅ FIXED
               │
-              │  [13] DATABASE TYPO ★★☆☆☆
-              │  [15] NO LAZY LOADING ★★★★☆
+              │  [13] DATABASE TYPO ✅ FIXED
+              │  [15] NO LAZY LOADING ✅ FIXED
               │  [16] EXPOSED CREDENTIALS ✅ FIXED
-              │  [17] FONT LOADING ★★☆☆☆
-              │  [18] MARQUEE LEAK ★★☆☆☆
+              │  [19] MISSING/UNSET ENV VARS ✅ (added .env.example; set at runtime)
+              │  [20] TODO CONFIGS (Cloudinary/Firebase) ✅ (warnings added; configure env)
+              │  [21] NPM AUDIT VULNERABILITIES ⚠️ (31 remaining; safe axios patch applied)
+              │  [22] EXCESSIVE CONSOLE LOGS ✅ FIXED (replaced with `lib/logger`)
+              │  [17] FONT LOADING ✅ FIXED
+              │  [18] MARQUEE LEAK ✅ FIXED
               │
               └──────────────────────────→ EFFORT
                       LOW      HIGH
 
-✅ = FIXED | ★ = Hours to fix
+✅ = FIXED | ⚠️ = Action required (e.g., run init) | ★ = Hours to fix
+```

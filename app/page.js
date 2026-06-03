@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, signInWithGoogle, signInWithApple, logOut } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -210,6 +210,17 @@ export default function HomePage() {
   // ─── Shared article card props ─────────────────────────────────────────────
   const sharedCardProps = { formatDate, selectedLanguage, dark, textScale, selectedFont, bdr, T1, T2, T3 };
 
+  // Marquee items memoized to avoid recreating duplicated arrays on every render
+  const marqueeItems = useMemo(() => {
+    if (!breakingNews || breakingNews.length === 0) return [];
+    const items = [];
+    breakingNews.forEach((item) => items.push({ key: `${item.id}-a`, title: item.title }));
+    breakingNews.forEach((item) => items.push({ key: `${item.id}-b`, title: item.title }));
+    return items;
+  }, [breakingNews]);
+
+  const marqueeDuration = Math.max(20, (breakingNews?.length || 0) * 6); // seconds
+
   // ──────────────────────────────────────────────────────────────────────────
   return (
     <DarkCtx.Provider value={dark}>
@@ -262,7 +273,7 @@ export default function HomePage() {
                   <div className="animate-marquee">
                     {[...breakingNews, ...breakingNews].map((item, i) => (
                       <span key={`${item.id}-${i}`}
-                        style={{ color: dark ? '#FCA5A5' : '#991B1B', fontSize: '15px', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                        style={{ color: dark ? '#FCA5A5' : '#991B1B', fontSize: '15px', fontWeight: 500,  whiteSpace: 'nowrap' }}>
                         {item.title}
                         <span
                           style={{ color: dark ? '#FCA5A5' : '#991B1B', marginLeft: '22px', marginRight: '22px', fontSize: '14px' }}>
@@ -426,7 +437,7 @@ export default function HomePage() {
           <SiteFooter dark={dark} categories={categories} selectedLanguage={selectedLanguage} onCategoryClick={setSelectedCategory} newsletterEmail={newsletterEmail} setNewsletterEmail={setNewsletterEmail} onNewsletterSubscribe={handleNewsletterSubscribe} newsletterLoading={newsletterLoading} />
         </div>
 
-        {/* ── Dialogs ─────────────────────────────────────────────────────── */}
+        {/* -- Dialogs ---------------------------------------------------- */}
         <AuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} onGoogleSignIn={handleGoogleSignIn} onAppleSignIn={handleAppleSignIn} loading={authLoading} bdr={bdr} />
 
         {/* <ArticleModal article={selectedNews} onClose={() => setSelectedNews(null)} isMobileView={isMobileView} selectedLanguage={selectedLanguage} surface={surface} bdr={bdr} T1={T1} T2={T2} T3={T3} onShareWhatsApp={shareOnWhatsApp} onShareTwitter={shareOnTwitter} onShareFacebook={shareOnFacebook} onSaveProgress={handleSaveProgress} formatDate={formatDate} /> */}

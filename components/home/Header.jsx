@@ -72,6 +72,15 @@ export default function Header({
   const navScrollRef = useRef(null);
 
   const [clicked, setClicked] = useState(null);
+  const [topBarDate, setTopBarDate] = useState('');
+
+  useEffect(() => {
+    const formattedDate = new Date().toLocaleDateString(
+      selectedLanguage === 'hi' ? 'hi-IN' : 'en-US',
+      { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }
+    );
+    setTopBarDate(formattedDate);
+  }, [selectedLanguage]);
 
   const scrollCategories = (dir) => {
     setClicked(dir);
@@ -110,11 +119,6 @@ export default function Header({
 
     requestAnimationFrame(animate);
   };
-
-  const topBarDate = new Date().toLocaleDateString(
-    selectedLanguage === 'hi' ? 'hi-IN' : 'en-US',
-    { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }
-  );
 
   // ── Profile dropdown (shared mobile + desktop) ───────────────────────────
   const ProfileDropdown = () => (
