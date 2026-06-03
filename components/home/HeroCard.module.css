@@ -1,84 +1,47 @@
-.card {
-  position: relative;
-  border-radius: 12px;
-  overflow: hidden;
-  cursor: pointer;
-  height: 400px;
+/* ── HeroCard ─────────────────────────────────────────── */
+.kn-hero {
+  all: unset;
+  display: block !important;
+  position: relative !important;
+  width: 100% !important;
+  aspect-ratio: 16 / 9 !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+  margin-bottom: 24px !important;
+  background-color: #111 !important;
+  box-sizing: border-box !important;
 }
 
-
-.image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform 0.4s ease;
+.kn-hero img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center top !important;
+  display: block !important;
 }
 
-.card:hover .image {
+/* Disable any old overrides — layout fully inline now */
+.kn-hero-grad,
+.kn-hero-content,
+.kn-hero-badges,
+.kn-hero-title,
+.kn-hero-excerpt,
+.kn-hero-date,
+.kn-breaking-badge,
+.kn-cat-badge {
+  all: unset;
+}
+
+/* Hover lift */
+.kn-hero:hover {
+  transform: translateY(-2px);
+  transition: transform 0.2s ease;
+}
+
+.kn-hero:hover img {
   transform: scale(1.02);
-}
-
-.gradient {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.05) 100%);
-}
-
-.content {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 24px 22px;
-}
-
-.badges {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.Badge {
-  background-color: #D72638;
-  color: white;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 3px;
-  letter-spacing: 0.07em;
-}
-
-.catBadge {
-  color: white;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 3px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.title {
-  color: white;
-  font-weight: 800;
-  line-height: 1.25;
-  margin: 0 0 10px;
-  max-width: 90%;
-}
-
-.excerpt {
-  color: rgba(255,255,255,0.78);
-  line-height: 1.5;
-  margin: 0 0 12px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.date {
-  color: rgba(255,255,255,0.6);
-  font-size: 12px;
+  transition: transform 0.4s ease;
 }

@@ -204,7 +204,7 @@ export default function HomePage() {
   const T2 = dark ? '#9BA5B4' : '#4B5563';
   const T3 = '#8A8F98';
 
-  const HEADER_H = isMobileView ? 105 : 204;
+  const HEADER_H = isMobileView ? 105 : 0;
   const contentPad = isMobileView ? '12px' : '24px 5px';
 
   // ─── Shared article card props ─────────────────────────────────────────────
