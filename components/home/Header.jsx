@@ -73,6 +73,7 @@ export default function Header({
 
   const [clicked, setClicked] = useState(null);
   const [topBarDate, setTopBarDate] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
     const formattedDate = new Date().toLocaleDateString(
@@ -204,16 +205,18 @@ export default function Header({
   // DESKTOP HEADER (3-tier)
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <header style={{ position: 'fixed', left: 0, top: 0, width: '100%', zIndex: 50 }}>
+    <header style={{ width: '100vw', zIndex: 100 }}>
 
       {/* ── TIER 1: Top utility bar ────────────────────────────────────────── */}
-      <div style={{ backgroundColor: TOP_BAR_BG, height: '36px', overflow: 'hidden' }}>
-        <div style={{
-          maxWidth: '1300px', margin: '0 auto', height: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '18px',
-        }}>
+      <div style={{ backgroundColor: TOP_BAR_BG, overflow: 'hidden' }}>
+        <div className={styles.topDateDiv}>
           {/* Date */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <span style={{ fontSize: '14px', fontWeight: 500, color: 'rgba(255,255,255,0.75)', whiteSpace: 'nowrap' }}>
+          <div   style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '20px'
+          }}>
+            <span style={{ fontSize: '16px', fontWeight: 600, color: 'white', whiteSpace: 'nowrap' }}>
               {topBarDate}
             </span>
 
@@ -223,7 +226,7 @@ export default function Header({
             </span> */}
             {/* <button style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.75)', cursor: 'pointer', fontSize: '11px', padding: 0, whiteSpace: 'nowrap' }}>ई-पेपर</button> */}
             <select value={selectedLanguage} onChange={e => setSelectedLanguage(e.target.value)}
-              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', cursor: 'pointer', fontSize: '14px', fontWeight: 500, outline: 'none' }}>
+              style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '16px', fontWeight: 600, outline: 'none' }}>
               <option value="hi" style={{ color: '#000' }}>हिंदी</option>
               <option value="en" style={{ color: '#000' }}>English</option>
             </select>
@@ -232,9 +235,9 @@ export default function Header({
           {/* Right: utility links + social icons */}
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '14px', flexShrink: 0 }}>
             {[ selectedLanguage === 'hi' ? 'हमारे बारे में' : 'About Us', selectedLanguage === 'hi' ? 'विज्ञापन दें' : 'Advertise with us', selectedLanguage === 'hi' ? 'संपर्क करें' : 'Contact Us'].map(link => (
-              <button key={link} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.72)', cursor: 'pointer', fontSize: '14px', fontWeight: 500, padding: 0, whiteSpace: 'nowrap' }}>{link}</button>
+              <button key={link} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '16px', fontWeight: 600, padding: 0, whiteSpace: 'nowrap' }}>{link}</button>
             ))}
-            <div className="kn-footer-social-row" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', color: 'rgba(255,255,255,0.72)' }}>
+            <div className="kn-footer-social-row" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '4px', color: 'white' }}>
               <button className="kn-footer-social-btn">
                 <FaFacebook size={18} />
               </button>
@@ -256,97 +259,140 @@ export default function Header({
       </div>
 
       {/* ── TIER 2: Logo / brand area ──────────────────────────────────────── */}
-      <div style={{ backgroundColor: dark ? '#161B27' : '#ffffff', borderBottom: `1px solid ${bdr}`, height: '120px' }}>
-        <div style={{ 
-          maxWidth: '1300px', margin: '0 auto', height: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '20px'
-        }}>
-          {/* Left: INI logo */}
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-            <Image src="/LOGO1.jpeg" alt="INI" width={110} height={110} style={{ borderRadius: '8px', objectFit: 'cover' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.3, fontSize: '9px', fontWeight: 800, color: dark ? '#9ca3af' : '#6B7280', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              {/* <span>INTEGRAL NEWS</span>
-              <span>OF INDIA</span> */}
+      <div style={{ backgroundColor: dark ? '#161B27' : '#ffffff', borderBottom: `1px solid ${bdr}` }}>
+        <div className={styles.logoMainDiv}>
+          <div className={styles.logoImgDiv}>
+            {/* Left: INI logo */}
+            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+              <Image src="/LOGO1.jpeg" alt="INI" width={170} height={170}/>
+              <div style={{ color: dark ? '#9ca3af' : '#6B7280'}}>
+                {/* <span>INTEGRAL NEWS</span>
+                <span>OF INDIA</span> */}
+              </div>
             </div>
-          </div>
 
-          {/* Center: Main logo + tagline */}
-          <div style={{ display: 'flex', flexDirection: 'column', marginRight: '150px', alignItems: 'center', gap: '2px', flex: 1 }}>
-            <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', padding: '4px 10px', display: 'inline-flex', alignItems: 'center' }}>
-              <Image src="/khabaron-logo2.png" alt="KhabarON" width={300} height={83} priority style={{ objectFit: 'contain' }} />
+            {/* Center: Main logo + tagline */}
+            <div>
+              <div style={{ color: dark ? '#9ca3af' : '#6B7280'}}>
+                <Image src="/khabaron-logo2.png" alt="KhabarON" width={480} height={460} style={{ objectFit: 'contain' }} />
+              </div>
             </div>
           </div>
 
           {/* Right: Search + Dark mode + Notification + Login */}
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '18px', flexShrink: 0 }}>
+          <div className={styles.headerActions}>
             {/* Search */}
-            <form onSubmit={onSearch} style={{ position: 'relative' }}>
-              <Search style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', width: '13px', height: '13px', color: T3, pointerEvents: 'none' }} />
-              <input
-                type="search"
-                placeholder={t.searchPlaceholder}
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                onFocus={e => (e.target.style.borderColor = ACCENT)}
-                onBlur={e => (e.target.style.borderColor = bdr)}
-                style={{ width: '250px', padding: '7px 12px 7px 30px', borderRadius: '8px', border: `1px solid ${bdr}`, backgroundColor: dark ? '#252E40' : '#F5F6F8', color: T1, fontSize: '13px', outline: 'none', transition: 'border-color 0.15s' }}
-              />
-            </form>
+            {showSearch ? (
+              <form onSubmit={onSearch} className={styles.searchForm}>
+                <Search className={styles.searchIcon}  color={T2} />
 
-            {/* Dark mode */}
-            <button onClick={toggleDark}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, minWidth: '40px' }}>
-              {dark ? <Moon size={20} color={T2} /> : <Sun size={30} color={T2} />}
-              <span style={{ fontSize: '10px', color: T3, whiteSpace: 'nowrap' }}>{selectedLanguage === 'hi' ? 'डार्क मोड' : 'Dark'}</span>
-            </button>
+                <input
+                  autoFocus
+                  type="search"
+                  placeholder={t.searchPlaceholder}
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  onFocus={e => (e.target.style.borderColor = ACCENT)}
+                  onBlur={e => {
+                    e.target.style.borderColor = bdr;
 
-            {/* Admin Panel */}
+                    if (!searchQuery.trim()) {
+                      setShowSearch(false);
+                    }
+                  }}
+                  className={styles.searchInput}
+                  style={{
+                    borderColor: bdr,
+                    backgroundColor: dark ? '#252E40' : '#F5F6F8',
+                    color: T1
+                  }}
+                />
+              </form>
+            ) : (
+              <button
+                onClick={() => setShowSearch(true)}
+                className={styles.iconButton}
+              >
+                <div className={styles.iconCircle}>
+                  <Search size={34}  color={T2} />
+                </div>
+
+                <span className={styles.iconLabel} style={{ color: dark ? '#FFFFFF' : '#152a58' }}>
+                  {selectedLanguage === 'hi' ? 'खोजें' : 'Search'}
+                </span>
+              </button>
+            )}
+
+            {/* Dark Mode */}
             <button
-              onClick={() => window.location.href = '/admin'}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, minWidth: '55px' }}
+              onClick={toggleDark}
+              className={styles.iconButton}
             >
-              <FaRegUser size={30} color={T2} />
-              <span style={{ fontSize: '10px', color: T3, whiteSpace: 'nowrap' }}>
+              <div className={styles.iconCircle}>
+                {dark
+                  ? <Moon size={34}  color={T2} />
+                  : <Sun size={34}  color={T2} />}
+              </div>
+
+              <span className={styles.iconLabel} style={{ color: dark ? '#FFFFFF' : '#152a58' }}>
+                {selectedLanguage === 'hi' ? 'डार्क मोड' : 'Dark'}
+              </span>
+            </button>
+
+            {/* Admin */}
+            {/* <button
+              onClick={() => (window.location.href = '/admin')}
+              className={styles.iconButton}
+            >
+              <div className={styles.iconCircle}>
+                <FaRegUser size={34} color={T2} />
+              </div>
+
+              <span className={styles.iconLabel} style={{ color: T3 }}>
                 {selectedLanguage === 'hi' ? 'एडमिन' : 'Admin'}
-              </span>
-            </button>
-
-            {/* Notification */}
-            <button onClick={handleNotificationClick}
-              style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, minWidth: '28px' }}>
-              <Bell size={30} color={T2} />
-              <span style={{ fontSize: '10px', color: T3, whiteSpace: 'nowrap' }}>
-                {selectedLanguage === 'hi' ? 'बेल' : 'Bell'}
-              </span>
-              {breakingNews.length > 0 && (
-                <span style={{ position: 'absolute', top: '-2px', right: '-2px', width: '7px', height: '7px', backgroundColor: EDITORIAL_RED, borderRadius: '50%' }} />
-              )}
-            </button>
-
-            {/* LIVE */}
-            {/* <button onClick={() => window.location.href = '/live'}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, minWidth: '40px' }}>
-              <span
-                style={{ width: '18px', height: '18px', borderRadius: '50%', background: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '8px', fontWeight: 700 }}>
-                <FaChromecast size={20} color={T2} />
-              </span>
-              <span
-                style={{ fontSize: '10px', color: T3, whiteSpace: 'nowrap' }}>
-                LIVE
               </span>
             </button> */}
 
+            {/* Notification */}
+            <button
+              onClick={handleNotificationClick}
+              className={`${styles.iconButton} ${styles.notificationButton}`}
+            >
+              <div className={styles.iconCircle}>
+                <Bell size={34}  color={T2} />
+              </div>
+
+              <span className={styles.iconLabel} style={{ color: dark ? '#FFFFFF' : '#152a58' }}>
+                {selectedLanguage === 'hi' ? 'बेल' : 'Bell'}
+              </span>
+
+              {breakingNews.length > 0 && (
+                <span
+                  className={styles.notificationDot}
+                  style={{ backgroundColor: EDITORIAL_RED }}
+                />
+              )}
+            </button>
+
             {/* Login / Profile */}
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => user ? setShowProfileMenu(p => !p) : onSignIn()}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, minWidth: '40px' }}>
-                <User size={30} color={T2} />
-                <span style={{ fontSize: '10px', color: T3, whiteSpace: 'nowrap' }}>
-                  {user ? (user.displayName?.split(' ')[0] || 'Account') : (selectedLanguage === 'hi' ? 'लॉगिन' : 'Login')}
-                </span>
-              </button>
-              {showProfileMenu && <ProfileDropdown />}
-            </div>
+            <button
+              onClick={() =>
+                user ? setShowProfileMenu(prev => !prev) : onSignIn()
+              }
+              className={styles.iconButton}
+            >
+              <div className={styles.iconCircle}>
+                <User size={34} color={T2} />
+              </div>
+
+              <span className={styles.iconLabel} style={{ color: dark ? '#FFFFFF' : '#152a58' }}>
+                {user
+                  ? user.displayName?.split(' ')[0] || 'Account'
+                  : selectedLanguage === 'hi'
+                    ? 'लॉगिन'
+                    : 'Login'}
+              </span>
+            </button>
           </div>
         </div>
       </div>
@@ -384,6 +430,7 @@ export default function Header({
                       key={item.slug}
                       className={`${styles.navItem} ${ isActive ? styles.navItemActive : "" }`}
                       onClick={() => setSelectedCategory(item.slug)}
+                      style={{fontSize: "16px", fontWeight: isActive ? 600 : 500}}
                     >
                       {item.label}
                     </button>

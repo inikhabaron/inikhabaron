@@ -290,7 +290,7 @@ export default function HomePage() {
         )}
 
         {/* Live News Header */}
-        <Header
+        {/* <Header
           dark={dark} toggleDark={toggleDark}
           selectedLanguage={selectedLanguage} setSelectedLanguage={setSelectedLanguage}
           translations={translations}
@@ -300,7 +300,7 @@ export default function HomePage() {
           breakingNews={breakingNews} isMobileView={isMobileView}
           setShowMobileSearch={setShowMobileSearch} setIsSearchActive={setIsSearchActive}
           t={t} surface={surface} bdr={bdr} T1={T1} T2={T2} T3={T3}
-        />
+        /> */}
 
         {/* Page body */}
         <div
