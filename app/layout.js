@@ -38,7 +38,7 @@ export const viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  themeColor: '#1a2744',
+  themeColor: '#152a58',
 };
 
 export default function RootLayout({ children }) {
@@ -58,7 +58,7 @@ export default function RootLayout({ children }) {
     <html lang="en" className={fontVars}>
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#1a2744" />
+        <meta name="theme-color" content="#152a58" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <Script
           async

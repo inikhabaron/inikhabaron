@@ -27,14 +27,10 @@ export function Sidebar({ activeTab, onTabChange, currentUser, isOpen, onClose, 
         <div style={DS.overlay} onClick={onClose} />
       )}
       <div style={sidebarStyle}>
-        <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 32, height: 32, background: '#2563eb', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Pencil size={15} color="#fff" />
-            </div>
-            <span style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>
-              Dash<span style={{ color: '#60a5fa' }}>Board</span>
-            </span>
+        <div style={{ padding: '10px 10px 8px', borderBottom: '2px solid rgb(65, 65, 103)' }}>
+          <div
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src="/khabaron-logo.jpeg" alt="KhabarON" style={{ width: '190px', height: 'auto', objectFit: 'contain', display: 'block' }}  />
           </div>
         </div>
 

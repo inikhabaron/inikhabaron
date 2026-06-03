@@ -219,7 +219,7 @@
 
 /* TIER 3: Nav bar */
 .navBar {
-  background-color: #1a2744;
+  background-color: #152a58;
   height: 48px;
   width: 100%;
   display: flex;
@@ -273,7 +273,7 @@
   cursor: pointer;
   flex-shrink: 0;
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .navArrow {
@@ -374,7 +374,7 @@
   cursor: pointer;
   background: transparent;
   color: rgba(255, 255, 255, 0.85);
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 400;
   white-space: nowrap;
   scroll-snap-align: start;
@@ -439,7 +439,7 @@
   border-radius: 10px;
   padding: 14px;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.15);
-  z-index: 999;
+  z-index: 300;
 }
 
 .profileName {

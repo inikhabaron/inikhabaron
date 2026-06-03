@@ -2,14 +2,16 @@
 import React, { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Search, Sun, Moon, User, Home, LogOut as LogOutIcon, Bell, ChevronDown, ChevronLeft, ChevronRight, Video } from 'lucide-react';
+import { IoHome } from "react-icons/io5";
+import { FaFacebook } from "react-icons/fa";
 import { FaChromecast, FaRegUser, FaFacebookF, FaXTwitter, FaYoutube, FaInstagram } from 'react-icons/fa6';
 import styles from './Header.module.css';
 import { useRouter } from "next/navigation";
 
 const ACCENT        = '#3BAFDA';
 const EDITORIAL_RED = '#D72638';
-const NAV_BG        = '#1a2744';
-const TOP_BAR_BG    = '#111111';
+const NAV_BG        = '#152a58';
+const TOP_BAR_BG    = '#152a58';
 
 export default function Header({
   dark, toggleDark,
@@ -37,7 +39,7 @@ export default function Header({
 
   // Build nav items list
   const navItems = [
-    { label: selectedLanguage === 'hi' ? 'होम'       : 'Home',          slug: 'all',           icon: true },
+    { label: selectedLanguage === 'hi' ? 'ताज़ा खबरें'       : 'Latest News',          slug: 'all',           icon: true },
     { label: selectedLanguage === 'hi' ? 'देश'        : 'Nation',      slug: 'nation' },
     { label: selectedLanguage === 'hi' ? 'राज्य'      : 'States',        slug: 'states' },
     { label: selectedLanguage === 'hi' ? 'राजनीति'   : 'Politics',      slug: 'politics' },
@@ -120,7 +122,7 @@ export default function Header({
       position: 'absolute', top: 'calc(100% + 8px)', right: 0,
       width: '190px', backgroundColor: surface, border: `1px solid ${bdr}`,
       borderRadius: '10px', padding: '14px',
-      boxShadow: '0 10px 28px rgba(0,0,0,0.15)', zIndex: 999,
+      boxShadow: '0 10px 28px rgba(0,0,0,0.15)', zIndex: 300,
     }}>
       {user ? (
         <>
@@ -203,11 +205,11 @@ export default function Header({
       {/* ── TIER 1: Top utility bar ────────────────────────────────────────── */}
       <div style={{ backgroundColor: TOP_BAR_BG, height: '36px', overflow: 'hidden' }}>
         <div style={{
-          maxWidth: '1300px', margin: '0 auto', height: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
+          maxWidth: '1300px', margin: '0 auto', height: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '18px',
         }}>
           {/* Date */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: '14px', fontWeight: 500, color: 'rgba(255,255,255,0.75)', whiteSpace: 'nowrap' }}>
               {topBarDate}
             </span>
 
@@ -217,7 +219,7 @@ export default function Header({
             </span> */}
             {/* <button style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.75)', cursor: 'pointer', fontSize: '11px', padding: 0, whiteSpace: 'nowrap' }}>ई-पेपर</button> */}
             <select value={selectedLanguage} onChange={e => setSelectedLanguage(e.target.value)}
-              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', cursor: 'pointer', fontSize: '11px', outline: 'none' }}>
+              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.9)', cursor: 'pointer', fontSize: '14px', fontWeight: 500, outline: 'none' }}>
               <option value="hi" style={{ color: '#000' }}>हिंदी</option>
               <option value="en" style={{ color: '#000' }}>English</option>
             </select>
@@ -225,24 +227,24 @@ export default function Header({
 
           {/* Right: utility links + social icons */}
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '14px', flexShrink: 0 }}>
-            {['हमारे बारे में', 'विज्ञापन दें', 'संपर्क करें'].map(link => (
-              <button key={link} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.72)', cursor: 'pointer', fontSize: '11px', padding: 0, whiteSpace: 'nowrap' }}>{link}</button>
+            {[ selectedLanguage === 'hi' ? 'हमारे बारे में' : 'About Us', selectedLanguage === 'hi' ? 'विज्ञापन दें' : 'Advertise with us', selectedLanguage === 'hi' ? 'संपर्क करें' : 'Contact Us'].map(link => (
+              <button key={link} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.72)', cursor: 'pointer', fontSize: '14px', fontWeight: 500, padding: 0, whiteSpace: 'nowrap' }}>{link}</button>
             ))}
             <div className="kn-footer-social-row" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', color: 'rgba(255,255,255,0.72)' }}>
               <button className="kn-footer-social-btn">
-                <FaFacebookF size={14} />
+                <FaFacebook size={18} />
               </button>
 
               <button className="kn-footer-social-btn">
-                <FaXTwitter size={14} />
+                <FaXTwitter size={18} />
               </button>
 
               <button className="kn-footer-social-btn">
-                <FaYoutube size={14} />
+                <FaYoutube size={18} />
               </button>
 
               <button className="kn-footer-social-btn">
-                <FaInstagram size={14} />
+                <FaInstagram size={18} />
               </button>
             </div>
           </div>
@@ -256,7 +258,7 @@ export default function Header({
         }}>
           {/* Left: INI logo */}
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-            <Image src="/LOGO1.jpeg" alt="INI" width={90} height={90} style={{ borderRadius: '8px', objectFit: 'cover' }} />
+            <Image src="/LOGO1.jpeg" alt="INI" width={110} height={110} style={{ borderRadius: '8px', objectFit: 'cover' }} />
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.3, fontSize: '9px', fontWeight: 800, color: dark ? '#9ca3af' : '#6B7280', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               {/* <span>INTEGRAL NEWS</span>
               <span>OF INDIA</span> */}
@@ -264,7 +266,7 @@ export default function Header({
           </div>
 
           {/* Center: Main logo + tagline */}
-          <div style={{ display: 'flex', flexDirection: 'column', marginLeft: '150px', alignItems: 'center', gap: '2px', flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', marginRight: '350px', alignItems: 'center', gap: '2px', flex: 1 }}>
             <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', padding: '4px 10px', display: 'inline-flex', alignItems: 'center' }}>
               <Image src="/khabaron-logo2.png" alt="KhabarON" width={300} height={83} priority style={{ objectFit: 'contain' }} />
             </div>
@@ -354,7 +356,7 @@ export default function Header({
 
             <button className={`${styles.navFixedBtn} ${styles.navItemActive}`}
               onClick={() => router.push("/")} >
-              <Home size={16} />
+              <IoHome size={16} /> {selectedLanguage === 'hi' ? 'होम' : 'Home'}
             </button>
 
             {/* LEFT SCROLL */}

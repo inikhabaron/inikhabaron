@@ -45,7 +45,7 @@ export default function ArticleModal({
     <Dialog open={!!article} onOpenChange={handleClose}>
       <DialogContent
         hideClose hideOverlay
-        style={{ width: '100vw', maxWidth: '100vw', height: '100dvh', maxHeight: '100dvh', left: 0, top: 0, transform: 'none', padding: 0, overflow: 'hidden', zIndex: 900, border: 'none', borderRadius: 0, backgroundColor: surface, boxShadow: 'none', display: 'flex', flexDirection: 'column' }}
+        style={{ width: '100vw', maxWidth: '100vw', height: '100dvh', maxHeight: '100dvh', left: 0, top: 0, transform: 'none', padding: 0, overflow: 'hidden', zIndex: 295, border: 'none', borderRadius: 0, backgroundColor: surface, boxShadow: 'none', display: 'flex', flexDirection: 'column' }}
       >
         <DialogTitle style={SR_ONLY}>{article.title}</DialogTitle>
         <DialogDescription style={SR_ONLY}>{article.excerpt || `Article by ${article.authorName || 'KhabarON'}.`}</DialogDescription>

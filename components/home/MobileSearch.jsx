@@ -19,7 +19,7 @@ export default function MobileSearch({
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, backgroundColor: dark ? '#141620' : '#fff', zIndex: 9999, display: 'flex', flexDirection: 'column', padding: '14px' }}>
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: dark ? '#141620' : '#fff', zIndex: 400, display: 'flex', flexDirection: 'column', padding: '14px' }}>
       {/* Search bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <button onClick={onClose} style={{ border: 'none', background: 'transparent', color: dark ? '#fff' : '#141620', cursor: 'pointer' }}>

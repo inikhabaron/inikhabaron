@@ -7,7 +7,7 @@ import styles from './Header.module.css';
 
 const ACCENT        = '#3BAFDA';
 const EDITORIAL_RED = '#D72638';
-const NAV_BG        = '#1a2744';
+const NAV_BG        = '#152a58';
 const TOP_BAR_BG    = '#111111';
 
 export default function Header({
@@ -76,7 +76,7 @@ export default function Header({
       position: 'absolute', top: 'calc(100% + 8px)', right: 0,
       width: '190px', backgroundColor: surface, border: `1px solid ${bdr}`,
       borderRadius: '10px', padding: '14px',
-      boxShadow: '0 10px 28px rgba(0,0,0,0.15)', zIndex: 999,
+      boxShadow: '0 10px 28px rgba(0,0,0,0.15)', zIndex: 300,
     }}>
       {user ? (
         <>

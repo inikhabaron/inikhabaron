@@ -399,7 +399,7 @@ export default function HomePage() {
 
                   <LatestNews items={breakingNews.length > 0 ? breakingNews : news} onArticleClick={goToArticle} dark={dark} selectedLanguage={selectedLanguage} formatDate={formatDate} />
 
-                  <button onClick={() => setSubscriptionOpen(true)} className="kn-premium-btn" style={{ backgroundColor: ACCENT, color: 'white' }} onMouseEnter={e => (e.currentTarget.style.backgroundColor = ACCENT_H)} onMouseLeave={e => (e.currentTarget.style.backgroundColor = ACCENT)}>
+                  <button onClick={() => setSubscriptionOpen(true)} className="kn-premium-btn" style={{ backgroundColor: ACCENT, color: 'white' }} onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#1134a7')} onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#152a58')}>
                     <Crown style={{ width: '14px', height: '14px', color: '#fde68a' }} />
                     Go Premium — ₹299/mo
                   </button>
