@@ -1,11 +1,25 @@
 import { getCollection } from '@/lib/mongodb';
 import { json, preflight } from '@/lib/api/cors';
 import { encodeToken } from '@/lib/auth/token';
+import { verifyPassword } from '@/lib/auth/password';
+import { checkRateLimit, rateLimitResponse } from '@/lib/middleware/rateLimit';
 
 export const OPTIONS = preflight;
 
 export async function POST(request) {
   try {
+    // Extract IP for rate limiting
+    const ip = request.headers.get('x-forwarded-for') 
+      || request.headers.get('cf-connecting-ip')
+      || 'unknown';
+    
+    // Rate limit by IP
+    const { success } = await checkRateLimit(`login:${ip}`, 'login');
+    
+    if (!success) {
+      return rateLimitResponse();
+    }
+
     const body = await request.json().catch(() => ({}));
     const { email, password } = body;
 
@@ -24,18 +38,20 @@ export async function POST(request) {
       return json({ error: 'User account does not have admin access' }, { status: 403 });
     }
 
-    if (user.password !== password) {
+    // Verify hashed password
+    const passwordValid = await verifyPassword(password, user.passwordHash);
+    if (!passwordValid) {
       return json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
-    const token = encodeToken(user.id);
-    const { password: _, ...userWithoutPassword } = user;
+    const token = encodeToken(user.id, user.role);
+    const { passwordHash: _, ...userWithoutPassword } = user;
     const normalizedUser = {
       ...userWithoutPassword,
       role: userWithoutPassword.role?.toString().trim().toLowerCase(),
     };
 
-    return json({ success: true, admin: normalizedUser, token });
+    return json({ success: true, admin: normalizedUser, token, expiresIn: 604800 });
   } catch (error) {
     console.error('POST /api/admin/login error:', error);
     return json({ error: error.message }, { status: 500 });

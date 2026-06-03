@@ -1,14 +1,9 @@
 import { getCollection } from '@/lib/mongodb';
 import { v4 as uuidv4 } from 'uuid';
 import { json, preflight } from '@/lib/api/cors';
+import { hashPassword } from '@/lib/auth/password';
 
 export const OPTIONS = preflight;
-
-const DEMO_USERS = [
-  { email: 'admin@newsdesk.com', password: 'admin123', name: 'Admin User', role: 'admin', isVerified: true, bio: 'System Administrator' },
-  { email: 'editor@newsdesk.com', password: 'editor123', name: 'Editor User', role: 'editor', isVerified: true, bio: 'Content Editor' },
-  { email: 'reporter@newsdesk.com', password: 'reporter123', name: 'Reporter User', role: 'reporter', isVerified: true, bio: 'News Reporter' },
-];
 
 const DEFAULT_CATEGORIES = [
   { name: 'Nation', slug: 'nation', color: '#EA580C', icon: 'Flag', order: 1 },
@@ -117,18 +112,31 @@ export async function POST() {
     const existingCategories = await categoriesCollection.countDocuments({});
     const existingUsers = await usersCollection.countDocuments({});
 
-    await Promise.all(DEMO_USERS.map(async (userData) => {
-      const fullUserData = { ...userData, createdAt: new Date(), updatedAt: new Date() };
-      const existingUser = await usersCollection.findOne({ email: userData.email });
-      if (existingUser) {
-        await usersCollection.updateOne(
-          { email: userData.email },
-          { $set: { ...fullUserData, id: existingUser.id } }
-        );
-      } else {
-        await usersCollection.insertOne({ ...fullUserData, id: userData.role + '-' + uuidv4() });
-      }
-    }));
+    // Only create demo users if DEMO_ADMIN_EMAIL is set (opt-in for demo mode)
+    if (process.env.DEMO_ADMIN_EMAIL && process.env.DEMO_ADMIN_PASSWORD) {
+      const demoUsers = [
+        { email: process.env.DEMO_ADMIN_EMAIL, password: process.env.DEMO_ADMIN_PASSWORD, name: 'Admin User', role: 'admin', isVerified: true },
+        { email: process.env.DEMO_EDITOR_EMAIL || 'editor@demo.local', password: process.env.DEMO_EDITOR_PASSWORD || 'editor123', name: 'Editor User', role: 'editor', isVerified: true },
+      ];
+
+      await Promise.all(demoUsers.map(async (userData) => {
+        try {
+          const passwordHash = await hashPassword(userData.password);
+          const fullUserData = { ...userData, passwordHash, createdAt: new Date(), updatedAt: new Date() };
+          const existingUser = await usersCollection.findOne({ email: userData.email });
+          if (existingUser) {
+            await usersCollection.updateOne(
+              { email: userData.email },
+              { $set: { ...fullUserData, id: existingUser.id } }
+            );
+          } else {
+            await usersCollection.insertOne({ ...fullUserData, id: uuidv4() });
+          }
+        } catch (error) {
+          console.error(`Error creating user ${userData.email}:`, error);
+        }
+      }));
+    }
 
     if (existingCategories > 0 && existingUsers > 0) {
       return json({ message: 'Already seeded' });

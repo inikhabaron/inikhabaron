@@ -27,11 +27,18 @@ const nextConfig = {
       {
         source: "/(.*)",
         headers: [
-          { key: "X-Frame-Options", value: "ALLOWALL" },
-          { key: "Content-Security-Policy", value: "frame-ancestors *;" },
-          { key: "Access-Control-Allow-Origin", value: process.env.CORS_ORIGINS || "*" },
+          // Security headers
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "X-XSS-Protection", value: "1; mode=block" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          
+          // CORS headers (restrict to allowed origins)
+          { key: "Access-Control-Allow-Origin", value: process.env.ALLOWED_ORIGINS || "http://localhost:3000" },
           { key: "Access-Control-Allow-Methods", value: "GET, POST, PUT, DELETE, OPTIONS" },
-          { key: "Access-Control-Allow-Headers", value: "*" },
+          { key: "Access-Control-Allow-Headers", value: "Content-Type, Authorization, X-Admin-Token" },
+          { key: "Access-Control-Allow-Credentials", value: "true" },
+          { key: "Access-Control-Max-Age", value: "86400" },
         ],
       },
     ];

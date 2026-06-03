@@ -1,9 +1,7 @@
 import {
   Inter,
   Poppins,
-  Roboto,
   DM_Sans,
-  Nunito_Sans,
   Plus_Jakarta_Sans,
   Noto_Sans_Devanagari,
 } from 'next/font/google';
@@ -11,19 +9,19 @@ import Script from 'next/script';
 import './globals.css';
 import './home.css';
 import { Toaster } from '@/components/ui/sonner';
+import GlobalErrorBoundary from '@/components/ErrorBoundary';
 
-// Each font exposes a CSS variable so client components can switch at runtime
+// Only load essential fonts - removed Roboto, Nunito_Sans (not used significantly)
+// Use Inter as fallback - most performant configuration
 const inter         = Inter         ({ subsets: ['latin'],      weight: ['300','400','500','600','700','800'], variable: '--font-inter',         display: 'swap' });
-const poppins       = Poppins       ({ subsets: ['latin'],      weight: ['300','400','500','600','700','800'], variable: '--font-poppins',       display: 'swap' });
-const roboto        = Roboto        ({ subsets: ['latin'],      weight: ['300','400','500','700','900'],       variable: '--font-roboto',        display: 'swap' });
-const dmSans        = DM_Sans       ({ subsets: ['latin'],      weight: ['300','400','500','600','700'],       variable: '--font-dm-sans',       display: 'swap' });
-// const nunitoSans    = Nunito_Sans   ({ subsets: ['latin'],      weight: ['300','400','600','700','800'],       variable: '--font-nunito-sans',   display: 'swap' });
-const plusJakarta   = Plus_Jakarta_Sans({ subsets: ['latin'],   weight: ['300','400','500','600','700'],       variable: '--font-plus-jakarta',  display: 'swap' });
+const poppins       = Poppins       ({ subsets: ['latin'],      weight: ['400','600','700'],       variable: '--font-poppins',       display: 'swap' });
+const dmSans        = DM_Sans       ({ subsets: ['latin'],      weight: ['400','500','600'],       variable: '--font-dm-sans',       display: 'swap' });
+const plusJakarta   = Plus_Jakarta_Sans({ subsets: ['latin'],   weight: ['500','600','700'],       variable: '--font-plus-jakarta',  display: 'swap' });
 
 // Pre-load Hindi script — used when selectedLanguage === 'hi'
 const notoDevanagari = Noto_Sans_Devanagari({
   subsets: ['devanagari'],
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-devanagari',
   display: 'swap',
 });
@@ -45,12 +43,9 @@ export default function RootLayout({ children }) {
   const fontVars = [
     inter.variable,
     poppins.variable,
-    roboto.variable,
     dmSans.variable,
-    // nunitoSans.variable,
     plusJakarta.variable,
     notoDevanagari.variable,
-    // inter.className is the default body font
     inter.className,
   ].join(' ');
 
@@ -68,8 +63,10 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
-        {children}
-        <Toaster position="top-right" />
+        <GlobalErrorBoundary>
+          {children}
+          <Toaster position="top-right" />
+        </GlobalErrorBoundary>
       </body>
     </html>
   );
