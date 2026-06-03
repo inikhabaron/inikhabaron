@@ -99,7 +99,7 @@ Status: 200 OK
 
 #### ✅ Get Breaking News
 ```
-GET /api/news/breaking
+GET api/news/breaking
 Status: 200 OK
 Response: [] (empty array - no breaking news currently)
 ```
@@ -371,7 +371,7 @@ Visit: http://localhost:3000/api-docs
 ### 2. Test Public Endpoints
 - GET `/api/news` - No auth required
 - GET `/api/categories` - No auth required
-- GET `/api/news/breaking` - No auth required
+- GET `api/news/breaking` - No auth required
 
 ### 3. Test Admin Authentication
 - POST `/api/admin/login` with credentials
@@ -395,7 +395,7 @@ Visit: http://localhost:3000/api-docs
 | Endpoint | Method | Status | Auth Required |
 |----------|--------|--------|---------------|
 | `/api/news` | GET | ✅ 200 | No |
-| `/api/news/breaking` | GET | ✅ 200 | No |
+| `api/news/breaking` | GET | ✅ 200 | No |
 | `/api/categories` | GET | ✅ 200 | No |
 | `/api/admin/login` | POST | ✅ 200 | No |
 | `/api/admin/news` | GET | ✅ 200 | Yes |

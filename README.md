@@ -229,7 +229,7 @@ news-application/
 5. **DB access** — `await getCollection('<name>')` returns a `Collection` from the cached `MongoClient`. The client is cached on `globalThis._mongoClientPromise` in dev to survive HMR.
 6. **Response** — always wrapped in `json(data, { status })` from `lib/api/cors.js`. Errors are caught at the handler boundary, logged with `console.error`, and surfaced as `{ error: message }` with status 500.
 
-`autoPublishScheduledArticles()` runs at the top of news-listing GETs (`/api/news`, `/api/news/breaking`, `/api/news/[id]`, `/api/admin/news`). It bulk-flips `scheduled` rows whose `scheduledAt <= now` to `published`. This is a lazy cron substitute — there is no scheduled job. **If you stop hitting these GETs, scheduled articles never publish.** (See [§12](#12-known-issues--tech-debt).)
+`autoPublishScheduledArticles()` runs at the top of news-listing GETs (`/api/news`, `api/news/breaking`, `/api/news/[id]`, `/api/admin/news`). It bulk-flips `scheduled` rows whose `scheduledAt <= now` to `published`. This is a lazy cron substitute — there is no scheduled job. **If you stop hitting these GETs, scheduled articles never publish.** (See [§12](#12-known-issues--tech-debt).)
 
 ---
 
@@ -478,7 +478,7 @@ All responses are JSON. All routes accept `OPTIONS` (preflight). Mutation routes
 | ------ | --------------------------------- | -------------------------------------------- |
 | GET    | `/api/health`                     | Liveness check                               |
 | GET    | `/api/news`                       | List published news. Query: `category`, `search`, `limit`, `page` |
-| GET    | `/api/news/breaking`              | Top 10 breaking + published                  |
+| GET    | `api/news/breaking`              | Top 10 breaking + published                  |
 | GET    | `/api/news/[id]`                  | Single article. Increments `views`           |
 | POST   | `/api/news/[id]/share`            | `{ platform }` → `$inc shares.<platform>`    |
 | GET    | `/api/categories`                 | Active categories (deduped by slug)          |
@@ -579,7 +579,7 @@ The admin panel uses **inline styles** via a `DS` token object (`components/admi
 
 ### A new API endpoint
 
-1. Create `app/api/<path>/route.js`. Mirror an existing simple route (e.g. `app/api/news/breaking/route.js`).
+1. Create `app/api/<path>/route.js`. Mirror an existing simple route (e.g. `appapi/news/breaking/route.js`).
 2. Always export `OPTIONS = preflight` and wrap responses with `json()` from `lib/api/cors.js`.
 3. If the endpoint mutates and requires auth:
    ```js
@@ -695,7 +695,7 @@ The fix is always: log out and sign in again at `/admin/login`.
 
 ### Scheduled article never publishes
 
-See [§12](#12-known-issues--tech-debt). `autoPublishScheduledArticles()` only runs when someone hits `/api/news`, `/api/news/breaking`, `/api/news/[id]`, or `/api/admin/news`. If your traffic is zero in dev, hit one of those endpoints manually.
+See [§12](#12-known-issues--tech-debt). `autoPublishScheduledArticles()` only runs when someone hits `/api/news`, `api/news/breaking`, `/api/news/[id]`, or `/api/admin/news`. If your traffic is zero in dev, hit one of those endpoints manually.
 
 ### Build fails on Vercel with "out of memory"
 

@@ -124,7 +124,7 @@ export default function NewsDetailsPage() {
         const [articleRes, categoryRes, breakingRes, latestRes, tagsRes] = await Promise.all([
           fetch(`/api/news/${id}`),
           fetch('/api/categories'),
-          fetch('/api/news/breaking'),
+          fetch('api/news/breaking'),
           fetch('/api/news?page=1&limit=8'),
           fetch('/api/tags'),
         ]);

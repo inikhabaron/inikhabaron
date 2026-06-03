@@ -189,13 +189,17 @@ export default function HomePage() {
           return;
         }
       }
-      const d = await fetch('/api/news/breaking').then(r => r.json());
-      setBreaking(d.news || []);
-      // Cache locally
-      localStorage.setItem('kn_breaking_cache', JSON.stringify({
-        data: d.news || [],
-        timestamp: Date.now()
-      }));
+      const res = await fetch('/api/news/breaking');
+
+      if (!res.ok) {
+        console.error(
+          'Breaking API failed',
+          res.status,
+          await res.text()
+        );
+        return;
+      }
+      const data = await res.json();
     } catch (e) { console.error(e); }
   }, []);
 
