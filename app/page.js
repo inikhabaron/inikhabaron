@@ -137,15 +137,66 @@ export default function HomePage() {
   }, []);
 
   const fetchCategories = useCallback(async () => {
-    try { const d = await fetch('/api/categories').then(r => r.json()); setCategories(d.categories || []); } catch (e) { console.error(e); }
+    try {
+      // Check localStorage cache first
+      const cached = localStorage.getItem('kn_categories_cache');
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < 60 * 60 * 1000) { // 1 hour cache
+          setCategories(data);
+          return;
+        }
+      }
+      const d = await fetch('/api/categories').then(r => r.json());
+      setCategories(d.categories || []);
+      // Cache locally
+      localStorage.setItem('kn_categories_cache', JSON.stringify({
+        data: d.categories || [],
+        timestamp: Date.now()
+      }));
+    } catch (e) { console.error(e); }
   }, []);
 
   const fetchTags = useCallback(async () => {
-    try { const d = await fetch('/api/tags').then(r => r.json()); setTags((d.tags || []).filter(t => t.active && t.popular)); } catch (e) { console.error(e); }
+    try {
+      // Check localStorage cache first
+      const cached = localStorage.getItem('kn_tags_cache');
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < 60 * 60 * 1000) { // 1 hour cache
+          setTags((data || []).filter(t => t.active && t.popular));
+          return;
+        }
+      }
+      const d = await fetch('/api/tags').then(r => r.json());
+      setTags((d.tags || []).filter(t => t.active && t.popular));
+      // Cache locally
+      localStorage.setItem('kn_tags_cache', JSON.stringify({
+        data: d.tags || [],
+        timestamp: Date.now()
+      }));
+    } catch (e) { console.error(e); }
   }, []);
 
   const fetchBreaking = useCallback(async () => {
-    try { const d = await fetch('/api/news/breaking').then(r => r.json()); setBreaking(d.news || []); } catch (e) { console.error(e); }
+    try {
+      // Check localStorage cache first
+      const cached = localStorage.getItem('kn_breaking_cache');
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < 5 * 60 * 1000) { // 5 minute cache
+          setBreaking(data);
+          return;
+        }
+      }
+      const d = await fetch('/api/news/breaking').then(r => r.json());
+      setBreaking(d.news || []);
+      // Cache locally
+      localStorage.setItem('kn_breaking_cache', JSON.stringify({
+        data: d.news || [],
+        timestamp: Date.now()
+      }));
+    } catch (e) { console.error(e); }
   }, []);
 
   const fetchYoutube = useCallback(async () => {
@@ -153,12 +204,10 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    const init = async () => {
-      await fetch('/api/seed', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => { });
-      await Promise.all([fetchCategories(), fetchTags(), fetchBreaking(), fetchNews()]);
-      fetchYoutube();
-    };
-    init();
+    // Parallel fetch of essential data (no seed call, no YouTube blocking)
+    Promise.all([fetchCategories(), fetchTags(), fetchBreaking(), fetchNews()]);
+    // Fetch YouTube async without blocking
+    fetchYoutube();
   }, [fetchCategories, fetchTags, fetchBreaking, fetchNews, fetchYoutube]);
 
   useEffect(() => { setPage(1); fetchNews(selectedCategory, searchQuery, 1); }, [selectedCategory, fetchNews, searchQuery]);

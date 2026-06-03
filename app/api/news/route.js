@@ -74,7 +74,12 @@ export async function GET(request) {
       result = await fetchNews();
     }
 
-    return json(result);
+    return json(result, {
+      headers: {
+        'Cache-Control': 'public, max-age=60, s-maxage=60',
+        'CDN-Cache-Control': 'max-age=60',
+      }
+    });
   } catch (error) {
     console.error('GET /api/news error:', error);
     return json({ error: error.message }, { status: 500 });
