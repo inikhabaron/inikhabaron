@@ -21,6 +21,8 @@ import SiteFooter from '@/components/home/SiteFooter';
 import AuthDialog from '@/components/home/AuthDialog';
 import SubscriptionPlans from '@/components/home/SubscriptionPlans';
 import MobileSearch from '@/components/home/MobileSearch';
+import { Suspense } from 'react';
+// import HomeContent from '@/components/HomeContent';
 
 // ─── Shared utilities & contexts ──────────────────────────────────────────────
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
@@ -32,7 +34,7 @@ import { ACCENT, ACCENT_H, EDITORIAL_RED, FONT_OPTIONS, translations, getCatAcce
 const Loader = () => <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}><div className="loader" /></div>;
 
 // ─── HomePage ─────────────────────────────────────────────────────────────────
-export default function HomePage() {
+function HomePageContent() {
   // ── Data state ───────────────────────────────────────────────────────────
   const [news, setNews] = useState([]);
   const [breakingNews, setBreaking] = useState([]);
@@ -508,5 +510,13 @@ export default function HomePage() {
 
       </FontCtx.Provider>
     </DarkCtx.Provider>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomePageContent />
+    </Suspense>
   );
 }
