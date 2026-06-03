@@ -62,9 +62,11 @@ export async function GET(request) {
       query.$text = { $search: search };
     }
 
-    // Create cache key - only cache first page, no search queries
-    const shouldCache = page === 1 && !search && (!category || category === 'all');
-    const cacheKey = shouldCache ? getCacheKey('news', 'home', category || 'all') : null;
+    // Cache first page of every category (not just 'all'). Each category gets
+    // its own Redis key so sports/politics/etc. hits are served from cache too.
+    // Search queries are never cached — result space is unbounded.
+    const shouldCache = page === 1 && !search;
+    const cacheKey = shouldCache ? getCacheKey('news', 'list', category || 'all') : null;
 
     const fetchNews = async () => {
       const [news, total] = await Promise.all([
