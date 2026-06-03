@@ -195,12 +195,11 @@
 .kn-footer-nl-btn:disabled { opacity: .7; }
 .kn-footer-main        { padding: 24px 24px 24px; }
 .kn-footer-main-inner  { max-width: 1300px; margin: 0 auto; padding: 0 10px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; }
-.kn-footer-brand,
+.kn-footer-links-col     { padding: 0 28px; }
 .kn-footer-links-col,
-.kn-footer-contact     { padding: 0 28px; }
-.kn-footer-links-col,
-.kn-footer-contact     { border-left: 1px solid #dfe3e8; }
-.kn-footer-brand       { display: flex; flex-direction: column; gap: 14px; }
+.kn-footer-contact     { display: flex; flex-direction: column; align-items: flex-end; text-align: right; padding-left: 28px; border-left: 1px solid #dfe3e8; gap: 12px; }
+.kn-footer-contact-title{ font-size: 17px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; border-bottom: 1px solid #000000; }
+.kn-footer-brand       { padding-right: 28px; display: flex; flex-direction: column; gap: 14px; }
 .kn-footer-logo-row    { display: flex; align-items: center; gap: 10px; }
 .kn-footer-desc        { font-size: 15px; line-height: 1.6; margin: 0; }
 .kn-footer-social-row  { display: flex; gap: 8px; }

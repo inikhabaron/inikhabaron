@@ -139,8 +139,8 @@ export default function SiteFooter({ dark, categories, selectedLanguage, onCateg
           </div>
 
           {/* Contact */}
-          <div className="kn-footer-links-col">
-            <h4 className="kn-footer-col-title" style={{ color: T1 }}>{selectedLanguage === 'hi' ? 'संपर्क' : 'Contact'}</h4>
+          <div className="kn-footer-contact">
+            <h4 className="kn-footer-contact-title" style={{ color: T1 }}>{selectedLanguage === 'hi' ? 'संपर्क' : 'Contact'}</h4>
             <ul className="kn-footer-contact-list">
               <li style={{ color: T2 }}>✉ info@khabaron.in</li>
               <li style={{ color: T2 }}>📞 +91 12345 67890</li>

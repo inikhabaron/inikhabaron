@@ -291,7 +291,7 @@ export default function Header({
             {/* Dark mode */}
             <button onClick={toggleDark}
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, minWidth: '40px' }}>
-              {dark ? <Moon size={20} color={T2} /> : <Sun size={20} color={T2} />}
+              {dark ? <Moon size={20} color={T2} /> : <Sun size={30} color={T2} />}
               <span style={{ fontSize: '10px', color: T3, whiteSpace: 'nowrap' }}>{selectedLanguage === 'hi' ? 'डार्क मोड' : 'Dark'}</span>
             </button>
 
@@ -300,7 +300,7 @@ export default function Header({
               onClick={() => window.location.href = '/admin'}
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, minWidth: '55px' }}
             >
-              <FaRegUser size={20} color={T2} />
+              <FaRegUser size={30} color={T2} />
               <span style={{ fontSize: '10px', color: T3, whiteSpace: 'nowrap' }}>
                 {selectedLanguage === 'hi' ? 'एडमिन' : 'Admin'}
               </span>
@@ -309,7 +309,7 @@ export default function Header({
             {/* Notification */}
             <button onClick={handleNotificationClick}
               style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, minWidth: '28px' }}>
-              <Bell size={20} color={T2} />
+              <Bell size={30} color={T2} />
               <span style={{ fontSize: '10px', color: T3, whiteSpace: 'nowrap' }}>
                 {selectedLanguage === 'hi' ? 'बेल' : 'Bell'}
               </span>
@@ -336,7 +336,7 @@ export default function Header({
               <button
                 onClick={() => user ? setShowProfileMenu(p => !p) : onSignIn()}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, minWidth: '40px' }}>
-                <User size={20} color={T2} />
+                <User size={30} color={T2} />
                 <span style={{ fontSize: '10px', color: T3, whiteSpace: 'nowrap' }}>
                   {user ? (user.displayName?.split(' ')[0] || 'Account') : (selectedLanguage === 'hi' ? 'लॉगिन' : 'Login')}
                 </span>
