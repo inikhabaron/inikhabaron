@@ -270,17 +270,15 @@ export default function HomePage() {
                 </div>
                 {/* News Scroll */}
                 <div className="kn-marquee-wrap" style={{ flex: 1, overflow: 'hidden', marginLeft: '20px', marginRight: '10px' }}>
-                  <div className="animate-marquee">
-                    {[...breakingNews, ...breakingNews].map((item, i) => (
-                      <span key={`${item.id}-${i}`}
-                        style={{ color: dark ? '#FCA5A5' : '#991B1B', fontSize: '15px', fontWeight: 500,  whiteSpace: 'nowrap' }}>
-                        {item.title}
-                        <span
-                          style={{ color: dark ? '#FCA5A5' : '#991B1B', marginLeft: '22px', marginRight: '22px', fontSize: '14px' }}>
-                          ◆
+                  <div className="animate-marquee" style={{ animationDuration: `${marqueeDuration}s` }}>
+                    <div className="kn-breaking-track">
+                      {marqueeItems.map((item) => (
+                        <span key={item.key} className="kn-breaking-item">
+                          {item.title}
+                          <span className="kn-breaking-separator">◆</span>
                         </span>
-                      </span>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>

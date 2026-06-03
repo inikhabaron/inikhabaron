@@ -12,9 +12,12 @@
 .kn-content-wrap  { max-width: 1300px; margin: 0 auto; }
 
 /* Breaking ticker */
-.kn-ticker         { display: flex; align-items: center; gap: 12px; padding: 6px 20px; overflow: hidden; }
-.kn-ticker-label   { display: flex; align-items: center; gap: 5px; background: #D72638; color: #fff; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 3px; white-space: nowrap; flex-shrink: 0; letter-spacing: .07em; }
-.kn-ticker-track   { overflow: hidden; flex: 1; }
+.kn-breaking-ticker { height: 48px; min-height: 48px; display: flex; align-items: center; overflow: hidden; }
+.kn-breaking-label  { display: flex; align-items: center; justify-content: center; min-width: 105px; height: 24px; background: #D72638; color: #fff; border-radius: 6px; font-size: 12px; font-weight: 700; letter-spacing: 1px; padding: 0 10px; white-space: nowrap; flex-shrink: 0; }
+.kn-marquee-wrap    { flex: 1; overflow: hidden; white-space: nowrap; }
+.kn-breaking-track  { display: inline-flex; align-items: center; white-space: nowrap; flex-wrap: nowrap; }
+.kn-breaking-item   { display: inline-flex; align-items: center; white-space: nowrap; flex-shrink: 0; color: #991B1B; font-size: 15px; font-weight: 500; padding-right: 22px; }
+.kn-breaking-separator { margin: 0 22px; color: #991B1B; font-size: 14px; }
 
 /* Desktop 2-col grid */
 .kn-desktop-grid   { display: grid; grid-template-columns: 1fr 320px; gap: 28px; align-items: start; }

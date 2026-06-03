@@ -329,7 +329,9 @@ code {
   100% { transform: translateX(-50%); }
 }
 .animate-marquee {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
   animation: marquee var(--marquee-duration, 30s) linear infinite;
   will-change: transform;
 }
