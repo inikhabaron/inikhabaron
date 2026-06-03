@@ -46,9 +46,22 @@ export async function POST(request) {
     }
 
     // Verify hashed password
-    const passwordValid = await verifyPassword(password, user.passwordHash);
+    let passwordValid = false;
+
+    if (user.passwordHash) {
+      passwordValid = await verifyPassword(
+        password,
+        user.passwordHash
+      );
+    } else {
+      passwordValid = password === user.password;
+    }
+
     if (!passwordValid) {
-      return json({ error: 'Invalid email or password' }, { status: 401 });
+      return json(
+        { error: 'Invalid email or password' },
+        { status: 401 }
+      );
     }
 
     const token = encodeToken(user.id, user.role);
