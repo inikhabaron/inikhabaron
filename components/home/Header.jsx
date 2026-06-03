@@ -429,7 +429,7 @@ export default function Header({
                     <button
                       key={item.slug}
                       className={`${styles.navItem} ${ isActive ? styles.navItemActive : "" }`}
-                      onClick={() => setSelectedCategory(item.slug)}
+                      onClick={() => { setSelectedCategory(item.slug); router.push(`/?category=${item.slug}`); }}
                       style={{fontSize: "16px", fontWeight: isActive ? 600 : 500}}
                     >
                       {item.label}

@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { auth, signInWithGoogle, signInWithApple, logOut } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { toast } from 'sonner';
@@ -72,6 +72,7 @@ export default function HomePage() {
 
   const shareMenuRef = useRef(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const goToArticle = (item) => router.push(`/news/${item.id}`);
   const t = translations[selectedLanguage];
 
@@ -121,6 +122,16 @@ export default function HomePage() {
     localStorage.setItem('newsdesk_user_id', id);
     setUserId(id);
   }, []);
+
+  useEffect(() => {
+    const category = searchParams.get('category');
+
+    if (category) {
+      setSelectedCategory(category);
+    } else {
+      setSelectedCategory('all');
+    }
+  }, [searchParams]);
 
   // ── Data fetching ─────────────────────────────────────────────────────────
   const fetchNews = useCallback(async (cat = 'all', search = '', pageNum = 1) => {
