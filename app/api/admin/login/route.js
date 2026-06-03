@@ -8,6 +8,13 @@ export const OPTIONS = preflight;
 
 export async function POST(request) {
   try {
+    if (!process.env.MONGO_URL) {
+      return json({ error: 'Server misconfiguration: MONGO_URL is required' }, { status: 500 });
+    }
+    if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+      return json({ error: 'Server misconfiguration: JWT_SECRET must be at least 32 characters' }, { status: 500 });
+    }
+
     // Extract IP for rate limiting
     const ip = request.headers.get('x-forwarded-for') 
       || request.headers.get('cf-connecting-ip')
