@@ -158,7 +158,7 @@ export default function Header({
   if (isMobileView) {
     return (
       <header style={{
-        position: 'fixed', left: 0, top: 0, width: '100%', zIndex: 100,
+        position: 'fixed', left: 0, top: 0, width: '100%', zIndex: 50,
         display: 'flex', flexDirection: 'column',
         backgroundColor: surface,
         borderTop: `3px solid ${EDITORIAL_RED}`,
@@ -204,7 +204,7 @@ export default function Header({
   // DESKTOP HEADER (3-tier)
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <header style={{ position: 'fixed', left: 0, top: 0, width: '100%', zIndex: 100 }}>
+    <header style={{ position: 'fixed', left: 0, top: 0, width: '100%', zIndex: 50 }}>
 
       {/* ── TIER 1: Top utility bar ────────────────────────────────────────── */}
       <div style={{ backgroundColor: TOP_BAR_BG, height: '36px', overflow: 'hidden' }}>

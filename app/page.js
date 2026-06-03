@@ -440,7 +440,7 @@ export default function HomePage() {
 
         {/* <ArticleModal article={selectedNews} onClose={() => setSelectedNews(null)} isMobileView={isMobileView} selectedLanguage={selectedLanguage} surface={surface} bdr={bdr} T1={T1} T2={T2} T3={T3} onShareWhatsApp={shareOnWhatsApp} onShareTwitter={shareOnTwitter} onShareFacebook={shareOnFacebook} onSaveProgress={handleSaveProgress} formatDate={formatDate} /> */}
 
-        <SubscriptionPlans open={subscriptionOpen} onClose={() => setSubscriptionOpen(false)} />
+        <SubscriptionPlans open={subscriptionOpen} onClose={() => setSubscriptionOpen(false)} user={user} userId={userId} />
 
       </FontCtx.Provider>
     </DarkCtx.Provider>
