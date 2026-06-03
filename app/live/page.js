@@ -189,7 +189,7 @@ export default function HomePage() {
           return;
         }
       }
-      const d = await fetch('api/news/breaking').then(r => r.json());
+      const d = await fetch('/api/news/breaking').then(r => r.json());
       setBreaking(d.news || []);
       // Cache locally
       localStorage.setItem('kn_breaking_cache', JSON.stringify({

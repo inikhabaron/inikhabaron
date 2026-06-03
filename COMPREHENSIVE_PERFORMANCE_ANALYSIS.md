@@ -44,7 +44,7 @@ const news = await newsCollection.find(query)
 
 **Affected Files:**
 - [app/api/news/route.js](app/api/news/route.js#L23-L31)
-- [appapi/news/breaking/route.js](appapi/news/breaking/route.js#L15-L19)
+- [app/api/news/breaking/route.js](app/api/news/breaking/route.js#L15-L19)
 - [app/api/admin/news/route.js](app/api/admin/news/route.js#L15-L25)
 - [app/api/categories/route.js](app/api/categories/route.js#L8-L11)
 - [app/api/admin/users/route.js](app/api/admin/users/route.js#L10)

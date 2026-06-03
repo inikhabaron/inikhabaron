@@ -163,7 +163,7 @@ backend:
     status_history:
       - working: true
         agent: "testing"
-        comment: "Breaking news API working correctly. Retrieved 1 breaking news article with isBreaking flag. Tested at GET api/news/breaking."
+        comment: "Breaking news API working correctly. Retrieved 1 breaking news article with isBreaking flag. Tested at GET /api/news/breaking."
 
   - task: "Single News Article API"
     implemented: true
