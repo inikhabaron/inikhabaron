@@ -203,16 +203,17 @@ function HomePageContent() {
         }
       }
       const res = await fetch('/api/news/breaking');
-
       if (!res.ok) {
-        console.error(
-          'Breaking API failed',
-          res.status,
-          await res.text()
-        );
+        console.error('Breaking API failed', res.status);
         return;
       }
       const data = await res.json();
+      const breakingArticles = data.news || [];
+      setBreaking(breakingArticles);
+      localStorage.setItem('kn_breaking_cache', JSON.stringify({
+        data: breakingArticles,
+        timestamp: Date.now(),
+      }));
     } catch (e) { console.error(e); }
   }, []);
 
@@ -221,11 +222,12 @@ function HomePageContent() {
   }, []);
 
   useEffect(() => {
-    // Parallel fetch of essential data (no seed call, no YouTube blocking)
-    Promise.all([fetchCategories(), fetchTags(), fetchBreaking(), fetchNews()]);
-    // Fetch YouTube async without blocking
+    // Fetch supporting data in parallel. fetchNews is driven by the
+    // [selectedCategory, searchQuery] effect below — calling it here too
+    // would cause two parallel /api/news requests on every mount.
+    Promise.all([fetchCategories(), fetchTags(), fetchBreaking()]);
     fetchYoutube();
-  }, [fetchCategories, fetchTags, fetchBreaking, fetchNews, fetchYoutube]);
+  }, [fetchCategories, fetchTags, fetchBreaking, fetchYoutube]);
 
   useEffect(() => { setPage(1); fetchNews(selectedCategory, searchQuery, 1); }, [selectedCategory, fetchNews, searchQuery]);
 
@@ -387,7 +389,7 @@ function HomePageContent() {
                 {news.map(item => (
                   <div key={item.id} onClick={() => goToArticle(item)} className="kn-mobile-item" style={{ borderBottom: `1px solid ${bdr}` }}>
                     <div className="kn-mobile-thumb">
-                      <img src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=300'} alt={item.title} />
+                      <img src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=300'} alt={item.title} loading="lazy" />
                     </div>
                     <div className="kn-mobile-item-text" style={{ marginLeft: '12px' }}>
                       <div className="kn-mobile-item-cat-row">

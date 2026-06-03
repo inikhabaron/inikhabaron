@@ -113,21 +113,16 @@ export default function NewsDetailsPage() {
   }, []);
 
   useEffect(() => {
-    if (!id) {
-      return;
-    }
+    if (!id) return;
 
     const load = async () => {
       setLoading(true);
       setError(null);
       try {
-        const [articleRes, categoryRes, breakingRes, latestRes, tagsRes] = await Promise.all([
-          fetch(`/api/news/${id}`),
-          fetch('/api/categories'),
-          fetch('/api/news/breaking'),
-          fetch('/api/news?page=1&limit=8'),
-          fetch('/api/tags'),
-        ]);
+        // Critical path: fetch the article first and show it immediately.
+        // Supporting data (sidebar, header) loads in the background — don't
+        // block the article render on categories/tags/breaking/latest.
+        const articleRes = await fetch(`/api/news/${id}`);
 
         if (articleRes.status === 404) {
           setError('not-found');
@@ -138,29 +133,25 @@ export default function NewsDetailsPage() {
           const articleData = await articleRes.json();
           setArticle(articleData.news || null);
         }
-
-        if (categoryRes.ok) {
-          const data = await categoryRes.json();
-          setCategories(data.categories || []);
-        }
-        if (breakingRes.ok) {
-          const data = await breakingRes.json();
-          setBreakingNews(data.news || []);
-        }
-        if (latestRes.ok) {
-          const data = await latestRes.json();
-          setLatestNews(data.news || []);
-        }
-        if (tagsRes.ok) {
-          const data = await tagsRes.json();
-          setTags((data.tags || []).filter(tag => tag.active && tag.popular));
-        }
       } catch (err) {
         console.error(err);
-        if (!error) setError('failed');
+        setError('failed');
       } finally {
-        setLoading(false);
+        setLoading(false); // Article is ready — unblock the main render
       }
+
+      // Non-blocking: load sidebar/header support data after article is shown
+      Promise.all([
+        fetch('/api/categories').then(r => r.ok ? r.json() : null),
+        fetch('/api/news/breaking').then(r => r.ok ? r.json() : null),
+        fetch('/api/news?page=1&limit=8').then(r => r.ok ? r.json() : null),
+        fetch('/api/tags').then(r => r.ok ? r.json() : null),
+      ]).then(([catData, breakData, latestData, tagsData]) => {
+        if (catData) setCategories(catData.categories || []);
+        if (breakData) setBreakingNews(breakData.news || []);
+        if (latestData) setLatestNews(latestData.news || []);
+        if (tagsData) setTags((tagsData.tags || []).filter(t => t.active && t.popular));
+      }).catch(console.error);
     };
 
     load();
@@ -407,7 +398,7 @@ export default function NewsDetailsPage() {
                                     style={{ backgroundColor: dark ? '#161B27' : '#fff', borderColor: dark ? '#252E40' : '#E8EAED' }}
                                     onClick={() => navigateToArticle(item)}
                                   >
-                                    <img src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=900'} alt={item.title} />
+                                    <img src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=900'} alt={item.title} loading="lazy" />
                                     <div className={styles.relatedCardBody}>
                                       <p className={styles.relatedCardTitle} style={{ color: T1, fontFamily: selectedLanguage === 'hi' ? 'var(--font-devanagari), sans-serif' : selectedFont.value }}>
                                         {item.title}

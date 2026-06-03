@@ -1,9 +1,9 @@
 'use client';
-import React, { useState, useRef, useContext, useEffect } from 'react';
-import { Bookmark, Share2 } from 'lucide-react';
+import React, { useMemo, useRef, useContext, useEffect } from 'react';
+import { Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
-import { getCatAccent, getCatLabel, EDITORIAL_RED } from '@/lib/news-utils';
+import { getCatAccent, getCatLabel } from '@/lib/news-utils';
 
 export default function ArticleCard({
   item, onClick, formatDate, showShareMenu, setShowShareMenu,
@@ -13,32 +13,29 @@ export default function ArticleCard({
   const { scale } = useContext(FontCtx);
   const catColor = getCatAccent(item.category);
   const catLabel = getCatLabel(item.category, selectedLanguage);
-  const wordCount = ((item.content || '').replace(/<[^>]+>/g, '') + ' ' + (item.excerpt || '')).split(/\s+/).filter(Boolean).length;
-  const readTime = Math.max(1, Math.ceil(wordCount / 200));
   const shareMenuRef = useRef(null);
 
+  // Memoize — stripping HTML tags and splitting on whitespace is non-trivial
+  // and was re-running on every parent re-render for every card in the list.
+  const readTime = useMemo(() => {
+    const wordCount = ((item.excerpt || '')).split(/\s+/).filter(Boolean).length;
+    return Math.max(1, Math.ceil(wordCount / 200));
+  }, [item.excerpt]);
+
+  // Only attach the document listener while this card's share menu is open.
+  // Previously every card registered a permanent listener — 20 articles = 20
+  // always-active handlers firing on every mousedown anywhere on the page.
   useEffect(() => {
+    if (showShareMenu !== item.id) return;
+
     const handleClickOutside = (event) => {
-      if (
-        shareMenuRef.current &&
-        !shareMenuRef.current.contains(event.target)
-      ) {
+      if (shareMenuRef.current && !shareMenuRef.current.contains(event.target)) {
         setShowShareMenu(null);
       }
     };
-
-    document.addEventListener(
-      "mousedown",
-      handleClickOutside
-    );
-
-    return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
-    };
-  }, []);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showShareMenu, item.id, setShowShareMenu]);
 
   return (
     <div
@@ -51,6 +48,7 @@ export default function ArticleCard({
           src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600'}
           alt={item.title}
           className="kn-card-img"
+          loading="lazy"
         />
         {item.isBreaking && <span className="kn-card-live">LIVE</span>}
         <div className="kn-card-bar" style={{ backgroundColor: catColor }} />
@@ -72,9 +70,6 @@ export default function ArticleCard({
             <span style={{ fontSize: `${10 * scale}px`, color: '#8A8F98', whiteSpace: 'nowrap' }}>· {readTime} min</span>
           </div>
           <div className="kn-card-actions">
-            {/* <button onClick={(e) => e.stopPropagation()} className="kn-card-action-btn">
-              <Bookmark style={{ width: '14px', height: '14px' }} />
-            </button> */}
             <div style={{ position: 'relative' }}>
               <button
                 onClick={(e) => { e.stopPropagation(); setShowShareMenu(p => p === item.id ? null : item.id); }}
@@ -85,15 +80,12 @@ export default function ArticleCard({
               {showShareMenu === item.id && (
                 <div ref={shareMenuRef} onClick={(e) => e.stopPropagation()} className="kn-share-menu" style={{ backgroundColor: dark ? '#161B27' : '#fff', borderColor: dark ? '#252E40' : '#E8EAED' }}>
                   {[
-                    { label: 'WhatsApp', className:'share-whatsapp', fn: () => onShareWhatsApp(item) },
-                    { label: 'Twitter', className:'share-twitter',  fn: () => onShareTwitter(item) },
-                    { label: 'Facebook', className:'share-facebook', fn: () => onShareFacebook(item) },
-                    { label: 'Copy Link', className:'share-copy-link', fn: () => { navigator.clipboard.writeText(`${window.location.origin}/news/${item.id}`); toast.success('Link copied!'); } },
+                    { label: 'WhatsApp', className: 'share-whatsapp', fn: () => onShareWhatsApp(item) },
+                    { label: 'Twitter',  className: 'share-twitter',  fn: () => onShareTwitter(item) },
+                    { label: 'Facebook', className: 'share-facebook', fn: () => onShareFacebook(item) },
+                    { label: 'Copy Link', className: 'share-copy-link', fn: () => { navigator.clipboard.writeText(`${window.location.origin}/news/${item.id}`); toast.success('Link copied!'); } },
                   ].map(s => (
-                    <button
-                      key={s.label} onClick={s.fn}
-                      className={`kn-share-item ${s.className || ''}`}
-                    >
+                    <button key={s.label} onClick={s.fn} className={`kn-share-item ${s.className || ''}`}>
                       {s.label}
                     </button>
                   ))}
