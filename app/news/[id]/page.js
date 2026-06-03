@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { auth, signInWithGoogle, signInWithApple, logOut } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { toast } from 'sonner';
@@ -24,8 +24,10 @@ const Loader = () => (
   </div>
 );
 
-export default function NewsDetailsPage({ params }) {
+export default function NewsDetailsPage() {
   const router = useRouter();
+  const params = useParams();
+  const id = params?.id;
   const [article, setArticle] = useState(null);
   const [latestNews, setLatestNews] = useState([]);
   const [relatedNews, setRelatedNews] = useState([]);
@@ -111,12 +113,16 @@ export default function NewsDetailsPage({ params }) {
   }, []);
 
   useEffect(() => {
+    if (!id) {
+      return;
+    }
+
     const load = async () => {
       setLoading(true);
       setError(null);
       try {
         const [articleRes, categoryRes, breakingRes, latestRes, tagsRes] = await Promise.all([
-          fetch(`/api/news/${params.id}`),
+          fetch(`/api/news/${id}`),
           fetch('/api/categories'),
           fetch('/api/news/breaking'),
           fetch('/api/news?page=1&limit=8'),
@@ -158,7 +164,7 @@ export default function NewsDetailsPage({ params }) {
     };
 
     load();
-  }, [params.id]);
+  }, [id]);
 
   useEffect(() => {
     if (!article?.category) {

@@ -5,7 +5,7 @@ export const OPTIONS = preflight;
 
 export async function GET(_request, { params }) {
   try {
-    const newsId = params.id;
+    const { id: newsId } = await params;
     const newsCollection = await getCollection('news');
     const news = await newsCollection.findOne({ id: newsId });
 
