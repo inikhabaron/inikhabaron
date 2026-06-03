@@ -153,6 +153,12 @@
 .kn-latest-view-all{ display: block; width: 100%; margin-top: 14px; padding: 10px; border-radius: 8px; border: 1px solid #D72638; background: transparent; color: #D72638; font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; transition: all .15s; }
 .kn-latest-view-all:hover { background: #D72638; color: #fff; }
 
+@media (max-width: 850px) {
+  .kn-latest {
+    display: none !important;
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────────
    TRENDING BAR
 ───────────────────────────────────────────────────────────────── */
@@ -217,6 +223,116 @@
 .kn-footer-contact-list{ list-style: none; padding: 0; margin: 0; text-align: right; display: flex; flex-direction: column; gap: 8px; font-size: 15px; line-height: 1.8; }
 .kn-footer-copyright   { border-top: 1px solid #E8EAED; padding: 14px 24px; text-align: center; }
 .kn-footer-copyright p { font-size: 12px; margin: 0; }
+
+/* =====================================================
+   MOBILE FOOTER (770px and below)
+===================================================== */
+@media (max-width: 770px) {
+
+  /* Newsletter */
+  .kn-footer-newsletter {
+    padding: 28px 16px;
+  }
+
+  .kn-footer-nl-inner {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+  }
+
+  .kn-footer-nl-text {
+    flex-direction: column;
+    text-align: center;
+    gap: 14px;
+  }
+
+  .kn-footer-nl-icon {
+    width: 56px;
+    height: 56px;
+    font-size: 28px;
+  }
+
+  .kn-footer-nl-heading {
+    font-size: 18px;
+  }
+
+  .kn-footer-nl-sub {
+    font-size: 14px;
+  }
+
+  .kn-footer-nl-form {
+    width: 100%;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .kn-footer-nl-input {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .kn-footer-nl-btn {
+    width: 160px;
+  }
+
+  /* Footer Main */
+  .kn-footer-main {
+    padding: 24px 16px;
+  }
+
+  .kn-footer-main-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  /* All columns */
+  .kn-footer-brand,
+  .kn-footer-links-col,
+  .kn-footer-contact {
+    width: 100%;
+    padding: 0;
+    border: none !important;
+    align-items: center;
+    text-align: center;
+  }
+
+  .kn-footer-logo-row {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .kn-footer-desc {
+    text-align: center;
+    max-width: 500px;
+  }
+
+  .kn-footer-social-row {
+    justify-content: center;
+  }
+
+  .kn-footer-col-title,
+  .kn-footer-contact-title {
+    margin-bottom: 12px;
+  }
+
+  .kn-footer-link-list {
+    align-items: center;
+  }
+
+  .kn-footer-link-btn {
+    text-align: center;
+  }
+
+  .kn-footer-contact-list {
+    text-align: center;
+    align-items: center;
+  }
+
+  .kn-footer-copyright {
+    padding: 14px 12px;
+  }
+}
 
 /* ─────────────────────────────────────────────────────────────────
    ARTICLE MODAL

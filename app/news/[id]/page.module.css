@@ -179,3 +179,77 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ──────────────────────────────────────────
+   NEWS DETAILS MOBILE FIX
+────────────────────────────────────────── */
+@media (max-width: 850px) {
+
+  .articleHero {
+    border-radius: 12px;
+  }
+
+  .heroImage {
+    padding: 0;
+  }
+
+  .heroImage img {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .articleBody {
+    padding: 16px;
+  }
+
+  .articleTitle {
+    font-size: 1.6rem;
+    line-height: 1.25;
+    margin: 12px 0;
+  }
+
+  .articleMeta {
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  .articleContent {
+    margin-top: 16px;
+    font-size: 15px;
+    line-height: 1.8;
+  }
+
+  .shareRow {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .shareBtn {
+    width: 100%;
+  }
+
+  .relatedGrid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .relatedCard img {
+    height: 160px;
+  }
+
+  .relatedCardBody {
+    padding: 14px;
+  }
+
+  .tagsRow {
+    gap: 8px;
+  }
+
+  .tagItem {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+}
