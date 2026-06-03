@@ -266,7 +266,7 @@ export default function Header({
           </div>
 
           {/* Center: Main logo + tagline */}
-          <div style={{ display: 'flex', flexDirection: 'column', marginRight: '350px', alignItems: 'center', gap: '2px', flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', marginRight: '150px', alignItems: 'center', gap: '2px', flex: 1 }}>
             <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', padding: '4px 10px', display: 'inline-flex', alignItems: 'center' }}>
               <Image src="/khabaron-logo2.png" alt="KhabarON" width={300} height={83} priority style={{ objectFit: 'contain' }} />
             </div>

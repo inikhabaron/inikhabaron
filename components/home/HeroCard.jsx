@@ -34,7 +34,7 @@ export default function HeroCard({ item, onClick, formatDate, selectedLanguage, 
 
   return (
     <div onClick={() => onClick(item)} className="kn-hero">
-      <div className="kn-hero-share" >
+      {/* <div className="kn-hero-share" >
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -88,7 +88,7 @@ export default function HeroCard({ item, onClick, formatDate, selectedLanguage, 
             ))}
           </div>
         )}
-      </div>
+      </div> */}
       <img
         src={item.featuredImage || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=900'}
         alt={item.title}

@@ -204,7 +204,7 @@ export default function HomePage() {
   const T2 = dark ? '#9BA5B4' : '#4B5563';
   const T3 = '#8A8F98';
 
-  const HEADER_H = isMobileView ? 105 : 200;
+  const HEADER_H = isMobileView ? 105 : 204;
   const contentPad = isMobileView ? '12px' : '24px 5px';
 
   // ─── Shared article card props ─────────────────────────────────────────────
@@ -262,7 +262,7 @@ export default function HomePage() {
                   <div className="animate-marquee">
                     {[...breakingNews, ...breakingNews].map((item, i) => (
                       <span key={`${item.id}-${i}`}
-                        style={{ color: dark ? '#FCA5A5' : '#991B1B', fontSize: '15px', fontWeight: 500, marginRight: '55px', whiteSpace: 'nowrap' }}>
+                        style={{ color: dark ? '#FCA5A5' : '#991B1B', fontSize: '15px', fontWeight: 500, whiteSpace: 'nowrap' }}>
                         {item.title}
                         <span
                           style={{ color: dark ? '#FCA5A5' : '#991B1B', marginLeft: '22px', marginRight: '22px', fontSize: '14px' }}>

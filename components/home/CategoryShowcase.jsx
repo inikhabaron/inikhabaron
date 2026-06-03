@@ -11,8 +11,8 @@ const CATEGORY_IMAGES = {
 };
 
 const DESC = {
-  hi: { entertainment: 'लेटेस्ट फिल्म और टीवी खबरें', technology: 'गैजेट्स, ऐप्स और टेक अपडेट', health: 'हेल्थ टिप्स और मेडिकल अपडेट', sports: 'खेल की सभी ताज़ा खबरें', business: 'बाजार और कारोबार अपडेट', politics: 'देश की राजनीतिक खबरें' },
-  en: { entertainment: 'Latest films and TV news', technology: 'Gadgets, apps and tech', health: 'Health tips and medical updates', sports: 'Latest sports scores', business: 'Market and business updates', politics: 'Political news and analysis' },
+  hi: { entertainment: 'लेटेस्ट फिल्म और टीवी खबरें', science: 'गैजेट्स, ऐप्स और टेक अपडेट', farmers: 'किसानों की सभी ताज़ा खबरें', sports: 'खेल की सभी ताज़ा खबरें', spirituality: 'आध्यात्मिक खबरें और अंतर्दृष्टि', politics: 'देश की राजनीतिक खबरें' },
+  en: { entertainment: 'Latest films and TV news', science: 'Gadgets, apps and tech', farmers: 'All the latest news for farmers', sports: 'Latest sports scores', spirituality: 'Spiritual news and insights', politics: 'Political news and analysis' },
 };
 
 

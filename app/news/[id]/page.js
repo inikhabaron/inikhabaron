@@ -57,7 +57,7 @@ export default function NewsDetailsPage({ params }) {
   const T1 = dark ? '#E8ECF0' : '#111827';
   const T2 = dark ? '#9BA5B4' : '#4B5563';
   const T3 = '#8A8F98';
-  const HEADER_H = isMobileView ? 105 : 200;
+  const HEADER_H = isMobileView ? 105 : 204;
   const contentPad = isMobileView ? '12px' : '24px 5px';
 
   const articleHtml = useMemo(() => {
