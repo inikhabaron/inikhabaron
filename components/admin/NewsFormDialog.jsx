@@ -57,12 +57,28 @@ export function NewsFormDialog({
             </div>
             <div className="space-y-2">
               <Label>Category *</Label>
-              <Select value={newsForm.category} onValueChange={v => setNewsForm({ ...newsForm, category: v })}>
-                <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                <SelectContent>
-                  {categories.map(cat => <SelectItem key={cat.id} value={cat.slug}>{cat.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <select
+                className="kn-admin-select"
+                value={newsForm.category}
+                onChange={(e) =>
+                  setNewsForm({
+                    ...newsForm,
+                    category: e.target.value
+                  })
+                }
+              >
+                <option value="">Select category</option>
+
+                {categories.map((cat) => (
+                  <option
+                    key={cat.id}
+                    value={cat.slug}
+                  >
+                    {cat.name}
+                  </option>
+                ))}
+              </select>  
+              
             </div>
           </div>
 
@@ -116,14 +132,25 @@ export function NewsFormDialog({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Status</Label>
-              <Select value={newsForm.status} onValueChange={v => setNewsForm({ ...newsForm, status: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {(statusOptionsByRole[currentUser?.role] || statusOptionsByRole.admin).map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select
+                value={newsForm.status}
+                onChange={(e) =>
+                  setNewsForm({
+                    ...newsForm,
+                    status: e.target.value
+                  })
+                }
+                className="w-full h-10 rounded-md border border-gray-300 px-3 bg-white"
+              >
+                {(statusOptionsByRole[currentUser?.role] || statusOptionsByRole.admin).map(opt => (
+                  <option
+                    key={opt.value}
+                    value={opt.value}
+                  >
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2">
               <Label>Author Name</Label>

@@ -135,6 +135,7 @@ export async function DELETE(_request, { params }) {
     }
 
     await newsCollection.deleteOne({ id: newsId });
+    console.log("FOUND ARTICLE:", article);
     return json({ success: true });
   } catch (error) {
     console.error('DELETE /api/admin/news/[id] error:', error);

@@ -41,6 +41,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const user = await getUserFromToken(request);
+    // console.log('USER FROM TOKEN:', user);
     if (!user || !canCreateArticle(user)) {
       return json({ error: 'Unauthorized' }, { status: 403 });
     }

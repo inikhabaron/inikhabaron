@@ -89,12 +89,17 @@ export default function AdminPage() {
     };
   };
 
-  const authFetch = async (url, options = {}) => {
-    const token = localStorage.getItem('admin_token')?.toString().trim();
-    const authUrl = token ? `${url}${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}` : url;
-    const headers = { ...getAuthHeaders(), ...(options.headers || {}) };
-    return fetch(authUrl, { ...options, headers });
+ const authFetch = async (url, options = {}) => {
+  const headers = {
+    ...getAuthHeaders(),
+    ...(options.headers || {})
   };
+
+  return fetch(url, {
+    ...options,
+    headers
+  });
+};
 
   useEffect(() => {
     const checkAdminAuth = () => {
