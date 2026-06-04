@@ -1,12 +1,13 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import 'quilljs/dist/quill.snow.css';
+// import dynamic from 'next/dynamic';
+// import 'react-quill/dist/quill.snow.css';
+import TiptapEditor from './TiptapEditor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
@@ -15,7 +16,7 @@ import { statusOptionsByRole } from './constants';
 import { ImageUpload } from '@/components/upload/ImageUpload';
 import { MultiImageUpload } from '@/components/upload/MultiImageUpload';
 
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+// const ReactQuill = dynamic(() => import('nereact-quill'), { ssr: false });
 
 const QUILL_MODULES = {
   toolbar: [
@@ -40,6 +41,9 @@ export function NewsFormDialog({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editingNews ? 'Edit Article' : 'Create Article'}</DialogTitle>
+           <DialogDescription>
+            Create or edit a news article.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
@@ -67,13 +71,14 @@ export function NewsFormDialog({
             <span style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Description</span>
           </div>
           <div style={{ border: '1px solid #e5e7eb', borderRadius: '10px', overflow: 'hidden', background: '#fff' }}>
-            <ReactQuill
+            <TiptapEditor
               value={newsForm.content}
-              onChange={(value) => setNewsForm({ ...newsForm, content: value })}
-              placeholder="Article content..."
-              style={{ height: '250px' }}
-              modules={QUILL_MODULES}
-              formats={QUILL_FORMATS}
+              onChange={(value) =>
+                setNewsForm({
+                  ...newsForm,
+                  content:value
+                })
+              }
             />
           </div>
 
