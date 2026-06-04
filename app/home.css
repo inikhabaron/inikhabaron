@@ -231,70 +231,62 @@
 
   /* Newsletter */
   .kn-footer-newsletter {
-    padding: 28px 16px;
+    display: flex;     
+    align-items: center;
+    justify-content: center; 
+    padding: 18px 10px;
   }
 
   .kn-footer-nl-inner {
     flex-direction: column;
     text-align: center;
-    gap: 20px;
+    gap: 10px;
   }
 
   .kn-footer-nl-text {
     flex-direction: column;
     text-align: center;
-    gap: 14px;
-  }
-
-  .kn-footer-nl-icon {
-    width: 56px;
-    height: 56px;
-    font-size: 28px;
-  }
-
-  .kn-footer-nl-heading {
-    font-size: 18px;
-  }
-
-  .kn-footer-nl-sub {
-    font-size: 14px;
   }
 
   .kn-footer-nl-form {
     width: 100%;
     flex-direction: column;
-    gap: 12px;
   }
 
   .kn-footer-nl-input {
     width: 100%;
     max-width: 100%;
+    height: 40px;
   }
 
   .kn-footer-nl-btn {
-    width: 160px;
+    width: 150px;
+    height: 40px;
   }
 
-  /* Footer Main */
+  /* Footer */
   .kn-footer-main {
-    padding: 24px 16px;
+    padding: 18px 10px;
   }
 
   .kn-footer-main-inner {
-    display: flex;
-    flex-direction: column;
-    gap: 28px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px 10px;
   }
 
-  /* All columns */
-  .kn-footer-brand,
-  .kn-footer-links-col,
-  .kn-footer-contact {
-    width: 100%;
-    padding: 0;
-    border: none !important;
+  /* BRAND SECTION */
+  .kn-footer-brand {
+    grid-column: 1 / -1;
+
+    display: flex;
+    flex-direction: column;
     align-items: center;
+
     text-align: center;
+
+    padding: 0 0 20px;
+    border: none;
   }
 
   .kn-footer-logo-row {
@@ -304,16 +296,21 @@
 
   .kn-footer-desc {
     text-align: center;
-    max-width: 500px;
+    max-width: 450px;
   }
 
   .kn-footer-social-row {
+    gap: 15px;
     justify-content: center;
   }
 
-  .kn-footer-col-title,
-  .kn-footer-contact-title {
-    margin-bottom: 12px;
+  /* ABOUT + USEFUL LINKS + CATEGORIES */
+  .kn-footer-links-col {
+    padding: 0;
+    border: none !important;
+   
+    align-items: center;
+    text-align: center;
   }
 
   .kn-footer-link-list {
@@ -321,16 +318,35 @@
   }
 
   .kn-footer-link-btn {
+   font-size: 13px; text-align: center;
+  }
+
+  /* CONTACT SECTION */
+  .kn-footer-contact {
+    border: none !important;
+    padding: 0px;
+
+    align-items: center;
     text-align: center;
   }
 
   .kn-footer-contact-list {
     text-align: center;
     align-items: center;
+    font-size: 13px;
   }
 
+  /* Titles */
+  .kn-footer-col-title,
+  .kn-footer-contact-title {
+    font-size: 15px; letter-spacing: .03em;
+    margin-bottom: 0px;
+  }
+
+  /* Copyright */
   .kn-footer-copyright {
-    padding: 14px 12px;
+    text-align: center;
+    padding: 12px;
   }
 }
 
