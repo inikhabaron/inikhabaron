@@ -375,24 +375,28 @@ export default function Header({
             </button>
 
             {/* Login / Profile */}
-            <button
-              onClick={() =>
-                user ? setShowProfileMenu(prev => !prev) : onSignIn()
-              }
-              className={styles.iconButton}
-            >
-              <div className={styles.iconCircle}>
-                <User size={34} color={T2} />
-              </div>
+            <div style={{ position: "relative" }} ref={profileRef}>
+              <button
+                onClick={() => user ? setShowProfileMenu(prev => !prev) : onSignIn() }
+                className={styles.iconButton}
+              >
+                <div className={styles.iconCircle}>
+                  <User size={34} color={T2} />
+                </div>
 
-              <span className={styles.iconLabel} style={{ color: dark ? '#FFFFFF' : '#152a58' }}>
-                {user
-                  ? user.displayName?.split(' ')[0] || 'Account'
-                  : selectedLanguage === 'hi'
-                    ? 'लॉगिन'
-                    : 'Login'}
-              </span>
-            </button>
+                <span
+                  className={styles.iconLabel}
+                  style={{ color: dark ? "#FFFFFF" : "#152a58" }}
+                >
+                  {user
+                    ? user.displayName?.split(" ")[0] || "Account"
+                    : selectedLanguage === "hi"
+                    ? "लॉगिन"
+                    : "Login"}
+                </span>
+              </button>
+              {showProfileMenu && <ProfileDropdown />}
+            </div>
           </div>
         </div>
       </div>
