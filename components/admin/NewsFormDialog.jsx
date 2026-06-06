@@ -138,7 +138,7 @@ export function NewsFormDialog({
           </div>
 
           <div className="flex flex-wrap items-center gap-6">
-            {currentUser?.role === 'admin' && (
+            {/* {currentUser?.role === 'admin' && (
               <div className="flex items-center gap-2">
                 <Switch checked={newsForm.isBreaking} onCheckedChange={v => setNewsForm({ ...newsForm, isBreaking: v })} />
                 <Label>Breaking News</Label>
@@ -161,7 +161,35 @@ export function NewsFormDialog({
                 <Switch checked={newsForm.trendingSuggested} onCheckedChange={v => setNewsForm({ ...newsForm, trendingSuggested: v })} />
                 <Label>Suggest Trending</Label>
               </div>
-            )}
+            )} */}
+
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={newsForm.breakingSuggested}
+                onCheckedChange={(v) =>
+                  setNewsForm({
+                    ...newsForm,
+                    breakingSuggested: v,
+                  })
+                }
+              />
+              <Label>Suggest Breaking News</Label>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={newsForm.trendingSuggested}
+                onCheckedChange={(v) =>
+                  setNewsForm({
+                    ...newsForm,
+                    trendingSuggested: v,
+                  })
+                }
+              />
+              <Label>Suggest Trending News</Label>
+            </div>
+
+
             <div className="flex items-center gap-2">
               <Switch checked={newsForm.isFeatured} onCheckedChange={v => setNewsForm({ ...newsForm, isFeatured: v })} />
               <Label>Featured Article</Label>
