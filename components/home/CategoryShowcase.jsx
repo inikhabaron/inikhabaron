@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import { getCatLabel } from '@/lib/news-utils';
+import { useRouter } from 'next/navigation';
 
 const CATEGORY_IMAGES = {
   spirituality: '/Spirituality.jpg',
@@ -18,6 +19,7 @@ const DESC = {
 
 
 export default function CategoryShowcase({ categories, onCategoryClick, dark, selectedLanguage }) {
+  const router = useRouter();
   return (
     <section className="kn-showcase">
       <div className="kn-showcase-hdr">
@@ -44,7 +46,7 @@ export default function CategoryShowcase({ categories, onCategoryClick, dark, se
               key={cat.slug}
               className="kn-cat-card"
               style={{ backgroundImage: `url(${bg})` }}
-              onClick={() => onCategoryClick(cat.slug)}
+              onClick={() => { onCategoryClick?.(cat.slug); router.push(`/?category=${cat.slug}`); }}
             >
               <div className="kn-cat-overlay" />
               <div className="kn-cat-content">
