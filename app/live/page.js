@@ -122,6 +122,14 @@ export default function HomePage() {
     setUserId(id);
   }, []);
 
+  useEffect(() => {
+  fetchYoutube();
+  const interval = setInterval(() => {
+    fetchYoutube();
+  }, 60000);
+  return () => clearInterval(interval);
+}, []);
+
   // ── Data fetching ─────────────────────────────────────────────────────────
   const fetchNews = useCallback(async (cat = 'all', search = '', pageNum = 1) => {
     try {
@@ -137,66 +145,15 @@ export default function HomePage() {
   }, []);
 
   const fetchCategories = useCallback(async () => {
-    try {
-      // Check localStorage cache first
-      const cached = localStorage.getItem('kn_categories_cache');
-      if (cached) {
-        const { data, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < 60 * 60 * 1000) { // 1 hour cache
-          setCategories(data);
-          return;
-        }
-      }
-      const d = await fetch('/api/categories').then(r => r.json());
-      setCategories(d.categories || []);
-      // Cache locally
-      localStorage.setItem('kn_categories_cache', JSON.stringify({
-        data: d.categories || [],
-        timestamp: Date.now()
-      }));
-    } catch (e) { console.error(e); }
+    try { const d = await fetch('/api/categories').then(r => r.json()); setCategories(d.categories || []); } catch (e) { console.error(e); }
   }, []);
 
   const fetchTags = useCallback(async () => {
-    try {
-      // Check localStorage cache first
-      const cached = localStorage.getItem('kn_tags_cache');
-      if (cached) {
-        const { data, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < 60 * 60 * 1000) { // 1 hour cache
-          setTags((data || []).filter(t => t.active && t.popular));
-          return;
-        }
-      }
-      const d = await fetch('/api/tags').then(r => r.json());
-      setTags((d.tags || []).filter(t => t.active && t.popular));
-      // Cache locally
-      localStorage.setItem('kn_tags_cache', JSON.stringify({
-        data: d.tags || [],
-        timestamp: Date.now()
-      }));
-    } catch (e) { console.error(e); }
+    try { const d = await fetch('/api/tags').then(r => r.json()); setTags((d.tags || []).filter(t => t.active && t.popular)); } catch (e) { console.error(e); }
   }, []);
 
   const fetchBreaking = useCallback(async () => {
-    try {
-      // Check localStorage cache first
-      const cached = localStorage.getItem('kn_breaking_cache');
-      if (cached) {
-        const { data, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < 5 * 60 * 1000) { // 5 minute cache
-          setBreaking(data);
-          return;
-        }
-      }
-      const d = await fetch('/api/news/breaking').then(r => r.json());
-      setBreaking(d.news || []);
-      // Cache locally
-      localStorage.setItem('kn_breaking_cache', JSON.stringify({
-        data: d.news || [],
-        timestamp: Date.now()
-      }));
-    } catch (e) { console.error(e); }
+    try { const d = await fetch('/api/news/breaking').then(r => r.json()); setBreaking(d.news || []); } catch (e) { console.error(e); }
   }, []);
 
   const fetchYoutube = useCallback(async () => {
@@ -204,10 +161,12 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    // Parallel fetch of essential data (no seed call, no YouTube blocking)
-    Promise.all([fetchCategories(), fetchTags(), fetchBreaking(), fetchNews()]);
-    // Fetch YouTube async without blocking
-    fetchYoutube();
+    const init = async () => {
+      await fetch('/api/seed', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => { });
+      await Promise.all([fetchCategories(), fetchTags(), fetchBreaking(), fetchNews()]);
+      fetchYoutube();
+    };
+    init();
   }, [fetchCategories, fetchTags, fetchBreaking, fetchNews, fetchYoutube]);
 
   useEffect(() => { setPage(1); fetchNews(selectedCategory, searchQuery, 1); }, [selectedCategory, fetchNews, searchQuery]);
@@ -290,7 +249,7 @@ export default function HomePage() {
         )}
 
         {/* Live News Header */}
-        {/* <Header
+        <Header
           dark={dark} toggleDark={toggleDark}
           selectedLanguage={selectedLanguage} setSelectedLanguage={setSelectedLanguage}
           translations={translations}
@@ -300,7 +259,7 @@ export default function HomePage() {
           breakingNews={breakingNews} isMobileView={isMobileView}
           setShowMobileSearch={setShowMobileSearch} setIsSearchActive={setIsSearchActive}
           t={t} surface={surface} bdr={bdr} T1={T1} T2={T2} T3={T3}
-        /> */}
+        /> 
 
         {/* Page body */}
         <div
@@ -394,7 +353,7 @@ export default function HomePage() {
                 {/* Left column */}
                 <div>
                   {news.length > 0 && (
-                    <LiveCard item={news[0]} onClick={goToArticle} {...sharedCardProps} />
+                    <LiveCard youtubeLive={youtubeLive} dark={dark} bdr={bdr} />
                   )}
 
                   {news.length > 2 && (

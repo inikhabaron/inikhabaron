@@ -80,19 +80,19 @@ export default function SiteFooter({ dark, categories, selectedLanguage, onCateg
             
             <div className="kn-footer-social-row" style={{ color: dark ? 'rgb(255, 255, 255)' : 'rgb(1, 1, 1)' }}>
               <button className="kn-footer-social-btn">
-                <FaFacebookF size={14} />
+                <FaFacebookF size={18} />
               </button>
 
               <button className="kn-footer-social-btn">
-                <FaXTwitter size={14} />
+                <FaXTwitter size={18} />
               </button>
 
               <button className="kn-footer-social-btn">
-                <FaYoutube size={14} />
+                <FaYoutube size={18} />
               </button>
 
               <button className="kn-footer-social-btn">
-                <FaInstagram size={14} />
+                <FaInstagram size={18} />
               </button>
             </div>
           </div>

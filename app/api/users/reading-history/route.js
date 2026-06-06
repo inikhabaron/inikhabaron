@@ -8,19 +8,10 @@ export async function POST(request) {
     const body = await request.json();
     const historyCollection = await getCollection('reading_history');
 
-    // Create session ID (unique per user + article)
-    const readingSessionId = body.readingSessionId || `${body.userId}_${body.newsId}`;
-
     await historyCollection.updateOne(
-      { 
-        $or: [
-          { readingSessionId },
-          { odellerId: readingSessionId } // Support old field name for backward compatibility
-        ]
-      },
+      { odellerId: body.odellerId || `${body.userId}_${body.newsId}` },
       {
         $set: {
-          readingSessionId, // New standardized field name
           userId: body.userId,
           newsId: body.newsId,
           newsTitle: body.newsTitle,

@@ -190,7 +190,7 @@ export default function Header({
           {mobileNavItems.map(item => {
             const isActive = selectedCategory === item.slug;
             return (
-              <button key={item.slug} onClick={() => setSelectedCategory(item.slug)}
+              <button key={item.slug} onClick={() => { setSelectedCategory(item.slug); router.push(`/?category=${item.slug}`); }}
                 style={{ whiteSpace: 'nowrap', padding: '5px 14px', borderRadius: '20px', border: 'none', fontSize: '13px', cursor: 'pointer', flexShrink: 0, backgroundColor: isActive ? ACCENT : dark ? '#252838' : '#F1F3F5', color: isActive ? 'white' : T2 }}>
                 {item.label}
               </button>
@@ -205,7 +205,7 @@ export default function Header({
   // DESKTOP HEADER (3-tier)
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <header style={{ width: '100vw', zIndex: 100 }}>
+    <header style={{ width: '100vw', zIndex: 50 }}>
 
       {/* ── TIER 1: Top utility bar ────────────────────────────────────────── */}
       <div style={{ backgroundColor: TOP_BAR_BG, overflow: 'hidden' }}>
@@ -429,7 +429,7 @@ export default function Header({
                     <button
                       key={item.slug}
                       className={`${styles.navItem} ${ isActive ? styles.navItemActive : "" }`}
-                      onClick={() => setSelectedCategory(item.slug)}
+                      onClick={() => { setSelectedCategory(item.slug); router.push(`/?category=${item.slug}`); }}
                       style={{fontSize: "16px", fontWeight: isActive ? 600 : 500}}
                     >
                       {item.label}

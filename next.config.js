@@ -3,8 +3,10 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  serverExternalPackages: ['mongodb'],
-  turbopack: {},
+  experimental: {
+    // Remove if not using Server Components
+    serverComponentsExternalPackages: ['mongodb'],
+  },
   webpack(config, { dev }) {
     if (dev) {
       // Reduce CPU/memory from file watching
@@ -25,18 +27,11 @@ const nextConfig = {
       {
         source: "/(.*)",
         headers: [
-          // Security headers
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "X-Frame-Options", value: "SAMEORIGIN" },
-          { key: "X-XSS-Protection", value: "1; mode=block" },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          
-          // CORS headers (restrict to allowed origins)
-          { key: "Access-Control-Allow-Origin", value: process.env.ALLOWED_ORIGINS || "http://localhost:3000" },
+          { key: "X-Frame-Options", value: "ALLOWALL" },
+          { key: "Content-Security-Policy", value: "frame-ancestors *;" },
+          { key: "Access-Control-Allow-Origin", value: process.env.CORS_ORIGINS || "*" },
           { key: "Access-Control-Allow-Methods", value: "GET, POST, PUT, DELETE, OPTIONS" },
-          { key: "Access-Control-Allow-Headers", value: "Content-Type, Authorization, X-Admin-Token" },
-          { key: "Access-Control-Allow-Credentials", value: "true" },
-          { key: "Access-Control-Max-Age", value: "86400" },
+          { key: "Access-Control-Allow-Headers", value: "*" },
         ],
       },
     ];

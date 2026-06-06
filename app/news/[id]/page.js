@@ -344,7 +344,7 @@ export default function NewsDetailsPage() {
                 </div>
               ) : article ? (
                 <>
-                  <div className="kn-desktop-grid">
+                  <div className="kn-desktop-grid" style={{ display: isMobileView ? 'block' : undefined }}>
                     <main style={{ display: 'grid', gap: '24px' }}>
                       <div className={styles.articleHero} style={{ backgroundColor: surface, border: `1px solid ${bdr}` }}>
                         <div className={styles.heroImage}>
@@ -426,7 +426,7 @@ export default function NewsDetailsPage() {
                       </div>
                     </main>
 
-                    <aside className="kn-right-col" style={{ position: 'sticky', top: `${HEADER_H + 16}px` }}>
+                    <aside className="kn-right-col" style={{ position: isMobileView ? 'static' : 'sticky', top: isMobileView ? 'auto' : `${HEADER_H + 16}px`, marginTop: isMobileView ? '20px' : '0' }}>
                       <LatestNews
                         items={latestNews}
                         onArticleClick={navigateToArticle}
