@@ -324,27 +324,49 @@ export default function HomePage() {
 
             ) : isMobileView ? (
               /* ── Mobile list ──────────────────────────────────────────── */
-                <div className="kn-mobile-list">
+                <>
+                  {/* Live TV */}
+                  {youtubeLive?.videoId && ( <LiveCard youtubeLive={youtubeLive} dark={dark} bdr={bdr} />)}
+
+                  {/* News List */}
+                  <div className="kn-mobile-list">
                     {news.map(item => (
-                    <div key={item.id} onClick={() => goToArticle(item)} className="kn-mobile-item" style={{ borderBottom: `1px solid ${bdr}` }}>
+                      <div key={item.id} onClick={() => goToArticle(item)} className="kn-mobile-item" style={{ borderBottom: `1px solid ${bdr}` }}>
                         <div className="kn-mobile-thumb">
                         <img src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=300'} alt={item.title} />
                         </div>
                         <div className="kn-mobile-item-text" style={{ marginLeft: '12px' }}>
-                        <div className="kn-mobile-item-cat-row">
-                            <span className="kn-mobile-item-cat-dot" style={{ backgroundColor: getCatAccent(item.category) }} />
-                            <span style={{ fontSize: '10px', fontWeight: 700, color: getCatAccent(item.category), textTransform: 'uppercase', letterSpacing: '0.07em', marginLeft: '10px' }}>
-                            {getCatLabel(item.category, selectedLanguage)}
-                            </span>
+                          <div className="kn-mobile-item-cat-row">
+                              <span className="kn-mobile-item-cat-dot" style={{ backgroundColor: getCatAccent(item.category) }} />
+                              <span style={{ fontSize: '10px', fontWeight: 700, color: getCatAccent(item.category), textTransform: 'uppercase', letterSpacing: '0.07em', marginLeft: '10px' }}>
+                              {getCatLabel(item.category, selectedLanguage)}
+                              </span>
+                          </div>
+                          <p style={{ fontSize: '14px', fontWeight: 700, color: dark ? '#E8ECF0' : '#111827', lineHeight: 1.4, marginBottom: '7px', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</p>
+                          <span style={{ fontSize: '11px', color: T3, marginLeft: '10px' }}>{formatDate(item.publishedAt)}</span> 
+                          {item.isBreaking && <span style={{ backgroundColor: EDITORIAL_RED, color: '#fff', fontSize: '9px', fontWeight: 700, padding: '1px 5px', marginLeft: '10px', borderRadius: '2px' }}>LIVE</span>}
                         </div>
-                        <p style={{ fontSize: '14px', fontWeight: 700, color: dark ? '#E8ECF0' : '#111827', lineHeight: 1.4, marginBottom: '7px', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.title}</p>
-                        <span style={{ fontSize: '11px', color: T3, marginLeft: '10px' }}>{formatDate(item.publishedAt)}</span> 
-                        {item.isBreaking && <span style={{ backgroundColor: EDITORIAL_RED, color: '#fff', fontSize: '9px', fontWeight: 700, padding: '1px 5px', marginLeft: '10px', borderRadius: '2px' }}>LIVE</span>}
-                        </div>
-                        
+                          
+                      </div>
+                      ))}
+                  </div>
+
+                  {hasMore && (
+                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px', marginBottom: '20px' }}>
+                      <button onClick={loadMore} disabled={loading}
+                        style={{ padding: '12px 24px', borderRadius: '12px', border: `1px solid ${bdr}`, background: surface, color: T1, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                            {loading ? (
+                              'Loading...'
+                            ) : (
+                              <>
+                                {selectedLanguage === 'hi' ? 'और देखें' : 'Load More'}
+                                <ChevronDown size={16} />
+                              </>
+                            )}
+                      </button>
                     </div>
-                    ))}
-                </div>
+                  )}
+                </>
 
             ) : (
               /* ── Desktop 2-column layout ────────────────────────────── */

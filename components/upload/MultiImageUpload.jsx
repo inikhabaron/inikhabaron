@@ -4,7 +4,7 @@ import { ImageUpload } from './ImageUpload';
 
 export function MultiImageUpload({ images = [], onChange }) {
   const handleAdd = (url) => {
-    onChange([...images, { url, crop: null }]);
+    onChange([...images, url]);
   };
 
   const removeImage = (index) => {
@@ -27,7 +27,7 @@ export function MultiImageUpload({ images = [], onChange }) {
             overflow: 'hidden',
             border: '1px solid #e5e7eb',
           }}>
-            <img src={img.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img src={typeof img === 'string' ? img : img?.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             <button onClick={() => removeImage(i)}
               style={{
                 position: 'absolute',

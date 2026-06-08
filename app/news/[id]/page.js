@@ -382,6 +382,30 @@ export default function NewsDetailsPage() {
                             </button>
                           </div>
                           <article className={styles.articleContent} dangerouslySetInnerHTML={{ __html: articleHtml }} />
+                          {article.images?.length > 0 && (
+                            <div
+                              style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                                gap: '16px',
+                                marginTop: '24px'
+                              }}
+                            >
+                              {article.images.map((img, index) => (
+                                <img
+                                  key={index}
+                                  src={typeof img === 'string' ? img : img?.url}
+                                  alt={`Gallery ${index + 1}`}
+                                  style={{
+                                    width: '100%',
+                                    height: '220px',
+                                    objectFit: 'cover',
+                                    borderRadius: '12px'
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          )}
                           {articleTags.length > 0 && (
                             <div className={styles.tagsRow}>
                               {articleTags.map(tag => (

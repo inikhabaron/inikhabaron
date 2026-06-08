@@ -22,7 +22,7 @@ export const DS = {
   header: {
     background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 24px',
     height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    position: 'sticky', top: 0,
+    position: 'sticky', top: 0, zIndex: 2000,
   },
   card: { background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden' },
   btn: (variant = 'primary', extra = {}) => {

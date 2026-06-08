@@ -45,7 +45,10 @@ export default function TiptapEditor({
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Image,
+      Image.configure({
+        inline: false,
+        allowBase64: true,
+      }),
       TextStyle,
       Color,
       Highlight.configure({
@@ -74,12 +77,66 @@ export default function TiptapEditor({
   if (!editor) return null;
 
   const addImage = () => {
-    const url = window.prompt('Image URL');
+  const input = document.createElement('input');
 
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run();
+  input.type = 'file';
+  input.accept = 'image/*';
+
+  input.onchange = async (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      // Get Cloudinary signature
+      const sigRes = await fetch('/api/cloudinary/signature?folder=news');
+
+      if (!sigRes.ok) {
+        throw new Error('Failed to get Cloudinary signature');
+      }
+
+      const sigData = await sigRes.json();
+
+      // Upload to Cloudinary
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', sigData.apiKey);
+      formData.append('timestamp', sigData.timestamp);
+      formData.append('signature', sigData.signature);
+      formData.append('folder', sigData.folder);
+
+      const uploadRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${sigData.cloudName}/image/upload`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+
+      const uploadData = await uploadRes.json();
+
+      if (!uploadRes.ok) {
+        throw new Error(
+          uploadData.error?.message || 'Cloudinary upload failed'
+        );
+      }
+
+      editor
+        .chain()
+        .focus()
+        .setImage({
+          src: uploadData.secure_url,
+        })
+        .run();
+
+    } catch (err) {
+      console.error(err);
+      alert('Image upload failed: ' + err.message);
     }
   };
+
+  input.click();
+};
 
   const addLink = () => {
     const url = window.prompt('Link URL');
