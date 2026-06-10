@@ -51,8 +51,7 @@ export default function Header({
     { label: selectedLanguage === 'hi' ? 'विज्ञान'     : 'Science',         slug: 'science' },
     { label: selectedLanguage === 'hi' ? 'छलांग'      : 'Innovation',        slug: 'innovation' },
     { label: selectedLanguage === 'hi' ? 'ऑटोमोबाइल-गैजेट'     : 'Auto-Gadget',         slug: 'auto-gadget' },
-    { label: selectedLanguage === 'hi' ? 'साहित्य'      : 'Literature',        slug: 'literature' },
-    { label: selectedLanguage === 'hi' ? 'आध्यात्म'     : 'Spirituality',         slug: 'spirituality' },
+    { label: selectedLanguage === 'hi' ? 'न्यायालय'     : 'Court-Room',         slug: 'court-room' },
     { label: selectedLanguage === 'hi' ? 'लोकरुचि'      : 'Lifestyle',        slug: 'lifestyle' },
     { label: selectedLanguage === 'hi' ? 'स्थानीय'     : 'Local',         slug: 'local' }
   ];

@@ -26,10 +26,9 @@ const DEFAULT_CATEGORIES = [
   { name: 'Science', slug: 'science', color: '#3B82F6', icon: 'Microscope', order: 13 },
   { name: 'Innovation', slug: 'innovation', color: '#8B5CF6', icon: 'Lightbulb', order: 14 },
   { name: 'Auto-Gadget', slug: 'auto-gadget', color: '#EF4444', icon: 'Car', order: 15 },
-  { name: 'Literature', slug: 'literature', color: '#F97316', icon: 'BookOpen', order: 16 },
-  { name: 'Spirituality', slug: 'spirituality', color: '#6366F1', icon: 'Pray', order: 17 },
-  { name: 'Lifestyle', slug: 'lifestyle', color: '#EC4899', icon: 'Heartbeat', order: 18 },
-  { name: 'Local', slug: 'local', color: '#CA8A04', icon: 'MapPin', order: 19 }
+  { name: 'Court-Room', slug: 'court-room', color: '#6366F1', icon: 'Court', order: 16 },
+  { name: 'Lifestyle', slug: 'lifestyle', color: '#EC4899', icon: 'Heartbeat', order: 17 },
+  { name: 'Local', slug: 'local', color: '#CA8A04', icon: 'MapPin', order: 18 }
 ];
 
 function buildSampleNews() {

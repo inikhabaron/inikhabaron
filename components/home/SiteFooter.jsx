@@ -26,8 +26,7 @@ const hiTranslations = {
   science: 'विज्ञान',
   innovation: 'छलांग',
   'auto-gadget': 'ऑटोमोबाइल-गैजेट',
-  literature: 'साहित्य',
-  spirituality: 'आध्यात्म',
+  'court-room': 'न्यायालय',
   lifestyle: 'लोकरुचि',
   local: 'स्थानीय',
  };

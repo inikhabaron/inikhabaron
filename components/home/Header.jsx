@@ -55,14 +55,18 @@ export default function Header({
     { label: selectedLanguage === 'hi' ? 'विज्ञान'     : 'Science',         slug: 'science' },
     { label: selectedLanguage === 'hi' ? 'छलांग'      : 'Innovation',        slug: 'innovation' },
     { label: selectedLanguage === 'hi' ? 'ऑटोमोबाइल-गैजेट'     : 'Auto-Gadget',         slug: 'auto-gadget' },
-    { label: selectedLanguage === 'hi' ? 'साहित्य'      : 'Literature',        slug: 'literature' },
-    { label: selectedLanguage === 'hi' ? 'आध्यात्म'     : 'Spirituality',         slug: 'spirituality' },
+    { label: selectedLanguage === 'hi' ? 'न्यायालय'     : 'Court-Room',         slug: 'court-room' },
     { label: selectedLanguage === 'hi' ? 'लोकरुचि'      : 'Lifestyle',        slug: 'lifestyle' },
     { label: selectedLanguage === 'hi' ? 'स्थानीय'     : 'Local',         slug: 'local' },
   ];
 
   const mobileNavItems = [
     { label: t.latestNews, slug: 'all' },
+    {
+      label: selectedLanguage === 'hi' ? 'वीडियो' : 'Video',
+      slug: 'live-video',
+      isVideo: true,
+    },
     ...categories.map(cat => ({
       label: selectedLanguage === 'hi' ? (translations.hi[cat.slug] || cat.name) : cat.name,
       slug: cat.slug,
@@ -190,7 +194,7 @@ export default function Header({
           {mobileNavItems.map(item => {
             const isActive = selectedCategory === item.slug;
             return (
-              <button key={item.slug} onClick={() => { setSelectedCategory(item.slug); router.push(`/?category=${item.slug}`); }}
+              <button key={item.slug} onClick={() => { if (item.isVideo) { router.push('/live'); return; } setSelectedCategory(item.slug); router.push(`/?category=${item.slug}`); }}
                 style={{ whiteSpace: 'nowrap', padding: '5px 14px', borderRadius: '20px', border: 'none', fontSize: '13px', cursor: 'pointer', flexShrink: 0, backgroundColor: isActive ? ACCENT : dark ? '#252838' : '#F1F3F5', color: isActive ? 'white' : T2 }}>
                 {item.label}
               </button>

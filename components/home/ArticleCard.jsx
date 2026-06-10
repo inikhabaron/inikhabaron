@@ -52,7 +52,7 @@ export default function ArticleCard({
           alt={item.title}
           className="kn-card-img"
         />
-        {item.isBreaking && <span className="kn-card-live">LIVE</span>}
+        {item.isBreaking && <span className="kn-card-live">Breaking News</span>}
         <div className="kn-card-bar" style={{ backgroundColor: catColor }} />
       </div>
 
