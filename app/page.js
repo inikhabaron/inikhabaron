@@ -69,6 +69,7 @@ export default function HomePage() {
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterLoading, setNLLoading] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(null);
+  const [topStoriesCount, setTopStoriesCount] = useState(6);
 
   const shareMenuRef = useRef(null);
   const router = useRouter();
@@ -386,10 +387,20 @@ useEffect(() => {
                   )}
 
                   <div className="kn-horizontal-grid">
-                    {news.slice(2, 6).map(item => (
+                    {news.slice(1, 1 + topStoriesCount).map(item => (
                       <HorizontalArticleCard key={item.id} item={item} onClick={goToArticle} {...sharedCardProps} />
                     ))}
                   </div>
+
+                  {news.length > (2 + topStoriesCount) && (
+                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px', marginBottom: '20px' }}>
+                      <button onClick={() => setTopStoriesCount(prev => prev + 4)} className="kn-load-more-btn"
+                        style={{ border: `1px solid ${bdr}`, backgroundColor: surface, color: T2 }}>
+                        <span> {selectedLanguage === 'hi' ? 'और देखें' : 'Load More'} </span>
+                        <ChevronDown style={{ width: '14px', height: '14px', marginLeft: '6px' }}/>
+                      </button>
+                    </div>
+                  )}
 
                   {news.length > 5 && (
                     <>

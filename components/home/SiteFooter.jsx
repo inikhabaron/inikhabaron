@@ -12,7 +12,7 @@ import {
 
 const hiTranslations = {
   nation: 'देश',
-  states: 'प्रदेश',
+  states: 'राज्य',
   politics: 'राजनीति',
   world: 'दुनिया',
   economy: 'अर्थव्यवस्था',
@@ -118,7 +118,7 @@ export default function SiteFooter({ dark, categories, selectedLanguage, onCateg
             <ul className="kn-footer-link-list">
               {[
                 { slug: 'nation', name: 'देश' },
-                { slug: 'states', name: 'प्रदेश' },
+                { slug: 'states', name: 'राज्य' },
                 { slug: 'politics', name: 'राजनीति' },
                 { slug: 'world', name: 'दुनिया' },
                 { slug: 'science', name: 'विज्ञान' },
