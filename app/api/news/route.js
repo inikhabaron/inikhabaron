@@ -31,7 +31,7 @@ export async function GET(request) {
     }
 
     const [news, total] = await Promise.all([
-      newsCollection.find(query).sort({ publishedAt: -1 }).skip(skip).limit(limit).toArray(),
+      newsCollection.find(query).sort({ publishedAt: -1, createdAt: -1, _id: -1 }).skip(skip).limit(limit).toArray(),
       newsCollection.countDocuments(query),
     ]);
 

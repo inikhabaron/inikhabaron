@@ -57,6 +57,22 @@ export function NewsListView({
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
+  const getPageNumbers = () => {
+    const pages = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+      return pages;
+    }
+    pages.push(1);
+    if (page > 3) pages.push('...');
+    const start = Math.max(2, page - 1);
+    const end = Math.min(totalPages - 1, page + 1);
+    for (let i = start; i <= end; i++) { pages.push(i); }
+    if (page < totalPages - 2) pages.push('...');
+    pages.push(totalPages);
+    return pages;
+  };
+
   const toggleSelect = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   const allSelected = paginated.length > 0 && paginated.every(p => selectedIds.includes(p.id));
   const toggleAll = () => setSelectedIds(allSelected ? [] : paginated.map(p => p.id));
@@ -242,7 +258,7 @@ export function NewsListView({
             <PaginationBtn disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
               <ChevronRight size={13} style={{ transform: 'rotate(180deg)' }} />
             </PaginationBtn>
-            {[...Array(Math.min(totalPages, 9))].map((_, i) => {
+            {/* {[...Array(Math.min(totalPages, 9))].map((_, i) => {
               const p = i + 1;
               if (totalPages > 7 && i === 5) return <span key="dots" style={{ padding: '0 4px', color: '#9ca3af', fontSize: 13 }}>...</span>;
               if (totalPages > 7 && i > 5 && i < totalPages - 1) return null;
@@ -252,7 +268,26 @@ export function NewsListView({
                   {p}
                 </button>
               );
+            })} */}
+
+            {getPageNumbers().map((p, i) => {
+              if (p === '...') {
+                return (
+                  <span key={`dots-${i}`} style={{ padding: '0 6px', color: '#9ca3af', fontSize: 13 }}>
+                    ...
+                  </span>
+                );
+              }
+
+              return (
+                <button
+                  key={p} onClick={() => setPage(p)}
+                  style={{ width: 32, height: 32, border: `1px solid ${page === p ? '#2563eb' : '#e5e7eb'}`, borderRadius: 8, background: page === p ? '#2563eb' : '#fff', color: page === p ? '#fff' : '#374151', fontSize: 13, fontWeight: page === p ? 600 : 400, cursor: 'pointer' }}>
+                  {p}
+                </button>
+              );
             })}
+
             <PaginationBtn disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
               <ChevronRight size={13} />
             </PaginationBtn>
