@@ -23,6 +23,24 @@ export async function GET() {
       .limit(10)
       .toArray();
 
+    const monthlyStats = await newsCollection.aggregate([
+      {$match: { status: 'published', publishedAt: { $ne: null }}},
+      {$group: { _id: { $month: '$publishedAt' }, articles: { $sum: 1 }, views: { $sum: { $ifNull: ['$views', 0] } }}},
+      {$sort: { _id: 1 }}
+    ]).toArray();
+
+    const months = [ 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' ];
+
+    const chartData = months.map((month, index) => {
+      const found = monthlyStats.find( item => item._id === index + 1 );
+
+      return {
+        name: month,
+        views: found?.views || 0,
+        articles: found?.articles || 0,
+      };
+    });
+
     return json({
       stats: {
         totalNews,
@@ -32,6 +50,7 @@ export async function GET() {
         totalViews: totalViews[0]?.total || 0,
         totalUsers,
       },
+      chartData,
       topArticles,
     });
   } catch (error) {

@@ -270,6 +270,15 @@ export default function NewsDetailsPage() {
 
   const author = article?.author || article?.authorName || article?.writer || article?.byline;
 
+  const trackShare = (newsId, platform) =>
+    fetch(`/api/news/${newsId}/share`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ platform }),
+    }).catch(console.error);
+
   return (
     <DarkCtx.Provider value={dark}>
       <FontCtx.Provider value={{ font: selectedFont, scale: textScale }}>
@@ -365,17 +374,20 @@ export default function NewsDetailsPage() {
                             <p style={{ color: T2, fontSize: '15px', lineHeight: 1.8, marginTop: '16px' }}>{article.excerpt}</p>
                           )}
                           <div className={styles.shareRow}>
-                            <button className={`${styles.shareBtn} ${styles.whatsapp}`} onClick={() => {
+                            <button className={`${styles.shareBtn} ${styles.whatsapp}`} onClick={() => { 
+                              trackShare(article.id, 'whatsapp');
                               window.open(`https://wa.me/?text=${encodeURIComponent(article.title + '\n\n' + window.location.origin + '/news/' + article.id)}`, '_blank');
                             }}>
                               WhatsApp
                             </button>
                             <button className={`${styles.shareBtn} ${styles.twitter}`} onClick={() => {
+                              trackShare(article.id, 'twitter');
                               window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}&url=${encodeURIComponent(window.location.origin + '/news/' + article.id)}`, '_blank');
                             }}>
                               X / Twitter
                             </button>
                             <button className={`${styles.shareBtn} ${styles.facebook}`} onClick={() => {
+                              trackShare(article.id, 'facebook');
                               window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/news/' + article.id)}`, '_blank');
                             }}>
                               Facebook

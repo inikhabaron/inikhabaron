@@ -1,7 +1,7 @@
 import { getCollection } from '@/lib/mongodb';
 import { json, preflight } from '@/lib/api/cors';
 import { getUserFromToken } from '@/lib/auth/token';
-import { canPublishArticle } from '@/lib/auth/permissions';
+import { canPublishArticle, normalizeStatus } from '@/lib/auth/permissions';
 
 export const OPTIONS = preflight;
 
@@ -19,7 +19,7 @@ export async function POST(request, { params }) {
       { id: params.id },
       {
         $set: {
-          status: 'PUBLISHED',
+          status: normalizeStatus('published'),
           publishedAt: new Date(),
           approvedBy: user.id,
           updatedAt: new Date(),

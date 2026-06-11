@@ -653,3 +653,33 @@ code {
   background:#d1d5db;
   border-radius:999px;
 }
+
+.dropdown-content[data-side='top'] {
+  animation: slideUp 0.15s ease;
+}
+
+.dropdown-content[data-side='bottom'] {
+  animation: slideDown 0.15s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

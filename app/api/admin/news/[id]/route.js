@@ -52,6 +52,12 @@ export async function PUT(request, { params }) {
 
     const updateData = { ...body, updatedAt: new Date() };
 
+    if (body.scheduledAt !== undefined) {
+      updateData.scheduledAt = body.scheduledAt
+        ? new Date(body.scheduledAt)
+        : null;
+    }
+
     if (Array.isArray(body.tags)) {
       const category = body.category ?? article.category;
       updateData.tags = body.tags.filter(

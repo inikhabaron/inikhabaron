@@ -9,6 +9,7 @@ import { DS } from './design-system';
 import { STATUS_LABELS, statusFilterOptionsByRole } from './constants';
 import { MenuBtn } from './MenuBtn';
 import { PaginationBtn } from './PaginationBtn';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 const STATUS_TABS = [
   { id: 'all', label: 'All', filter: 'all' },
@@ -19,28 +20,23 @@ const STATUS_TABS = [
 
 export function NewsListView({
   news, currentUser, newsStatusFilter, onStatusFilterChange,
-  searchQuery, loading, onEdit, onDelete, onWorkflow, onAddNew, onViewVersionHistory,
+  searchQuery, loading, onEdit, onDelete, onWorkflow, onAddNew,
 }) {
-  const [openMenuId, setOpenMenuId] = useState(null);
   const [openTagsId, setOpenTagsId] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [page, setPage] = useState(1);
-  const menuRef = useRef(null);
   const tagsRef = useRef(null);
   const perPage = 6;
 
   useEffect(() => {
     const onMouseDown = (event) => {
-      if (openMenuId !== null && menuRef.current && !menuRef.current.contains(event.target)) {
-        setOpenMenuId(null);
-      }
       if (openTagsId !== null && tagsRef.current && !tagsRef.current.contains(event.target)) {
         setOpenTagsId(null);
       }
     };
     document.addEventListener('mousedown', onMouseDown);
     return () => document.removeEventListener('mousedown', onMouseDown);
-  }, [openMenuId, openTagsId]);
+  }, [openTagsId]);
 
   const activeTabId = STATUS_TABS.find(t => t.filter === newsStatusFilter)?.id || 'all';
 
@@ -169,10 +165,8 @@ export function NewsListView({
                         ))}
                         {extra > 0 && (
                           <>
-                            <span
-                              style={{ ...DS.tag, background: '#e0e7ff', color: '#4338ca', cursor: 'pointer' }}
-                              onClick={() => setOpenTagsId(openTagsId === item.id ? null : item.id)}
-                            >
+                            <span style={{ ...DS.tag, background: '#e0e7ff', color: '#4338ca', cursor: 'pointer' }}
+                              onClick={() => setOpenTagsId(openTagsId === item.id ? null : item.id)}>
                               +{extra} more
                             </span>
                             {openTagsId === item.id && (
@@ -193,50 +187,54 @@ export function NewsListView({
                       <span style={DS.badge(item.status)}>{STATUS_LABELS[item.status] || item.status}</span>
                     </td>
                     <td style={{ padding: '13px 14px' }}>
-                      <div ref={openMenuId === item.id ? menuRef : null} style={{ position: 'relative' }}>
-                        <button style={DS.btn('ghost')} onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}>
-                          <MoreVertical size={15} />
-                        </button>
-                        {openMenuId === item.id && (
-                          <div style={{ position: 'absolute', right: 0, top: '100%', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 50, minWidth: 190, overflow: 'hidden' }}>
+                      <DropdownMenu.Root>
+                        <DropdownMenu.Trigger asChild>
+                          <button style={DS.btn('ghost')}>
+                            <MoreVertical size={15} />
+                          </button>
+                        </DropdownMenu.Trigger>
+                        <DropdownMenu.Portal>
+                          <DropdownMenu.Content className="dropdown-content" sideOffset={6} collisionPadding={10} align="end" avoidCollisions style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 50, minWidth: 190, overflow: 'hidden' }}>
+                            
                             <div style={{ padding: '4px 0' }}>
                               {((currentUser?.role === 'admin') ||
                                 (currentUser?.role === 'editor' && ['draft', 'needs_revision'].includes(item.status)) ||
                                 (currentUser?.role === 'reporter' && item.status === 'draft' && item.authorId === currentUser?.id)) && (
-                                <MenuBtn icon={Edit} label="Edit" color="#374151" onClick={() => { onEdit(item); setOpenMenuId(null); }} />
+                                <MenuBtn icon={Edit} label="Edit" color="#374151" onClick={() => { onEdit(item); }} />
                               )}
                               {currentUser?.role === 'reporter' && item.status === 'draft' && (
-                                <MenuBtn icon={Send} label="Submit for Review" color="#1d4ed8" onClick={() => { onWorkflow(item.id, 'submit'); setOpenMenuId(null); }} />
+                                <MenuBtn icon={Send} label="Submit for Review" color="#1d4ed8" onClick={() => { onWorkflow(item.id, 'submit'); }} />
                               )}
                               {currentUser?.role === 'reporter' && item.status === 'needs_revision' && (
-                                <MenuBtn icon={Send} label="Resubmit" color="#1d4ed8" onClick={() => { onWorkflow(item.id, 'submit'); setOpenMenuId(null); }} />
+                                <MenuBtn icon={Send} label="Resubmit" color="#1d4ed8" onClick={() => { onWorkflow(item.id, 'submit'); }} />
                               )}
                               {currentUser?.role === 'editor' && item.status === 'pending_review' && (
                                 <>
-                                  <MenuBtn icon={Check} label="Approve" color="#059669" onClick={() => { onWorkflow(item.id, 'approve'); setOpenMenuId(null); }} />
-                                  <MenuBtn icon={X} label="Request Revision" color="#ea580c" onClick={() => { onWorkflow(item.id, 'revise'); setOpenMenuId(null); }} />
+                                  <MenuBtn icon={Check} label="Approve" color="#059669" onClick={() => { onWorkflow(item.id, 'approve'); }} />
+                                  <MenuBtn icon={X} label="Request Revision" color="#ea580c" onClick={() => { onWorkflow(item.id, 'revise'); }} />
                                 </>
                               )}
                               {currentUser?.role === 'admin' && item.status === 'ready_to_publish' && (
-                                <MenuBtn icon={CheckCircle} label="Publish" color="#059669" onClick={() => { onWorkflow(item.id, 'publish'); setOpenMenuId(null); }} />
+                                <MenuBtn icon={CheckCircle} label="Publish" color="#059669" onClick={() => { onWorkflow(item.id, 'publish'); }} />
                               )}
                               {currentUser?.role === 'admin' && item.breakingSuggested && !item.breakingApproved && (
-                                <MenuBtn icon={AlertCircle} label="Approve Breaking" color="#dc2626" onClick={() => { onWorkflow(item.id, 'approve-breaking'); setOpenMenuId(null); }} />
+                                <MenuBtn icon={AlertCircle} label="Approve Breaking" color="#dc2626" onClick={() => { onWorkflow(item.id, 'approve-breaking'); }} />
                               )}
                               {(currentUser?.role === 'admin' || currentUser?.role === 'editor') && item.trendingSuggested && !item.isTrending && (
-                                <MenuBtn icon={TrendingUp} label="Approve Trending" color="#7c3aed" onClick={() => { onWorkflow(item.id, 'approve-trending'); setOpenMenuId(null); }} />
+                                <MenuBtn icon={TrendingUp} label="Approve Trending" color="#7c3aed" onClick={() => { onWorkflow(item.id, 'approve-trending'); }} />
                               )}
-                              <MenuBtn icon={History} label="Version History" color="#374151" onClick={() => { onViewVersionHistory(item.id); setOpenMenuId(null); }} />
+                              {/* <MenuBtn icon={History} label="Version History" color="#374151" onClick={() => { onViewVersionHistory(item.id); }} /> */}
                               {currentUser?.role === 'admin' && (
                                 <>
                                   <div style={{ height: 1, background: '#f3f4f6', margin: '4px 0' }} />
-                                  <MenuBtn icon={Trash2} label="Delete" color="#dc2626" hoverBg="#fff5f5" onClick={() => { onDelete(item.id); setOpenMenuId(null); }} />
+                                  <MenuBtn icon={Trash2} label="Delete" color="#dc2626" hoverBg="#fff5f5" onClick={() => { onDelete(item.id); }} />
                                 </>
                               )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                            </div>                          
+                          </DropdownMenu.Content>
+                        </DropdownMenu.Portal>
+                      </DropdownMenu.Root>
+                      
                     </td>
                   </tr>
                   );
@@ -258,17 +256,6 @@ export function NewsListView({
             <PaginationBtn disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
               <ChevronRight size={13} style={{ transform: 'rotate(180deg)' }} />
             </PaginationBtn>
-            {/* {[...Array(Math.min(totalPages, 9))].map((_, i) => {
-              const p = i + 1;
-              if (totalPages > 7 && i === 5) return <span key="dots" style={{ padding: '0 4px', color: '#9ca3af', fontSize: 13 }}>...</span>;
-              if (totalPages > 7 && i > 5 && i < totalPages - 1) return null;
-              return (
-                <button key={p} onClick={() => setPage(p)}
-                  style={{ width: 32, height: 32, border: `1px solid ${page === p ? '#2563eb' : '#e5e7eb'}`, borderRadius: 8, background: page === p ? '#2563eb' : '#fff', color: page === p ? '#fff' : '#374151', fontSize: 13, fontWeight: page === p ? 600 : 400, cursor: 'pointer' }}>
-                  {p}
-                </button>
-              );
-            })} */}
 
             {getPageNumbers().map((p, i) => {
               if (p === '...') {

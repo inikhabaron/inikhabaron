@@ -17,6 +17,20 @@ export default function ArticleCard({
   const readTime = Math.max(1, Math.ceil(wordCount / 200));
   const shareMenuRef = useRef(null);
 
+  const trackShare = async (id, platform) => {
+    try {
+      console.log('Tracking share:', id, platform);
+      const response = await fetch(`/api/news/${id}/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', },
+        body: JSON.stringify({ platform }),
+      });
+      console.log('Share response:', response.status);
+    } catch (error) {
+      console.error('Share tracking failed:', error);
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
