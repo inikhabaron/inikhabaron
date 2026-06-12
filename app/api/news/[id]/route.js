@@ -1,6 +1,9 @@
 import { getCollection } from '@/lib/mongodb';
 import { json, preflight } from '@/lib/api/cors';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const OPTIONS = preflight;
 
 export async function GET(_request, { params }) {
@@ -14,7 +17,15 @@ export async function GET(_request, { params }) {
     }
 
     await newsCollection.updateOne({ id: newsId }, { $inc: { views: 1 } });
-    return json({ news });
+    return json({ news },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      }
+    );
   } catch (error) {
     console.error('GET /api/news/[id] error:', error);
     return json({ error: error.message }, { status: 500 });

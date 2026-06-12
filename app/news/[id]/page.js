@@ -122,10 +122,11 @@ export default function NewsDetailsPage() {
       setError(null);
       try {
         const [articleRes, categoryRes, breakingRes, latestRes, tagsRes] = await Promise.all([
-          fetch(`/api/news/${id}`),
+          // fetch(`/api/news/${id}?t=${Date.now()}`,{ cache: 'no-store', }), // For testing the word Wrapping
+          fetch(`/api/news/${id}}`,{ cache: 'no-store', }),
           fetch('/api/categories'),
-          fetch('/api/news/breaking'),
-          fetch('/api/news?page=1&limit=8'),
+          fetch('/api/news/breaking', { cache: 'no-store', }),
+          fetch('/api/news?page=1&limit=8', { cache: 'no-store', }),
           fetch('/api/tags'),
         ]);
 

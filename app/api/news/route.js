@@ -2,6 +2,9 @@ import { getCollection } from '@/lib/mongodb';
 import { json, preflight } from '@/lib/api/cors';
 import { autoPublishScheduledArticles } from '@/lib/services/news';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const OPTIONS = preflight;
 
 export async function GET(request) {
@@ -35,10 +38,17 @@ export async function GET(request) {
       newsCollection.countDocuments(query),
     ]);
 
-    return json({
-      news,
-      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
-    });
+    return json(
+      {news, pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      }
+    );
   } catch (error) {
     console.error('GET /api/news error:', error);
     return json({ error: error.message }, { status: 500 });
