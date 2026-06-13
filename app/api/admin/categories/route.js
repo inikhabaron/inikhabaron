@@ -25,7 +25,9 @@ export async function POST(request) {
     const category = {
       id: uuidv4(),
       name: body.name,
+      nameHi: body.nameHi,
       slug: body.slug || body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      parentSlug: body.parentSlug || '',
       description: body.description || '',
       icon: body.icon || null,
       color: body.color || '#3B82F6',

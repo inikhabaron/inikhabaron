@@ -16,14 +16,24 @@ export function CategoryFormDialog({ open, onOpenChange, editingCategory, catego
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>Name *</Label>
+            <Label>Name (English) *</Label>
             <Input value={categoryForm.name}
               onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value, slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-') })}
-              placeholder="Category name" />
+              placeholder="For Example: Nation" />
+          </div>
+          <div className="space-y-2">
+            <Label>Name (Hindi) *</Label>
+            <Input value={categoryForm.nameHi || ''}
+              onChange={e => setCategoryForm({ ...categoryForm, nameHi: e.target.value })}
+              placeholder="जैसे: देश" />
           </div>
           <div className="space-y-2">
             <Label>Slug</Label>
             <Input value={categoryForm.slug} onChange={e => setCategoryForm({ ...categoryForm, slug: e.target.value })} placeholder="category-slug" />
+          </div>
+          <div className="space-y-2">
+            <Label>Parent Slug</Label>
+            <Input value={categoryForm.parentSlug || ''} onChange={e => setCategoryForm({ ...categoryForm, parentSlug: e.target.value, })} placeholder="states" />
           </div>
           <div className="space-y-2">
             <Label>Description</Label>

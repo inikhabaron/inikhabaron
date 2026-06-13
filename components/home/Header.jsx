@@ -39,37 +39,17 @@ export default function Header({
 
   // Build nav items list
   const navItems = [
-    { label: selectedLanguage === 'hi' ? 'ताज़ा खबरें'       : 'Latest News',          slug: 'all',           icon: true },
-    { label: selectedLanguage === 'hi' ? 'देश'        : 'Nation',      slug: 'nation' },
-    { label: selectedLanguage === 'hi' ? 'राज्य'      : 'States',        slug: 'states' },
-    { label: selectedLanguage === 'hi' ? 'राजनीति'   : 'Politics',      slug: 'politics' },
-    { label: selectedLanguage === 'hi' ? 'दुनिया'     : 'World',         slug: 'world' },
-    { label: selectedLanguage === 'hi' ? 'अर्थव्यवस्था' : 'Economy',       slug: 'economy' },
-    { label: selectedLanguage === 'hi' ? 'खेल'        : 'Sports',        slug: 'sports' },
-    { label: selectedLanguage === 'hi' ? 'मनोरंजन'    : 'Entertainment', slug: 'entertainment' },
-    { label: selectedLanguage === 'hi' ? 'विमर्श'  : 'Opinion',    slug: 'opinion' },
-    { label: selectedLanguage === 'hi' ? 'योजनाएं'   : 'Schemes',        slug: 'schemes' },
-    { label: selectedLanguage === 'hi' ? 'पढ़ाई'      : 'Education',        slug: 'education' },
-    { label: selectedLanguage === 'hi' ? 'नौकरी'      : 'Jobs',         slug: 'jobs' },
-    { label: selectedLanguage === 'hi' ? 'किसान'      : 'Farmers',        slug: 'farmers' },
-    { label: selectedLanguage === 'hi' ? 'विज्ञान'     : 'Science',         slug: 'science' },
-    { label: selectedLanguage === 'hi' ? 'छलांग'      : 'Innovation',        slug: 'innovation' },
-    { label: selectedLanguage === 'hi' ? 'ऑटोमोबाइल-गैजेट'     : 'Auto-Gadget',         slug: 'auto-gadget' },
-    { label: selectedLanguage === 'hi' ? 'न्यायालय'     : 'Court-Room',         slug: 'court-room' },
-    { label: selectedLanguage === 'hi' ? 'लोकरुचि'      : 'Lifestyle',        slug: 'lifestyle' },
-    { label: selectedLanguage === 'hi' ? 'स्थानीय'     : 'Local',         slug: 'local' },
+    { label: selectedLanguage === 'hi' ? 'ताज़ा खबरें' : 'Latest News', slug: 'all', icon: true, },
+    ...categories.map(cat => ({
+      label: selectedLanguage === 'hi' ? (cat.nameHi || cat.name) : cat.name, slug: cat.slug, color: cat.color,
+    })),
   ];
 
   const mobileNavItems = [
     { label: t.latestNews, slug: 'all' },
-    {
-      label: selectedLanguage === 'hi' ? 'वीडियो' : 'Video',
-      slug: 'live-video',
-      isVideo: true,
-    },
+    { label: selectedLanguage === 'hi' ? 'वीडियो' : 'Video', slug: 'live-video', isVideo: true, },
     ...categories.map(cat => ({
-      label: selectedLanguage === 'hi' ? (translations.hi[cat.slug] || cat.name) : cat.name,
-      slug: cat.slug,
+      label: selectedLanguage === 'hi' ? (cat.nameHi || cat.name) : cat.name, slug: cat.slug,
     })),
   ];
 

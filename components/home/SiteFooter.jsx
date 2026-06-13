@@ -10,27 +10,6 @@ import {
   FaInstagram
 } from 'react-icons/fa6';
 
-const hiTranslations = {
-  nation: 'देश',
-  states: 'राज्य',
-  politics: 'राजनीति',
-  world: 'दुनिया',
-  economy: 'अर्थव्यवस्था',
-  sports: 'खेल',
-  entertainment: 'मनोरंजन',
-  opinion: 'विमर्श',
-  schemes: 'योजनाएं',
-  education: 'पढ़ाई',
-  jobs: 'नौकरी',
-  farmers: 'किसान',
-  science: 'विज्ञान',
-  innovation: 'छलांग',
-  'auto-gadget': 'ऑटोमोबाइल-गैजेट',
-  'court-room': 'न्यायालय',
-  lifestyle: 'लोकरुचि',
-  local: 'स्थानीय',
- };
-
 export default function SiteFooter({ dark, categories, selectedLanguage, onCategoryClick, newsletterEmail, setNewsletterEmail, onNewsletterSubscribe, newsletterLoading }) {
   const T1 = dark ? '#E8ECF0' : '#111827';
   const T2 = dark ? '#9BA5B4' : '#4B5563';

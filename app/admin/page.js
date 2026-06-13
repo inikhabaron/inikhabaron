@@ -25,7 +25,7 @@ const EMPTY_NEWS_FORM = {
 };
 
 const EMPTY_CATEGORY_FORM = {
-  name: '', slug: '', description: '', color: '#3B82F6', order: 0, isActive: true,
+  name: '', nameHi: '', slug: '', parentSlug: '', description: '', color: '#3B82F6', order: 0, isActive: true,
 };
 
 const EMPTY_TAG_FORM = {
@@ -60,8 +60,17 @@ export default function AdminPage() {
   const [versionHistory, setVersionHistory] = useState([]);
 
   const [newsForm, setNewsForm] = useState(EMPTY_NEWS_FORM);
-  const [categoryForm, setCategoryForm] = useState(EMPTY_CATEGORY_FORM);
-  const [tagForm, setTagForm] = useState(EMPTY_TAG_FORM);
+  const [categoryForm, setCategoryForm] = useState({
+    name: '',
+    nameHi: '',
+    slug: '',
+    parentSlug: '',
+    description: '',
+    color: '#3B82F6',
+    order: 0,
+    isActive: true,
+  });
+    const [tagForm, setTagForm] = useState(EMPTY_TAG_FORM);
   const [userForm, setUserForm] = useState(EMPTY_USER_FORM);
   const [ytForm, setYtForm] = useState({ videoId: '', channelId: '', title: '', isLive: false });
   const [ytSaving, setYtSaving] = useState(false);
@@ -311,9 +320,19 @@ export default function AdminPage() {
 
   const handleSaveCategory = async () => {
     try {
+      const payload = {
+        name: categoryForm.name,
+        nameHi: categoryForm.nameHi,
+        slug: categoryForm.slug,
+        parentSlug: categoryForm.parentSlug,
+        description: categoryForm.description,
+        color: categoryForm.color,
+        order: categoryForm.order,
+        isActive: categoryForm.isActive,
+      };
       const method = editingCategory ? 'PUT' : 'POST';
       const url = editingCategory ? `/api/admin/categories/${editingCategory.id}` : '/api/admin/categories';
-      const res = await authFetch(url, { method, body: JSON.stringify(categoryForm) });
+      const res = await authFetch(url, { method, body: JSON.stringify(payload) });
       if (!res.ok) throw new Error('Failed to save');
       toast.success(editingCategory ? 'Category updated' : 'Category created');
       setIsCategoryDialogOpen(false);
@@ -408,7 +427,7 @@ export default function AdminPage() {
             onAdd={() => { setEditingCategory(null); setCategoryForm(EMPTY_CATEGORY_FORM); setIsCategoryDialogOpen(true); }}
             onEdit={(cat) => {
               setEditingCategory(cat);
-              setCategoryForm({ name: cat.name, slug: cat.slug, description: cat.description || '', color: cat.color, order: cat.order, isActive: cat.isActive });
+              setCategoryForm({ name: cat.name || '', nameHi: cat.nameHi || '', slug: cat.slug || '', parentSlug: cat.parentSlug || '', description: cat.description || '', color: cat.color || '#3B82F6', order: cat.order || 0, isActive: cat.isActive ?? true, });
               setIsCategoryDialogOpen(true);
             }}
             onDelete={handleDeleteCategory}
