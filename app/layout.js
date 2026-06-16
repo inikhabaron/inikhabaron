@@ -31,7 +31,14 @@ const notoDevanagari = Noto_Sans_Devanagari({
 export const metadata = {
   title: 'KhabarON - Your Daily News Source',
   description: 'Stay informed with the latest news across politics, sports, business, entertainment, and technology.',
-  manifest: '/manifest.json',
+    manifest: '/site.webmanifest',
+  icons: {
+    icon: [
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
+  },
 };
 
 export const viewport = {
@@ -57,9 +64,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={fontVars}>
       <head>
-        <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#152a58" />
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <Script
           async
           strategy="afterInteractive"
