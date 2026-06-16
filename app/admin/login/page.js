@@ -123,22 +123,7 @@ export default function AdminLoginPage() {
               </Button>
             </form>
 
-            <div className="mt-6 pt-6 border-t">
-              <p className="text-xs text-muted-foreground text-center mb-3">
-                Demo Credentials:
-              </p>
-              <div className="space-y-2 text-xs">
-                <div className="bg-muted p-2 rounded">
-                  <p><strong>Admin:</strong> admin@newsdesk.com / admin123</p>
-                </div>
-                <div className="bg-muted p-2 rounded">
-                  <p><strong>Editor:</strong> editor@newsdesk.com / editor123</p>
-                </div>
-                <div className="bg-muted p-2 rounded">
-                  <p><strong>Reporter:</strong> reporter@newsdesk.com / reporter123</p>
-                </div>
-              </div>
-            </div>
+            {/* git */}
           </CardContent>
         </Card>
 
