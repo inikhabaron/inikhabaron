@@ -126,6 +126,19 @@ export function NewsFormDialog({
               </Select>
             </div>
             <div className="space-y-2">
+              <Label>Author Label</Label>
+              <Input
+                value={newsForm.authorLabel}
+                onChange={e =>
+                  setNewsForm({
+                    ...newsForm,
+                    authorLabel: e.target.value,
+                  })
+                }
+                placeholder="Author, Writer, Creator Name, Reported By..."
+              />
+            </div>
+            <div className="space-y-2">
               <Label>Author Name</Label>
               <Input value={newsForm.authorName} onChange={e => setNewsForm({ ...newsForm, authorName: e.target.value })} />
             </div>

@@ -101,13 +101,24 @@ export async function PUT(request, { params }) {
       if (requestedStatus === 'pending_review' && !canSubmitForReview(user, article)) {
         return json({ error: 'Cannot submit for review' }, { status: 403 });
       }
+
       if (requestedStatus === 'ready_to_publish' && !canApproveArticle(user)) {
         return json({ error: 'Cannot approve article' }, { status: 403 });
       }
+
       if (requestedStatus === 'published' && !canPublishArticle(user)) {
         return json({ error: 'Cannot publish article' }, { status: 403 });
       }
+
       updateData.status = requestedStatus;
+
+      // Set publish timestamp when publishing
+      if (
+        requestedStatus === 'published' &&
+        !article.publishedAt
+      ) {
+        updateData.publishedAt = new Date();
+      }
     }
 
     delete updateData.id;

@@ -270,6 +270,7 @@ export default function NewsDetailsPage() {
   }, [article, selectedLanguage]);
 
   const author = article?.author || article?.authorName || article?.writer || article?.byline;
+  const authorLabel = article?.authorLabel || 'Author';
 
   const trackShare = (newsId, platform) =>
     fetch(`/api/news/${newsId}/share`, {
@@ -369,7 +370,7 @@ export default function NewsDetailsPage() {
                           </h1>
                           <div className={styles.articleMeta}>
                             <span>{publishedAt}</span>
-                            {author && <span className={styles.articleAuthor}>{selectedLanguage === 'hi' ? 'रचित:' : 'By'} {author}</span>}
+                            {author && <span className={styles.articleAuthor}>{authorLabel}: {author}</span>}
                           </div>
                           {article.excerpt && (
                             <p style={{ color: T2, fontSize: '15px', lineHeight: 1.8, marginTop: '16px' }}>{article.excerpt}</p>
@@ -377,7 +378,7 @@ export default function NewsDetailsPage() {
                           <div className={styles.shareRow}>
                             <button className={`${styles.shareBtn} ${styles.whatsapp}`} onClick={() => { 
                               trackShare(article.id, 'whatsapp');
-                              window.open(`https://wa.me/?text=${encodeURIComponent(article.title + '\n\n' + window.location.origin + '/news/' + article.id)}`, '_blank');
+                              window.open(`https://wa.me/?text=${encodeURIComponent('*' + article.title + '*' + '\n\n' + window.location.origin + '/news/' + article.id)}`, '_blank');
                             }}>
                               WhatsApp
                             </button>

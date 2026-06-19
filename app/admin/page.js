@@ -20,7 +20,7 @@ import { VersionHistoryDialog } from '@/components/admin/VersionHistoryDialog';
 const EMPTY_NEWS_FORM = {
   title: '', content: '', excerpt: '', category: '', tags: '', featuredImage: '', images: [],
   status: 'draft', isBreaking: false, breakingSuggested: false, isTrending: false,
-  trendingSuggested: false, isFeatured: false, authorName: 'Admin',
+  trendingSuggested: false, isFeatured: false, authorLabel: 'Author', authorName: 'Admin',
   source: '', sourceUrl: '', seoTitle: '', seoDescription: '', seoKeywords: '', scheduledAt: '',
 };
 
@@ -235,7 +235,8 @@ export default function AdminPage() {
         tags: newsForm.tags.split(',').map(t => t.trim()).filter(Boolean),
         seoKeywords: newsForm.seoKeywords.split(',').map(t => t.trim()).filter(Boolean),
         authorId: currentUser?.id || 'admin',
-        authorName: currentUser?.name || newsForm.authorName,
+        authorLabel: newsForm.authorLabel || 'Author',
+        authorName: newsForm.authorName || currentUser?.name,
         status: newsForm.status,
       };
       const method = editingNews ? 'PUT' : 'POST';
@@ -296,7 +297,7 @@ export default function AdminPage() {
   };
 
   const resetNewsForm = () => {
-    setNewsForm({ ...EMPTY_NEWS_FORM, authorName: currentUser?.name || 'Admin' });
+    setNewsForm({ ...EMPTY_NEWS_FORM, authorLabel: 'Author', authorName: currentUser?.name || 'Admin' });
     setEditingNews(null);
   };
 
@@ -309,7 +310,7 @@ export default function AdminPage() {
       images: item.images || [],
       isBreaking: item.isBreaking || false, breakingSuggested: item.breakingSuggested || false,
       isTrending: item.isTrending || false, trendingSuggested: item.trendingSuggested || false,
-      isFeatured: item.isFeatured || false, authorName: item.authorName || 'Admin',
+      isFeatured: item.isFeatured || false, authorLabel: item.authorLabel || 'Author', authorName: item.authorName || 'Admin',
       source: item.source || '', sourceUrl: item.sourceUrl || '',
       seoTitle: item.seoTitle || '', seoDescription: item.seoDescription || '',
       seoKeywords: item.seoKeywords?.join(', ') || '',
