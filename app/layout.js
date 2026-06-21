@@ -11,6 +11,7 @@ import Script from 'next/script';
 import './globals.css';
 import './home.css';
 import { Toaster } from '@/components/ui/sonner';
+import GoogleAnalytics from '@/components/GoogleAnalytics';
 
 // Each font exposes a CSS variable so client components can switch at runtime
 const inter         = Inter         ({ subsets: ['latin'],      weight: ['300','400','500','600','700','800'], variable: '--font-inter',         display: 'swap' });
@@ -73,6 +74,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
+        <GoogleAnalytics />
         {children}
         <Toaster position="top-right" />
       </body>

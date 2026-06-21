@@ -17,6 +17,8 @@ import MobileSearch from '@/components/home/MobileSearch';
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
 import { ACCENT, FONT_OPTIONS, translations, getCatAccent, getCatLabel, formatDate } from '@/lib/news-utils';
 import styles from './page.module.css';
+import { event as trackEvent } from '@/lib/gtag';
+import { recordShare } from '@/lib/share';
 
 const Loader = () => (
   <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
@@ -272,14 +274,14 @@ export default function NewsDetailsPage() {
   const author = article?.author || article?.authorName || article?.writer || article?.byline;
   const authorLabel = article?.authorLabel || 'Author';
 
-  const trackShare = (newsId, platform) =>
-    fetch(`/api/news/${newsId}/share`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ platform }),
-    }).catch(console.error);
+  // const trackShare = (newsId, platform) =>
+  //   fetch(`/api/news/${newsId}/share`, {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: JSON.stringify({ platform }),
+  //   }).catch(console.error);
 
   return (
     <DarkCtx.Provider value={dark}>
@@ -376,20 +378,26 @@ export default function NewsDetailsPage() {
                             <p style={{ color: T2, fontSize: '15px', lineHeight: 1.8, marginTop: '16px' }}>{article.excerpt}</p>
                           )}
                           <div className={styles.shareRow}>
-                            <button className={`${styles.shareBtn} ${styles.whatsapp}`} onClick={() => { 
-                              trackShare(article.id, 'whatsapp');
+                            <button className={`${styles.shareBtn} ${styles.whatsapp}`} onClick={async () => { 
+                              trackEvent({ action: 'share_click', category: 'article', label: 'whatsapp', });
+
+                              await recordShare(article.id, 'whatsapp');
                               window.open(`https://wa.me/?text=${encodeURIComponent('*' + article.title + '*' + '\n\n' + window.location.origin + '/news/' + article.id)}`, '_blank');
                             }}>
                               WhatsApp
                             </button>
-                            <button className={`${styles.shareBtn} ${styles.twitter}`} onClick={() => {
-                              trackShare(article.id, 'twitter');
+                            <button className={`${styles.shareBtn} ${styles.twitter}`} onClick={async () => { 
+                              trackEvent({ action: 'share_click', category: 'article', label: 'twitter', });
+
+                              await recordShare(article.id, 'twitter');
                               window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}&url=${encodeURIComponent(window.location.origin + '/news/' + article.id)}`, '_blank');
                             }}>
                               X / Twitter
                             </button>
-                            <button className={`${styles.shareBtn} ${styles.facebook}`} onClick={() => {
-                              trackShare(article.id, 'facebook');
+                            <button className={`${styles.shareBtn} ${styles.facebook}`} onClick={async () => { 
+                              trackEvent({ action: 'share_click', category: 'article', label: 'facebook', });
+
+                              await recordShare(article.id, 'facebook');
                               window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/news/' + article.id)}`, '_blank');
                             }}>
                               Facebook

@@ -3,21 +3,33 @@ import { json, preflight } from '@/lib/api/cors';
 
 export const OPTIONS = preflight;
 
+const ALLOWED_PLATFORMS = ['whatsapp', 'facebook', 'twitter'];
+
 export async function POST(request, { params }) {
   try {
     const body = await request.json().catch(() => ({}));
-    const platform = body.platform;
-    console.log('Share API called');
-    console.log('Article ID:', params.id);
-    console.log('Platform:', platform);
+    const platform = String(body.platform || '').toLowerCase();
+
+    if (!ALLOWED_PLATFORMS.includes(platform)) {
+      return json({ error: 'Invalid platform' }, { status: 400 });
+    }
+
     const newsCollection = await getCollection('news');
+
     const result = await newsCollection.updateOne(
       { id: params.id },
-      { $inc: { [`shares.${platform}`]: 1, }, }
+      {
+        $inc: {
+          [`shares.${platform}`]: 1,
+        },
+      }
     );
-    console.log('Matched:', result.matchedCount);
-    console.log('Modified:', result.modifiedCount);
-    return json({ success: true });
+
+    return json({
+      success: true,
+      matched: result.matchedCount,
+      modified: result.modifiedCount,
+    });
   } catch (error) {
     console.error('POST /api/news/[id]/share error:', error);
     return json({ error: error.message }, { status: 500 });

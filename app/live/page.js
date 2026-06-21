@@ -25,6 +25,8 @@ import MobileSearch from '@/components/home/MobileSearch';
 // ─── Shared utilities & contexts ──────────────────────────────────────────────
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
 import { ACCENT, ACCENT_H, EDITORIAL_RED, FONT_OPTIONS, translations, getCatAccent, getCatLabel, formatDate } from '@/lib/news-utils';
+import { event as trackEvent } from '@/lib/gtag';
+import { recordShare } from '@/lib/share';
 
 // home.css is imported globally via layout.js — plain kn-* class names used below
 
@@ -181,10 +183,11 @@ export default function HomePage() {
   const handleGoogleSignIn = async () => { setAuthLoading(true); const r = await signInWithGoogle(); if (r.error) toast.error(r.error); else { setUser(r.user); setAuthDialogOpen(false); toast.success('Signed in!'); } setAuthLoading(false); };
   const handleAppleSignIn = async () => { setAuthLoading(true); const r = await signInWithApple(); if (r.error) toast.error(r.error); else { setUser(r.user); setAuthDialogOpen(false); toast.success('Signed in!'); } setAuthLoading(false); };
 
-  const trackShare = (newsId, platform) => fetch(`/api/news/${newsId}/share`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ platform }) }).catch(console.error);
-  const shareOnWhatsApp = (item) => { window.open(`https://wa.me/?text=${encodeURIComponent(item.title + '\n\n' + window.location.origin + '/news/' + item.id)}`, '_blank'); trackShare(item.id, 'whatsapp'); };
-  const shareOnTwitter = (item) => { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(item.title)}&url=${encodeURIComponent(window.location.origin + '/news/' + item.id)}`, '_blank'); trackShare(item.id, 'twitter'); };
-  const shareOnFacebook = (item) => { window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/news/' + item.id)}`, '_blank'); trackShare(item.id, 'facebook'); };
+  // const trackShare = (newsId, platform) => fetch(`/api/news/${newsId}/share`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ platform }) }).catch(console.error);
+  const shareOnWhatsApp = async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'whatsapp', }); await recordShare(item.id, 'whatsapp'); window.open(`https://wa.me/?text=${encodeURIComponent('*' + item.title + '*' + '\n\n' + window.location.origin + '/news/' + item.id)}`, '_blank'); };
+  const shareOnTwitter = async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'twitter', }); await recordShare(item.id, 'twitter'); window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(item.title)}&url=${encodeURIComponent(window.location.origin + '/news/' + item.id)}`, '_blank'); };
+  const shareOnFacebook = async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'facebook', }); await recordShare(item.id, 'facebook'); window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/news/' + item.id)}`, '_blank'); };
+  const copyArticleLink = async (item) => { try { await navigator.clipboard.writeText(`${window.location.origin}/news/${item.id}`); trackEvent({ action: 'share_click', category: 'article', label: 'copy_link', }); toast.success('Link copied!'); } catch (error) { console.error(error); toast.error('Failed to copy link'); }};
 
 //   const handleSaveProgress = async (scrollPct) => {
 //     if (!selectedNews || !userId || scrollPct <= 0) return;
@@ -415,7 +418,7 @@ export default function HomePage() {
                       </div>
                       <div className="kn-article-grid">
                         {news.slice(3).map(item => (
-                          <ArticleCard key={item.id} item={item} onClick={goToArticle} formatDate={formatDate} showShareMenu={showShareMenu} setShowShareMenu={setShowShareMenu} selectedLanguage={selectedLanguage} onShareWhatsApp={shareOnWhatsApp} onShareTwitter={shareOnTwitter} onShareFacebook={shareOnFacebook} />
+                          <ArticleCard key={item.id} item={item} onClick={goToArticle} formatDate={formatDate} showShareMenu={showShareMenu} setShowShareMenu={setShowShareMenu} selectedLanguage={selectedLanguage} onShareWhatsApp={shareOnWhatsApp} onShareTwitter={shareOnTwitter} onShareFacebook={shareOnFacebook} onCopyLink={copyArticleLink} />
                         ))}
                       </div>
                     </>

@@ -7,7 +7,7 @@ import { getCatAccent, getCatLabel, EDITORIAL_RED } from '@/lib/news-utils';
 
 export default function ArticleCard({
   item, onClick, formatDate, showShareMenu, setShowShareMenu,
-  selectedLanguage, onShareWhatsApp, onShareTwitter, onShareFacebook,
+  selectedLanguage, onShareWhatsApp, onShareTwitter, onShareFacebook, onCopyLink,
 }) {
   const dark = useContext(DarkCtx);
   const { scale } = useContext(FontCtx);
@@ -17,19 +17,19 @@ export default function ArticleCard({
   const readTime = Math.max(1, Math.ceil(wordCount / 200));
   const shareMenuRef = useRef(null);
 
-  const trackShare = async (id, platform) => {
-    try {
-      console.log('Tracking share:', id, platform);
-      const response = await fetch(`/api/news/${id}/share`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', },
-        body: JSON.stringify({ platform }),
-      });
-      console.log('Share response:', response.status);
-    } catch (error) {
-      console.error('Share tracking failed:', error);
-    }
-  };
+  // const trackShare = async (id, platform) => {
+  //   try {
+  //     console.log('Tracking share:', id, platform);
+  //     const response = await fetch(`/api/news/${id}/share`, {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json', },
+  //       body: JSON.stringify({ platform }),
+  //     });
+  //     console.log('Share response:', response.status);
+  //   } catch (error) {
+  //     console.error('Share tracking failed:', error);
+  //   }
+  // };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -102,7 +102,7 @@ export default function ArticleCard({
                     { label: 'WhatsApp', className:'share-whatsapp', fn: () => onShareWhatsApp(item) },
                     { label: 'Twitter', className:'share-twitter',  fn: () => onShareTwitter(item) },
                     { label: 'Facebook', className:'share-facebook', fn: () => onShareFacebook(item) },
-                    { label: 'Copy Link', className:'share-copy-link', fn: () => { navigator.clipboard.writeText(`${window.location.origin}/news/${item.id}`); toast.success('Link copied!'); } },
+                    { label: 'Copy Link', className:'share-copy-link', fn: () => onCopyLink(item) },
                   ].map(s => (
                     <button
                       key={s.label} onClick={s.fn}
