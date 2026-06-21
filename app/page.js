@@ -188,6 +188,7 @@ useEffect(() => {
   const shareOnWhatsApp = async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'whatsapp', }); await recordShare(item.id, 'whatsapp'); window.open(`https://wa.me/?text=${encodeURIComponent('*' + item.title + '*' + '\n\n' + window.location.origin + '/news/' + item.id)}`, '_blank'); };
   const shareOnTwitter = async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'twitter', }); await recordShare(item.id, 'twitter'); window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(item.title)}&url=${encodeURIComponent(window.location.origin + '/news/' + item.id)}`, '_blank'); };
   const shareOnFacebook = async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'facebook', }); await recordShare(item.id, 'facebook'); window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/news/' + item.id)}`, '_blank'); };
+    const copyArticleLink = async (item) => { try { await navigator.clipboard.writeText(`${window.location.origin}/news/${item.id}`); trackEvent({ action: 'share_click', category: 'article', label: 'copy_link', }); toast.success('Link copied!'); } catch (error) { console.error(error); toast.error('Failed to copy link'); }};
 
   // const handleSaveProgress = async (scrollPct) => {
   //   if (!selectedNews || !userId || scrollPct <= 0) return;
