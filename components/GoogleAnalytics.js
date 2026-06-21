@@ -1,7 +1,6 @@
 'use client';
 
 import Script from 'next/script';
-import GoogleAnalyticsTracker from './GoogleAnalyticsTracker';
 
 export default function GoogleAnalytics() {
   const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
@@ -23,8 +22,6 @@ export default function GoogleAnalytics() {
           gtag('config', '${GA_ID}');
         `}
       </Script>
-
-      <GoogleAnalyticsTracker />
     </>
   );
 }
