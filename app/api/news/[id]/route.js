@@ -16,13 +16,13 @@ export async function GET(_request, { params }) {
       return json({ error: 'News not found' }, { status: 404 });
     }
 
-    await newsCollection.updateOne({ id: newsId }, { $inc: { views: 1 } });
-    return json({ news },
+    return json(
+      { news },
       {
         headers: {
           'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
+          Pragma: 'no-cache',
+          Expires: '0',
         },
       }
     );

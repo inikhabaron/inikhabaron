@@ -190,6 +190,41 @@ export default function NewsDetailsPage() {
   }, [article]);
 
   useEffect(() => {
+    if (!article?.id) return;
+
+    const viewedKey = `viewed_${article.id}`;
+
+    // only block duplicate count within the SAME page session after a successful call
+    if (sessionStorage.getItem(viewedKey) === 'done') return;
+
+    fetch(`/api/news/${article.id}/view`, {
+      method: 'POST',
+      cache: 'no-store',
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok || !data?.success) {
+          console.error('View API failed:', data);
+          return;
+        }
+
+        // mark as counted only after success
+        sessionStorage.setItem(viewedKey, 'done');
+
+        // update UI immediately if you want to show latest count
+        if (typeof data.afterViews === 'number') {
+          setArticle((prev) =>
+            prev ? { ...prev, views: data.afterViews } : prev
+          );
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to record article view:', err);
+      });
+  }, [article?.id]);
+
+  useEffect(() => {
     const saved = localStorage.getItem('newsdesk_user_id');
     if (!saved) localStorage.setItem('newsdesk_user_id', 'user_' + Math.random().toString(36).substr(2, 9));
   }, []);
