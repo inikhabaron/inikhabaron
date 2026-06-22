@@ -190,39 +190,54 @@ export default function NewsDetailsPage() {
   }, [article]);
 
   useEffect(() => {
-    if (!article?.id) return;
+  if (!article?.id) return;
 
-    const viewedKey = `viewed_${article.id}`;
+  const VIEW_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
+  const viewedKey = `viewed_${article.id}`;
+  const now = Date.now();
 
-    // only block duplicate count within the SAME page session after a successful call
-    if (sessionStorage.getItem(viewedKey) === 'done') return;
+  let lastViewedAt = 0;
+  try {
+    lastViewedAt = Number(localStorage.getItem(viewedKey) || 0);
+  } catch (error) {
+    console.error('Failed to read article view timestamp:', error);
+  }
 
-    fetch(`/api/news/${article.id}/view`, {
-      method: 'POST',
-      cache: 'no-store',
+  // If article was already counted within last 30 minutes, do nothing
+  if (lastViewedAt && now - lastViewedAt < VIEW_COOLDOWN_MS) {
+    return;
+  }
+
+  fetch(`/api/news/${article.id}/view`, {
+    method: 'POST',
+    cache: 'no-store',
+  })
+    .then(async (res) => {
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data?.success) {
+        console.error('View API failed:', data);
+        return;
+      }
+
+      // Save the time only AFTER successful API call
+      try {
+        localStorage.setItem(viewedKey, String(now));
+      } catch (error) {
+        console.error('Failed to save article view timestamp:', error);
+      }
+
+      // Update UI immediately if article views are shown on page
+      if (typeof data.afterViews === 'number') {
+        setArticle((prev) =>
+          prev ? { ...prev, views: data.afterViews } : prev
+        );
+      }
     })
-      .then(async (res) => {
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok || !data?.success) {
-          console.error('View API failed:', data);
-          return;
-        }
-
-        // mark as counted only after success
-        sessionStorage.setItem(viewedKey, 'done');
-
-        // update UI immediately if you want to show latest count
-        if (typeof data.afterViews === 'number') {
-          setArticle((prev) =>
-            prev ? { ...prev, views: data.afterViews } : prev
-          );
-        }
-      })
-      .catch((err) => {
-        console.error('Failed to record article view:', err);
-      });
-  }, [article?.id]);
+    .catch((err) => {
+      console.error('Failed to record article view:', err);
+    });
+}, [article?.id]);
 
   useEffect(() => {
     const saved = localStorage.getItem('newsdesk_user_id');
