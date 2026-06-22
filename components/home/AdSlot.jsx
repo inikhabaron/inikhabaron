@@ -26,7 +26,7 @@ export const ProgrammaticAd = ({ placement, size = '728x90' }) => {
       const status = insRef.current?.getAttribute('data-ad-status');
       if (status === 'filled') { setHasAd(true); clearInterval(id); }
       else if (status === 'unfilled' || tries > 6) clearInterval(id);
-      console.log(`Ad slot ${placement} status:`, status, ` (tries: ${tries})`);
+     
     }, 500);
     return () => clearInterval(id);
   }, []);
