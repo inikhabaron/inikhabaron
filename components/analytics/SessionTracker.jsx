@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 
 const SESSION_STORAGE_KEY = 'khabaron_site_session';
-const SESSION_TIMEOUT_MS = 60 * 1000; // keep 1 min for testing right now
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 Minutes session
 
 function getDayKey(date = new Date()) {
   return date.toISOString().slice(0, 10);
@@ -78,7 +78,7 @@ export default function SessionTracker() {
       lastActivityAt: now,
       dayKey: todayKey,
     };
-    
+
     try {
       localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(updatedSession));
     } catch (error) {
