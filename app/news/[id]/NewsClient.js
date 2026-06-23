@@ -190,54 +190,53 @@ export default function NewsDetailsPage() {
   }, [article]);
 
   useEffect(() => {
-  if (!article?.id) return;
+    if (!article?.id) return;
 
-  const VIEW_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
-  const viewedKey = `viewed_${article.id}`;
-  const now = Date.now();
+    const VIEW_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
+    const viewedKey = `viewed_${article.id}`;
+    const now = Date.now();
 
-  let lastViewedAt = 0;
-  try {
-    lastViewedAt = Number(localStorage.getItem(viewedKey) || 0);
-  } catch (error) {
-    console.error('Failed to read article view timestamp:', error);
-  }
+    let lastViewedAt = 0;
 
-  // If article was already counted within last 30 minutes, do nothing
-  if (lastViewedAt && now - lastViewedAt < VIEW_COOLDOWN_MS) {
-    return;
-  }
+    try {
+      lastViewedAt = Number(localStorage.getItem(viewedKey) || 0);
+    } catch (error) {
+      console.error('Failed to read article view timestamp:', error);
+    }
 
-  fetch(`/api/news/${article.id}/view`, {
-    method: 'POST',
-    cache: 'no-store',
-  })
-    .then(async (res) => {
-      const data = await res.json().catch(() => ({}));
+    // Same article already counted within cooldown window
+    if (lastViewedAt && now - lastViewedAt < VIEW_COOLDOWN_MS) {
+      return;
+    }
 
-      if (!res.ok || !data?.success) {
-        console.error('View API failed:', data);
-        return;
-      }
-
-      // Save the time only AFTER successful API call
-      try {
-        localStorage.setItem(viewedKey, String(now));
-      } catch (error) {
-        console.error('Failed to save article view timestamp:', error);
-      }
-
-      // Update UI immediately if article views are shown on page
-      if (typeof data.afterViews === 'number') {
-        setArticle((prev) =>
-          prev ? { ...prev, views: data.afterViews } : prev
-        );
-      }
+    fetch(`/api/news/${article.id}/view`, {
+      method: 'POST',
+      cache: 'no-store',
     })
-    .catch((err) => {
-      console.error('Failed to record article view:', err);
-    });
-}, [article?.id]);
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok || !data?.success) {
+          console.error('View API failed:', data);
+          return;
+        }
+
+        // Save timestamp only after successful increment
+        try {
+          localStorage.setItem(viewedKey, String(now));
+        } catch (error) {
+          console.error('Failed to save article view timestamp:', error);
+        }
+
+        // Optional: immediately reflect new count in UI
+        if (typeof data.afterViews === 'number') {
+          setArticle((prev) => (prev ? { ...prev, views: data.afterViews } : prev));
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to record article view:', error);
+      });
+  }, [article?.id]);
 
   useEffect(() => {
     const saved = localStorage.getItem('newsdesk_user_id');

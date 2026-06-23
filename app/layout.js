@@ -12,6 +12,7 @@ import './globals.css';
 import './home.css';
 import { Toaster } from '@/components/ui/sonner';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
+import SessionTracker from '@/components/analytics/SessionTracker';
 
 // Each font exposes a CSS variable so client components can switch at runtime
 const inter         = Inter         ({ subsets: ['latin'],      weight: ['300','400','500','600','700','800'], variable: '--font-inter',         display: 'swap' });
@@ -75,6 +76,7 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <GoogleAnalytics />
+        <SessionTracker />
         {children}
         <Toaster position="top-right" />
       </body>

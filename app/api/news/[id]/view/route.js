@@ -11,25 +11,29 @@ export async function POST(_request, { params }) {
     const { id: newsId } = await params;
     const newsCollection = await getCollection('news');
 
-    const before = await newsCollection.findOne({ id: newsId });
-
-    const result = await newsCollection.updateOne(
+    const result = await newsCollection.findOneAndUpdate(
       { id: newsId },
-      { $inc: { views: 1 } }
+      {
+        $inc: { views: 1 },
+        $set: { updatedAt: new Date() },
+      },
+      {
+        returnDocument: 'after',
+      }
     );
 
-    if (!result.matchedCount) {
+    const article = result?.value || result;
+
+    if (!article) {
       return json({ error: 'News not found' }, { status: 404 });
     }
 
-    const after = await newsCollection.findOne({ id: newsId });
-
     return json({
       success: true,
-      afterViews: after?.views ?? ((before?.views ?? 0) + 1),
+      afterViews: article.views ?? 0,
     });
   } catch (error) {
     console.error('POST /api/news/[id]/view error:', error);
-    return json({ error: error.message }, { status: 500 });
+    return json({ error: error.message || 'Failed to record view' }, { status: 500 });
   }
 }
