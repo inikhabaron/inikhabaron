@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { auth, signInWithGoogle, signInWithApple, logOut } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -53,6 +53,7 @@ export default function NewsDetailsPage() {
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [tags, setTags] = useState([]);
+  const countedViewRef = useRef(null);
 
   const t = translations[selectedLanguage];
   const bg = dark ? '#0D1117' : '#F6F7F9';
@@ -192,22 +193,12 @@ export default function NewsDetailsPage() {
   useEffect(() => {
     if (!article?.id) return;
 
-    const VIEW_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
-    const viewedKey = `viewed_${article.id}`;
-    const now = Date.now();
-
-    let lastViewedAt = 0;
-
-    try {
-      lastViewedAt = Number(localStorage.getItem(viewedKey) || 0);
-    } catch (error) {
-      console.error('Failed to read article view timestamp:', error);
-    }
-
-    // Same article already counted within cooldown window
-    if (lastViewedAt && now - lastViewedAt < VIEW_COOLDOWN_MS) {
+    // Prevent duplicate counting for the same article render/mount cycle
+    if (countedViewRef.current === article.id) {
       return;
     }
+
+    countedViewRef.current = article.id;
 
     fetch(`/api/news/${article.id}/view`, {
       method: 'POST',
@@ -218,23 +209,21 @@ export default function NewsDetailsPage() {
 
         if (!res.ok || !data?.success) {
           console.error('View API failed:', data);
+
+          // allow retry if request failed
+          countedViewRef.current = null;
           return;
         }
 
-        // Save timestamp only after successful increment
-        try {
-          localStorage.setItem(viewedKey, String(now));
-        } catch (error) {
-          console.error('Failed to save article view timestamp:', error);
-        }
-
-        // Optional: immediately reflect new count in UI
         if (typeof data.afterViews === 'number') {
           setArticle((prev) => (prev ? { ...prev, views: data.afterViews } : prev));
         }
       })
       .catch((error) => {
         console.error('Failed to record article view:', error);
+
+        // allow retry if request failed
+        countedViewRef.current = null;
       });
   }, [article?.id]);
 

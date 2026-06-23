@@ -27,7 +27,7 @@ export function DashboardView({ analytics, loading }) {
     { label: 'Published', value: analytics.stats?.publishedNews || 0, icon: CheckCircle, color: '#059669', bg: '#f0fdf4' },
     { label: 'Pending Review', value: (analytics.stats?.draftNews || 0) + (analytics.stats?.pendingReviewNews || 0), icon: Clock, color: '#d97706', bg: '#fffbeb' },
     { label: 'Total Views', value: (analytics.stats?.totalViews || 0).toLocaleString(), icon: Eye, color: '#7c3aed', bg: '#faf5ff' },
-    // { label: 'Session Count', value: (analytics.stats?.totalSessions || 0).toLocaleString(), icon: Users, color: '#0f766e', bg: '#ecfeff', },
+    { label: 'Session Count', value: (analytics.stats?.totalSessions || 0).toLocaleString(), icon: Users, color: '#0f766e', bg: '#ecfeff', },
   ];
 
   return (
