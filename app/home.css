@@ -218,7 +218,7 @@
 .kn-footer-link-list   { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
 .kn-footer-link-btn    { background: none; border: none; padding: 0; cursor: pointer; font-size: 15px; text-align: left; transition: color .15s; }
 .kn-footer-link-btn:hover { color: #3BAFDA !important; }
-.kn-footer-contact-list{ list-style: none; padding: 0; margin: 0; text-align: right; display: flex; flex-direction: column; gap: 8px; font-size: 15px; line-height: 1.8; }
+.kn-footer-contact-list{ list-style: none; padding: 0; margin: 0; text-align: right; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
 .kn-footer-copyright   { border-top: 1px solid #E8EAED; padding: 14px 24px; text-align: center; }
 .kn-footer-copyright p { font-size: 12px; margin: 0; }
 
@@ -317,22 +317,7 @@
    font-size: 13px; text-align: center;
   }
 
-  /* CONTACT SECTION */
-  .kn-footer-contact {
-    border: none !important;
-    padding: 0px;
-
-    align-items: center;
-    text-align: center;
-  }
-
-  .kn-footer-contact-list {
-    text-align: center;
-    align-items: center;
-    font-size: 13px;
-  }
-
-  /* Titles */
+  /* Office Titles */
   .kn-footer-col-title,
   .kn-footer-contact-title {
     font-size: 15px; letter-spacing: .03em;
