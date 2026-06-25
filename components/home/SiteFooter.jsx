@@ -56,9 +56,9 @@ export default function SiteFooter({ dark, categories, selectedLanguage, onCateg
               {selectedLanguage === 'hi' ? 'खबरON भारत का प्रमुख न्यूज प्लेटफार्म है जो देश-दुनिया की हर खबर आप तक पहुँचाता है।' : "KhabarON is India's leading news platform."}
             </p>
             <ul>
-            <li style={{ color: T2 }}><a href={`mailto:support@inikhabaron.com?subject=${encodeURIComponent('Support Request - INIKhabaron')}&body=${encodeURIComponent('Hello Team,%0D%0A%0D%0AI need help regarding:%0D%0A')}`}>✉ support@inikhabaron.com</a></li>
+            <li><a className="kn-footer-contact-mini-link" style={{ color: T2 }} href={`mailto:support@inikhabaron.com?subject=${encodeURIComponent('Support Request - INIKhabaron')}&body=${encodeURIComponent('Hello Team,%0D%0A%0D%0AI need help regarding:%0D%0A')}`}><Mail size={16} /><span>support@inikhabaron.com</span></a></li>
 
-            <li style={{ color: T2 }}><a href="tel:+911234567890">📞 +91 12345 67890</a></li>
+            <li><a className="kn-footer-contact-mini-link" style={{ color: T2 }} href="tel:+911234567890"><Phone size={16} />+91 12345 67890</a></li>
             </ul>
             
             <div className="kn-footer-social-row" style={{ color: dark ? 'rgb(255, 255, 255)' : 'rgb(1, 1, 1)' }}>
@@ -126,12 +126,14 @@ export default function SiteFooter({ dark, categories, selectedLanguage, onCateg
             <h4 className="kn-footer-contact-title" style={{ color: T1 }}>{selectedLanguage === 'hi' ? 'कार्यालय' : 'Office'}</h4>
             <ul className="kn-footer-contact-list">
               <li style={{ color: T2 }}>
-                <span style={{ fontWeight: 700 }}>{selectedLanguage === 'hi' ? '📍 मुख्य कार्यालय: ' : '📍 Head Office: '}</span>
+                <span className="kn-footer-map-item"><MapPin size={16}/></span>
+                <span style={{ fontWeight: 700 }}>{selectedLanguage === 'hi' ? ' मुख्य कार्यालय: ' : ' Head Office: '}</span>
                 <span>{selectedLanguage === 'hi' ? 'सी/ओ हृषिकेश नारायण सिंह, मकान नंबर ई8, एफ/एफ, मंदिर के पास, मालवीय नगर (दक्षिणी दिल्ली), नई दिल्ली - 110017' : 'C/O Hrishikesh Narayan Sing, H No. E8, F/F, Near Mandir, Malviya Nagar (South Delhi), New Delhi - 110017'}</span>
              </li>
               <li style={{ color: T2 }}>
-                <span style={{ fontWeight: 700 }}>{selectedLanguage === 'hi' ? '📍 क्षेत्रीय कार्यालय: ' : '📍Regional Head Office: '}</span>
-                <span>{selectedLanguage === 'hi' ? 'पांचवीं मंज़िल, मणि कुंज अपार्टमेंट, ईस्ट बोरिंग कैनाल रोड, पटना 800001' : '5th Floor, Mani Kunj Apartment, East Boring Canal Road, Patna - 800001'}</span>
+                <span className="kn-footer-map-item"><MapPin size={16}/></span>
+                <span style={{ fontWeight: 700 }}>{selectedLanguage === 'hi' ? ' क्षेत्रीय कार्यालय: ' : ' Regional Head Office: '}</span>
+                <span>{selectedLanguage === 'hi' ? 'पांचवीं मंज़िल, मणि कुंज अपार्टमेंट, ईस्ट बोरिंग कैनाल रोड, पटना - 800001' : '5th Floor, Mani Kunj Apartment, East Boring Canal Road, Patna - 800001'}</span>
               </li>
             </ul>
           </div>

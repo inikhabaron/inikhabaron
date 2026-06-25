@@ -206,7 +206,7 @@
 .kn-footer-links-col,
 .kn-footer-contact     { display: flex; flex-direction: column; align-items: flex-end; text-align: right; padding-left: 28px; border-left: 1px solid #dfe3e8; gap: 12px; }
 .kn-footer-contact-title{ font-size: 17px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; border-bottom: 1px solid #000000; }
-.kn-footer-brand       { padding-right: 28px; display: flex; flex-direction: column; gap: 14px; }
+.kn-footer-brand       { padding-right: 28px; display: flex; flex-direction: column; gap: 8px; }
 .kn-footer-logo-row    { display: flex; align-items: center; gap: 10px; }
 .kn-footer-desc        { font-size: 15px; line-height: 1.6; margin: 0; }
 .kn-footer-social-row  { display: flex; gap: 8px; }
@@ -215,12 +215,17 @@
 .kn-footer-links-col   { display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center; }
 .kn-footer-col-title   { font-size: 17px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; border-bottom: 1px solid #000000; }
 
-.kn-footer-link-list   { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.kn-footer-link-list   { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 9px; }
 .kn-footer-link-btn    { background: none; border: none; padding: 0; cursor: pointer; font-size: 15px; text-align: left; transition: color .15s; }
 .kn-footer-link-btn:hover { color: #3BAFDA !important; }
 .kn-footer-contact-list{ list-style: none; padding: 0; margin: 0; text-align: right; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
-.kn-footer-copyright   { border-top: 1px solid #E8EAED; padding: 14px 24px; text-align: center; }
+.kn-footer-copyright   { border-top: 1px solid #E8EAED; padding: 10px 24px; text-align: center; }
 .kn-footer-copyright p { font-size: 12px; margin: 0; }
+.kn-footer-contact-mini { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.kn-footer-contact-mini-link { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; line-height: 1.4; white-space: nowrap; }
+.kn-footer-contact-mini-link svg { flex-shrink: 0 }
+.kn-footer-map-item { display: inline-flex; align-items: flex-start; }
+.kn-footer-map-item svg { flex-shrink: 0 }
 
 
 /* =====================================================
@@ -316,6 +321,22 @@
   .kn-footer-link-btn {
    font-size: 13px; text-align: center;
   }
+
+    /* Office SECTION */
+  .kn-footer-contact {
+    border: none !important;
+    padding: 0px;
+
+    align-items: center;
+    text-align: center;
+  }
+
+  .kn-footer-contact-list {
+    text-align: center;
+    align-items: center;
+    font-size: 13px;
+  }
+
 
   /* Office Titles */
   .kn-footer-col-title,
