@@ -58,7 +58,9 @@ export default function SiteFooter({ dark, categories, selectedLanguage, onCateg
             <ul>
             <li><a className="kn-footer-contact-mini-link" style={{ color: T2 }} href={`mailto:support@inikhabaron.com?subject=${encodeURIComponent('Support Request - INIKhabaron')}&body=${encodeURIComponent('Hello Team,%0D%0A%0D%0AI need help regarding:%0D%0A')}`}><Mail size={16} /><span>support@inikhabaron.com</span></a></li>
 
-            <li><a className="kn-footer-contact-mini-link" style={{ color: T2 }} href="tel:+911234567890"><Phone size={16} />+91 12345 67890</a></li>
+            <li><a className="kn-footer-contact-mini-link" style={{ color: T2 }} href="tel:+919334114994"><Phone size={16} />+91 9334114994</a></li>
+
+            <li><a className="kn-footer-contact-mini-link" style={{ color: T2 }} href="tel:+917004824208"><Phone size={16} />+91 7004824208</a></li>
             </ul>
             
             <div className="kn-footer-social-row" style={{ color: dark ? 'rgb(255, 255, 255)' : 'rgb(1, 1, 1)' }}>
