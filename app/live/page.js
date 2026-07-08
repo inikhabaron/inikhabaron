@@ -179,9 +179,115 @@ export default function HomePage() {
   const handleSearch = (e) => { e?.preventDefault(); setPage(1); fetchNews(selectedCategory, searchQuery, 1); };
   const loadMore = () => { const n = page + 1; setPage(n); fetchNews(selectedCategory, searchQuery, n); };
 
-  const handleSignOut = async () => { const r = await logOut(); if (r.error) toast.error(r.error); else { setUser(null); toast.success('Signed out'); } };
-  const handleGoogleSignIn = async () => { setAuthLoading(true); const r = await signInWithGoogle(); if (r.error) toast.error(r.error); else { setUser(r.user); setAuthDialogOpen(false); toast.success('Signed in!'); } setAuthLoading(false); };
-  const handleAppleSignIn = async () => { setAuthLoading(true); const r = await signInWithApple(); if (r.error) toast.error(r.error); else { setUser(r.user); setAuthDialogOpen(false); toast.success('Signed in!'); } setAuthLoading(false); };
+  const handleSignOut = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      const r = await logOut();
+
+      if (r.error) {
+        toast.error(r.error);
+        return;
+      }
+
+      setUser(null);
+
+      toast.success('Signed out');
+    } catch (err) {
+      toast.error('Unable to sign out');
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setAuthLoading(true);
+
+    try {
+      const r = await signInWithGoogle();
+
+      if (r.error) {
+        toast.error(r.error);
+        return;
+      }
+
+      // Get Firebase ID Token
+      const idToken = await r.user.getIdToken();
+
+      // Create backend session
+      const response = await fetch('/api/auth/session', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          idToken,
+        }),
+      });
+
+      const session = await response.json();
+
+      if (!session.success) {
+        toast.error(session.message || 'Unable to create session');
+        return;
+      }
+
+      setUser(r.user);
+      setAuthDialogOpen(false);
+
+      toast.success('Signed in!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Unable to sign in');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setAuthLoading(true);
+
+    try {
+      const r = await signInWithApple();
+
+      if (r.error) {
+        toast.error(r.error);
+        return;
+      }
+
+      const idToken = await r.user.getIdToken();
+
+      const response = await fetch('/api/auth/session', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          idToken,
+        }),
+      });
+
+      const session = await response.json();
+
+      if (!session.success) {
+        toast.error(session.message || 'Unable to create session');
+        return;
+      }
+
+      setUser(r.user);
+      setAuthDialogOpen(false);
+
+      toast.success('Signed in!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Unable to sign in');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
 
   // const trackShare = (newsId, platform) => fetch(`/api/news/${newsId}/share`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ platform }) }).catch(console.error);
   const shareOnWhatsApp = async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'whatsapp', }); await recordShare(item.id, 'whatsapp'); window.open(`https://wa.me/?text=${encodeURIComponent('*' + item.title + '*' + '\n\n' + window.location.origin + '/news/' + item.id)}`, '_blank'); };
@@ -418,7 +524,7 @@ export default function HomePage() {
                       </div>
                       <div className="kn-article-grid">
                         {news.slice(3).map(item => (
-                          <ArticleCard key={item.id} item={item} onClick={goToArticle} formatDate={formatDate} showShareMenu={showShareMenu} setShowShareMenu={setShowShareMenu} selectedLanguage={selectedLanguage} onShareWhatsApp={shareOnWhatsApp} onShareTwitter={shareOnTwitter} onShareFacebook={shareOnFacebook} onCopyLink={copyArticleLink} />
+                          <ArticleCard key={item.id} item={item} onClick={goToArticle} formatDate={formatDate} showShareMenu={showShareMenu} setShowShareMenu={setShowShareMenu} selectedLanguage={selectedLanguage} onShareWhatsApp={shareOnWhatsApp} onShareTwitter={shareOnTwitter} onShareFacebook={shareOnFacebook} onCopyLink={copyArticleLink} user={user} onRequireLogin={() => setAuthDialogOpen(true)} />
                         ))}
                       </div>
                     </>

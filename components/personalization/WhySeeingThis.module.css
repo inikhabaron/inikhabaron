@@ -1,0 +1,181 @@
+.container {
+  margin-top: 24px;
+  padding: 18px 20px;
+
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 14px;
+
+  background: var(--surface-color, #ffffff);
+
+  transition: all .25s ease;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-bottom: 12px;
+
+  font-weight: 600;
+}
+
+.header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.primaryReason {
+  margin: 0;
+
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.reasonList {
+  margin: 16px 0 0;
+  padding-left: 18px;
+}
+
+.reasonList li {
+  margin-bottom: 8px;
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.toggle {
+  margin-top: 14px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  border: none;
+  background: transparent;
+
+  cursor: pointer;
+
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.toggle:hover {
+  opacity: .8;
+}
+
+/* Skeleton */
+
+.skeletonTitle {
+  width: 180px;
+  height: 18px;
+
+  border-radius: 6px;
+
+  background: #ececec;
+}
+
+.skeletonText {
+  margin-top: 14px;
+
+  width: 70%;
+  height: 14px;
+
+  border-radius: 6px;
+
+  background: #ececec;
+}
+
+.subtitle {
+  margin: 0 0 18px;
+
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.primaryCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  padding: 14px 16px;
+
+  border-radius: 12px;
+
+  background: #f8fafc;
+
+  border: 1px solid #edf2f7;
+}
+
+.primaryIcon {
+  width: 36px;
+  height: 36px;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #eef6ff;
+  color: #2563eb;
+
+  flex-shrink: 0;
+}
+
+.primaryMessage {
+  font-size: 14px;
+  line-height: 1.7;
+  font-weight: 500;
+}
+
+.reasonList {
+  margin-top: 16px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reasonItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 10px 14px;
+
+  border-radius: 10px;
+
+  background: #fafafa;
+}
+
+.reasonItem svg {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.toggle {
+  margin-top: 18px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  border: none;
+  background: none;
+
+  cursor: pointer;
+
+  color: #2563eb;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+
+  .header h3 {
+    font-size: 15px;
+  }
+}

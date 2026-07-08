@@ -1,0 +1,101 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 8px 12px;
+
+  background: var(--bookmark-card);
+
+  border: 1px solid var(--bookmark-border);
+
+  border-radius: 999px;
+
+  transition:
+    transform .25s ease,
+    box-shadow .25s ease,
+    border-color .25s ease;
+}
+
+.chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0,0,0,.08);
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+
+  border-radius: 50%;
+
+  object-fit: cover;
+
+  flex-shrink: 0;
+}
+
+.info {
+  min-width: 0;
+}
+
+.name {
+  color: var(--bookmark-text);
+
+  font-size: 14px;
+  font-weight: 600;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  max-width: 180px;
+}
+
+.provider {
+  margin-top: 2px;
+
+  color: var(--bookmark-accent);
+
+  font-size: 12px;
+}
+
+@media (max-width:768px){
+
+  .chip{
+
+    padding:8px;
+
+    border-radius:16px;
+  }
+
+  .provider{
+    display:none;
+  }
+
+  .name{
+    max-width:100px;
+  }
+
+}
+
+@media (max-width:480px){
+
+  .chip{
+    width:42px;
+    height:42px;
+
+    padding:0;
+
+    justify-content:center;
+    border-radius:50%;
+  }
+
+  .avatar{
+    width:34px;
+    height:34px;
+  }
+
+  .info{
+    display:none;
+  }
+
+}

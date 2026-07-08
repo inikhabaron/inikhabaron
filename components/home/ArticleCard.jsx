@@ -4,10 +4,10 @@ import { Bookmark, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
 import { getCatAccent, getCatLabel, EDITORIAL_RED } from '@/lib/news-utils';
+import BookmarkButton from '@/components/bookmarks/BookmarkButton';
 
 export default function ArticleCard({
-  item, onClick, formatDate, showShareMenu, setShowShareMenu,
-  selectedLanguage, onShareWhatsApp, onShareTwitter, onShareFacebook, onCopyLink,
+  item, onClick, formatDate, showShareMenu, setShowShareMenu, selectedLanguage, onShareWhatsApp, onShareTwitter, onShareFacebook, onCopyLink, user, onRequireLogin,
 }) {
   const dark = useContext(DarkCtx);
   const { scale } = useContext(FontCtx);
@@ -86,10 +86,16 @@ export default function ArticleCard({
             <span style={{ fontSize: `${10 * scale}px`, color: '#8A8F98', whiteSpace: 'nowrap' }}>· {readTime} min</span>
           </div>
           <div className="kn-card-actions">
-            {/* <button onClick={(e) => e.stopPropagation()} className="kn-card-action-btn">
-              <Bookmark style={{ width: '14px', height: '14px' }} />
-            </button> */}
+            <button onClick={(e) => e.stopPropagation()} className="kn-card-action-btn">
+              <BookmarkButton 
+                  articleId={item.id}
+                  user={user}
+                  size="sm"
+                  onRequireLogin={onRequireLogin}
+              />
+            </button>
             <div style={{ position: 'relative' }}>
+              
               <button
                 onClick={(e) => { e.stopPropagation(); setShowShareMenu(p => p === item.id ? null : item.id); }}
                 className="kn-card-action-btn"

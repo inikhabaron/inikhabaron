@@ -1,6 +1,6 @@
 import { getCollection } from '@/lib/mongodb';
 import { json, preflight } from '@/lib/api/cors';
-import { encodeToken } from '@/lib/auth/token';
+import { encodeToken } from '@/lib/auth/admin/token';
 
 export const OPTIONS = preflight;
 

@@ -1,0 +1,741 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+
+  background: rgba(15, 23, 42, .55);
+
+  backdrop-filter: blur(4px);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 9999;
+
+  padding: 28px;
+}
+
+.dialog {
+  width: min(900px, 100%);
+
+  max-height: 90vh;
+
+  overflow-y: auto;
+
+  background: #fff;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 24px 60px rgba(0,0,0,.18);
+
+  animation: dialogIn .22s ease;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 24px 28px;
+
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.title {
+  margin: 0;
+
+  font-size: 24px;
+  font-weight: 700;
+
+  color: #111827;
+}
+
+.subtitle {
+  margin-top: 6px;
+
+  color: #6B7280;
+
+  font-size: 14px;
+}
+
+.closeButton {
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border: none;
+  border-radius: 10px;
+
+  background: #F3F4F6;
+
+  cursor: pointer;
+
+  transition: .2s;
+}
+
+.closeButton:hover {
+  background: #E5E7EB;
+}
+
+.body {
+  padding: 28px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 22px;
+}
+
+.card {
+  border: 1px solid #E5E7EB;
+
+  border-radius: 14px;
+
+  overflow: hidden;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 14px 18px;
+
+  background: #F9FAFB;
+
+  font-weight: 700;
+
+  color: #374151;
+
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.userSection {
+  display: flex;
+
+  gap: 20px;
+
+  padding: 22px;
+}
+
+.avatar {
+  border-radius: 50%;
+
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  width: 70px;
+  height: 70px;
+
+  border-radius: 50%;
+
+  background: #2563EB;
+
+  color: #fff;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.userInfo h3,
+.articleInfo h3 {
+  margin: 0 0 14px;
+
+  color: #111827;
+
+  font-size: 18px;
+}
+
+.articleInfo {
+  padding: 22px;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  color: #6B7280;
+
+  margin-bottom: 10px;
+
+  font-size: 14px;
+}
+
+@keyframes dialogIn {
+
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===========================
+   Comment Card
+=========================== */
+
+.commentBody {
+  padding: 24px;
+}
+
+.commentStatusRow {
+  display: flex;
+
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 20px;
+}
+
+.statusBadge {
+  padding: 6px 14px;
+
+  border-radius: 999px;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  letter-spacing: .05em;
+
+  text-transform: uppercase;
+}
+
+/* Approved */
+
+.approved {
+  background: #DCFCE7;
+
+  color: #15803D;
+}
+
+/* Pending */
+
+.pending {
+  background: #FEF3C7;
+
+  color: #B45309;
+}
+
+/* Rejected */
+
+.rejected {
+  background: #FEE2E2;
+
+  color: #DC2626;
+}
+
+/* Hidden */
+
+.hidden {
+  background: #E5E7EB;
+
+  color: #374151;
+}
+
+.editedBadge {
+  padding: 5px 10px;
+
+  border-radius: 999px;
+
+  background: #EFF6FF;
+
+  color: #2563EB;
+
+  font-size: 12px;
+
+  font-weight: 600;
+}
+
+.commentText {
+  margin: 0;
+
+  font-size: 16px;
+
+  line-height: 1.8;
+
+  color: #111827;
+
+  white-space: pre-wrap;
+
+  word-break: break-word;
+}
+
+/* ===========================
+   Statistics
+=========================== */
+
+.commentMetaGrid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 16px;
+
+  margin-top: 28px;
+}
+
+.metaCard {
+  padding: 18px;
+
+  border: 1px solid #E5E7EB;
+
+  border-radius: 12px;
+
+  background: #F9FAFB;
+
+  text-align: center;
+}
+
+.metaLabel {
+  display: block;
+
+  font-size: 13px;
+
+  color: #6B7280;
+
+  margin-bottom: 8px;
+}
+
+.metaValue {
+  display: block;
+
+  font-size: 24px;
+
+  font-weight: 700;
+
+  color: #111827;
+}
+
+/* ===========================
+   Dates
+=========================== */
+
+.dateGrid {
+  margin-top: 28px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 10px;
+}
+
+/* ===========================
+   Responsive
+=========================== */
+
+@media (max-width: 768px) {
+
+  .commentMetaGrid {
+
+    grid-template-columns: 1fr;
+
+  }
+
+}
+
+/* ====================================
+   Reports
+==================================== */
+
+.reportSection {
+  padding: 22px;
+}
+
+.reportItem {
+
+  padding: 18px;
+
+  border: 1px solid #E5E7EB;
+
+  border-radius: 12px;
+
+  margin-bottom: 16px;
+
+  background: #FAFAFA;
+}
+
+.reportItem:last-child {
+  margin-bottom: 0;
+}
+
+.reportHeader {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-bottom: 8px;
+
+  font-size: 14px;
+}
+
+.reportHeader strong {
+
+  color: #DC2626;
+
+  font-size: 15px;
+}
+
+.reportHeader span {
+
+  color: #6B7280;
+
+  font-size: 13px;
+}
+
+.reportReporter {
+
+  color: #374151;
+
+  font-size: 14px;
+
+  margin-bottom: 10px;
+}
+
+.reportDescription {
+
+  margin: 0;
+
+  color: #4B5563;
+
+  line-height: 1.7;
+
+  white-space: pre-wrap;
+}
+
+/* ====================================
+   Moderation Timeline
+==================================== */
+
+.historySection {
+
+  padding: 24px;
+}
+
+.timelineItem {
+
+  position: relative;
+
+  display: flex;
+
+  gap: 18px;
+
+  padding-bottom: 26px;
+}
+
+.timelineItem:last-child {
+
+  padding-bottom: 0;
+}
+
+.timelineItem:not(:last-child)::before {
+
+  content: '';
+
+  position: absolute;
+
+  left: 8px;
+
+  top: 18px;
+
+  width: 2px;
+
+  bottom: -4px;
+
+  background: #E5E7EB;
+}
+
+.timelineDot {
+
+  width: 18px;
+
+  height: 18px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #2563EB;
+
+  margin-top: 2px;
+}
+
+.timelineContent {
+
+  flex: 1;
+}
+
+.timelineHeader {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-bottom: 8px;
+}
+
+.timelineHeader strong {
+
+  color: #111827;
+
+  font-size: 15px;
+}
+
+.timelineHeader span {
+
+  color: #6B7280;
+
+  font-size: 13px;
+}
+
+.timelineBy {
+
+  color: #4B5563;
+
+  margin-bottom: 8px;
+
+  font-size: 14px;
+}
+
+.timelineReason {
+
+  background: #F9FAFB;
+
+  border-radius: 10px;
+
+  padding: 12px;
+
+  border: 1px solid #E5E7EB;
+
+  color: #374151;
+
+  line-height: 1.6;
+
+  white-space: pre-wrap;
+}
+
+/* ====================================
+   Empty State
+==================================== */
+
+.emptyState {
+
+  padding: 32px;
+
+  text-align: center;
+
+  color: #9CA3AF;
+
+  font-size: 14px;
+
+  border: 2px dashed #E5E7EB;
+
+  border-radius: 12px;
+}
+
+/* ====================================
+   Footer
+==================================== */
+
+.footer {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  gap: 18px;
+
+  padding: 24px 28px;
+
+  border-top: 1px solid #E5E7EB;
+
+  background: #FAFAFA;
+}
+
+.footerLeft {
+
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 12px;
+}
+
+.footerRight {
+
+  display: flex;
+
+  align-items: center;
+}
+
+.actionButton {
+
+  min-width: 110px;
+
+  height: 42px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  cursor: pointer;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  transition: .2s;
+}
+
+.actionButton:disabled {
+
+  opacity: .55;
+
+  cursor: not-allowed;
+}
+
+/* ---------------- */
+
+.approveButton {
+
+  background: #16A34A;
+
+  color: white;
+}
+
+.approveButton:hover:not(:disabled) {
+
+  background: #15803D;
+}
+
+/* ---------------- */
+
+.rejectButton {
+
+  background: #DC2626;
+
+  color: white;
+}
+
+.rejectButton:hover:not(:disabled) {
+
+  background: #B91C1C;
+}
+
+/* ---------------- */
+
+.hideButton {
+
+  background: #6B7280;
+
+  color: white;
+}
+
+.hideButton:hover:not(:disabled) {
+
+  background: #4B5563;
+}
+
+/* ---------------- */
+
+.deleteButton {
+
+  background: #111827;
+
+  color: white;
+}
+
+.deleteButton:hover:not(:disabled) {
+
+  background: #000;
+}
+
+/* ---------------- */
+
+.closeFooterButton {
+
+  min-width: 120px;
+
+  height: 42px;
+
+  border-radius: 10px;
+
+  border: 1px solid #D1D5DB;
+
+  background: white;
+
+  cursor: pointer;
+
+  font-weight: 600;
+
+  transition: .2s;
+}
+
+.closeFooterButton:hover {
+
+  background: #F3F4F6;
+}
+
+/* ====================================
+   Responsive
+==================================== */
+
+@media (max-width: 768px) {
+
+  .footer {
+
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  .footerLeft {
+
+    display: grid;
+
+    grid-template-columns: repeat(2, 1fr);
+
+    width: 100%;
+  }
+
+  .footerRight {
+
+    width: 100%;
+  }
+
+  .closeFooterButton {
+
+    width: 100%;
+  }
+
+  .actionButton {
+
+    width: 100%;
+  }
+
+}

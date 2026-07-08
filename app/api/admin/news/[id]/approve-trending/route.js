@@ -1,6 +1,6 @@
 import { getCollection } from '@/lib/mongodb';
 import { json, preflight } from '@/lib/api/cors';
-import { getUserFromToken } from '@/lib/auth/token';
+import { getUserFromToken } from '@/lib/auth/admin/token';
 import { canApproveTrending } from '@/lib/auth/permissions';
 
 export const OPTIONS = preflight;

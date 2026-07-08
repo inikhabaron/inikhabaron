@@ -683,3 +683,52 @@ code {
     transform: translateY(0);
   }
 }
+
+/* MVP2 */
+
+/* ==============================
+   Bookmark Page Theme
+================================= */
+
+:root {
+  --bookmark-bg: #f8fafc;
+  --bookmark-card: #ffffff;
+  --bookmark-border: #e5e7eb;
+  --bookmark-text: #111827;
+  --bookmark-muted: #6b7280;
+  --bookmark-accent: #3BAFDA;
+}
+
+.dark {
+  --bookmark-bg: #0f172a;
+  --bookmark-card: #1e293b;
+  --bookmark-border: #334155;
+  --bookmark-text: #f8fafc;
+  --bookmark-muted: #94a3b8;
+  --bookmark-accent: #38bdf8;
+}
+
+/* Bookmark Skeleton */
+
+.loader-skeleton {
+  background: linear-gradient(
+    90deg,
+    #f3f4f6 25%,
+    #e5e7eb 37%,
+    #f3f4f6 63%
+  );
+
+  background-size: 400% 100%;
+
+  animation: skeleton-loading 1.4s ease infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0 50%;
+  }
+}

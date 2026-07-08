@@ -1,0 +1,525 @@
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 18px;
+
+  margin-top: 10px;
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 0;
+
+  border: none;
+
+  background: transparent;
+
+  color: #6b7280;
+
+  font-size: .87rem;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition:
+    color .2s ease,
+    transform .15s ease;
+}
+
+.actionButton:hover:not(:disabled) {
+  color: #111827;
+
+  transform: translateY(-1px);
+}
+
+.actionButton:disabled {
+  opacity: .5;
+
+  cursor: not-allowed;
+}
+
+.actionButton svg {
+  transition:
+    color .2s ease,
+    transform .2s ease;
+}
+
+.actionButton:hover svg {
+  transform: scale(1.08);
+}
+
+.deleteButton:hover {
+  color: #ef4444;
+}
+
+@media (max-width:768px) {
+
+  .actions {
+    gap: 14px;
+  }
+}
+
+@media (max-width:480px) {
+
+  .actions {
+    gap: 12px;
+  }
+
+  .actionButton {
+    font-size: .82rem;
+  }
+}
+
+/* ==========================================================
+   COMMENT ACTIONS
+========================================================== */
+
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
+
+  margin-top: 12px;
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  border: none;
+  background: transparent;
+
+  padding: 4px 0;
+
+  color: #6b7280;
+
+  font-size: .88rem;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition:
+    color .2s ease,
+    transform .15s ease;
+}
+
+.actionButton:hover:not(:disabled) {
+  color: #111827;
+  transform: translateY(-1px);
+}
+
+.actionButton:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.actionButton svg {
+  transition:
+    color .2s ease,
+    fill .2s ease,
+    transform .2s ease;
+}
+
+.actionButton:hover svg {
+  transform: scale(1.08);
+}
+
+/* ==========================================================
+   LIKE BUTTON
+========================================================== */
+
+.likeButton {
+  color: #6b7280;
+}
+
+.likeButton:hover {
+  color: #ef4444;
+}
+
+.liked {
+  color: #ef4444;
+}
+
+.liked svg {
+  fill: currentColor;
+}
+
+.likeCount {
+  min-width: 16px;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* ==========================================================
+   REPORT BUTTON
+========================================================== */
+
+.reportButton:hover {
+  color: #f59e0b;
+}
+
+.reported {
+  color: #f59e0b;
+}
+
+.reported svg {
+  fill: currentColor;
+}
+
+/* ==========================================================
+   DELETE BUTTON
+========================================================== */
+
+.deleteButton:hover {
+  color: #ef4444;
+}
+
+/* ==========================================================
+   EDIT BUTTON
+========================================================== */
+
+.editButton:hover {
+  color: #3bafda;
+}
+
+/* ==========================================================
+   REPLY BUTTON
+========================================================== */
+
+.replyButton:hover {
+  color: #3bafda;
+}
+
+/* ==========================================================
+   VIEW REPLIES
+========================================================== */
+
+.viewReplies {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-top: 10px;
+
+  padding: 0;
+
+  border: none;
+  background: transparent;
+
+  color: #3bafda;
+
+  font-size: .88rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    color .2s ease,
+    transform .18s ease;
+}
+
+.viewReplies:hover {
+  color: #2288b7;
+  transform: translateX(2px);
+}
+
+.viewReplies svg {
+  transition:
+    transform .2s ease;
+}
+
+.viewReplies.open svg {
+  transform: rotate(180deg);
+}
+
+/* ==========================================================
+   REPLY FORM
+========================================================== */
+
+.replyForm {
+  margin-top: 16px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  padding-left: 22px;
+
+  border-left: 2px solid #e5e7eb;
+}
+
+.replyTextarea {
+  width: 100%;
+
+  min-height: 90px;
+
+  resize: vertical;
+
+  padding: 12px 14px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+
+  font-size: .94rem;
+  line-height: 1.7;
+
+  outline: none;
+
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease;
+}
+
+.replyTextarea:focus {
+  border-color: #3bafda;
+
+  box-shadow:
+    0 0 0 4px rgba(59,175,218,.12);
+}
+
+.replyActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.replySubmit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 10px 18px;
+
+  border: none;
+  border-radius: 999px;
+
+  background: #3bafda;
+
+  color: #fff;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    transform .18s ease,
+    box-shadow .22s ease;
+}
+
+.replySubmit:hover:not(:disabled) {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 8px 20px rgba(59,175,218,.28);
+}
+
+.replySubmit:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+.replyCancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 10px 16px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+
+  background: #fff;
+
+  cursor: pointer;
+
+  transition:
+    background .2s ease,
+    border-color .2s ease;
+}
+
+.replyCancel:hover {
+  background: #f9fafb;
+}
+
+/* ==========================================================
+   REPLY LIST
+========================================================== */
+
+.replyContainer {
+  margin-top: 18px;
+
+  margin-left: 28px;
+
+  padding-left: 22px;
+
+  border-left: 2px solid #edf2f7;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.replyCard {
+  display: flex;
+  gap: 14px;
+
+  padding: 14px;
+
+  border-radius: 14px;
+
+  background: #fafafa;
+
+  border: 1px solid #edf2f7;
+}
+
+.replyBody {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  min-width: 0;
+}
+
+.replyHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  flex-wrap: wrap;
+}
+
+.replyUser {
+  font-weight: 600;
+  color: #111827;
+}
+
+.replyDate {
+  color: #6b7280;
+  font-size: .8rem;
+}
+
+.replyContent {
+  color: #374151;
+
+  line-height: 1.75;
+
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ==========================================================
+   LOADING
+========================================================== */
+
+.loadingReplies {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-top: 14px;
+
+  color: #6b7280;
+
+  font-size: .9rem;
+}
+
+/* ==========================================================
+   ANIMATIONS
+========================================================== */
+
+.fadeIn {
+  animation: fadeIn .25s ease;
+}
+
+@keyframes fadeIn {
+
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pop {
+  animation: pop .18s ease;
+}
+
+@keyframes pop {
+
+  0% {
+    transform: scale(.9);
+  }
+
+  60% {
+    transform: scale(1.08);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media (max-width:768px) {
+
+  .actions {
+    gap: 14px;
+  }
+
+  .replyContainer {
+    margin-left: 16px;
+    padding-left: 16px;
+  }
+
+  .replyActions {
+    flex-direction: column;
+  }
+
+  .replySubmit,
+  .replyCancel {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width:480px) {
+
+  .actions {
+    gap: 12px;
+  }
+
+  .actionButton {
+    font-size: .82rem;
+  }
+
+  .replyContainer {
+    margin-left: 8px;
+    padding-left: 12px;
+  }
+
+  .replyCard {
+    padding: 12px;
+  }
+
+  .replyHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}

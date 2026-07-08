@@ -1,0 +1,217 @@
+/* =========================================
+   Layout
+========================================= */
+
+.container {
+  width: 100%;
+  max-width: 1400px;
+
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.header {
+  margin-bottom: 28px;
+}
+
+.header h2 {
+  margin: 0;
+
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.header p {
+  margin-top: 8px;
+
+  color: #64748b;
+  font-size: .95rem;
+  line-height: 1.6;
+}
+
+/* =========================================
+   Feed Grid
+========================================= */
+
+.grid {
+  display: grid;
+
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(320px, 1fr)
+  );
+
+  gap: 24px;
+}
+
+/* =========================================
+   Empty / Error
+========================================= */
+
+.message {
+  padding: 80px 20px;
+
+  text-align: center;
+
+  color: #64748b;
+
+  font-size: 1rem;
+}
+
+/* =========================================
+   Skeleton
+========================================= */
+
+.skeletonHeading {
+  width: 240px;
+  height: 30px;
+
+  border-radius: 8px;
+}
+
+.skeletonSubheading {
+  width: 340px;
+  height: 16px;
+
+  margin-top: 14px;
+
+  border-radius: 8px;
+}
+
+.skeletonCard {
+  overflow: hidden;
+
+  border: 1px solid #ececec;
+  border-radius: 16px;
+
+  background: white;
+}
+
+.skeletonImage {
+  width: 100%;
+
+  aspect-ratio: 16 / 9;
+}
+
+.skeletonBody {
+  padding: 18px;
+}
+
+.skeletonCategory {
+  width: 90px;
+  height: 14px;
+
+  border-radius: 6px;
+}
+
+.skeletonTitle {
+  width: 100%;
+  height: 18px;
+
+  margin-top: 18px;
+
+  border-radius: 6px;
+}
+
+.skeletonTitleShort {
+  width: 75%;
+  height: 18px;
+
+  margin-top: 10px;
+
+  border-radius: 6px;
+}
+
+.skeletonReason {
+  width: 90%;
+  height: 14px;
+
+  margin-top: 24px;
+
+  border-radius: 6px;
+}
+
+.skeletonFooter {
+  width: 120px;
+  height: 16px;
+
+  margin-top: 28px;
+
+  border-radius: 6px;
+}
+
+/* =========================================
+   Skeleton Animation
+========================================= */
+
+@keyframes shimmer {
+  from {
+    background-position: -500px 0;
+  }
+
+  to {
+    background-position: 500px 0;
+  }
+}
+
+.skeletonHeading,
+.skeletonSubheading,
+.skeletonImage,
+.skeletonCategory,
+.skeletonTitle,
+.skeletonTitleShort,
+.skeletonReason,
+.skeletonFooter {
+  background: linear-gradient(
+    90deg,
+    #ececec 25%,
+    #f5f5f5 37%,
+    #ececec 63%
+  );
+
+  background-size: 800px 100%;
+
+  animation: shimmer 1.4s linear infinite;
+}
+
+/* =========================================
+   Responsive
+========================================= */
+
+@media (max-width: 992px) {
+  .container {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header h2 {
+    font-size: 1.6rem;
+  }
+
+  .skeletonSubheading {
+    width: 80%;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 16px;
+  }
+
+  .grid {
+    gap: 18px;
+  }
+
+  .header h2 {
+    font-size: 1.35rem;
+  }
+
+  .message {
+    padding: 60px 16px;
+  }
+}

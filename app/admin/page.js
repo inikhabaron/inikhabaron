@@ -16,6 +16,7 @@ import { CategoryFormDialog } from '@/components/admin/CategoryFormDialog';
 import { TagFormDialog } from '@/components/admin/TagFormDialog';
 import { UserFormDialog } from '@/components/admin/UserFormDialog';
 import { VersionHistoryDialog } from '@/components/admin/VersionHistoryDialog';
+import { CommentsView, CommentDetailsDialog } from '@/components/admin/comments';
 
 const EMPTY_NEWS_FORM = {
   title: '', content: '', excerpt: '', category: '', tags: '', featuredImage: '', images: [],
@@ -43,6 +44,11 @@ export default function AdminPage() {
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
   const [users, setUsers] = useState([]);
+  const [comments, setComments] = useState([]);
+  const [commentFilter, setCommentFilter] = useState('all');
+  const [selectedComment, setSelectedComment] = useState(null);
+  const [commentDialogOpen, setCommentDialogOpen,] = useState(false);
+  const [commentLoading, setCommentLoading,] = useState(false);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [newsStatusFilter, setNewsStatusFilter] = useState('all');
@@ -169,6 +175,19 @@ export default function AdminPage() {
     } catch (error) { console.error('Error fetching users:', error); }
   }, []);
 
+  const fetchComments = useCallback(async () => {
+    try {
+      let url = '/api/admin/comments?limit=100';
+      if (commentFilter !== 'all') { url += `&status=${commentFilter}`; }
+      const res = await authFetch(url);
+      const data = await res.json();
+      setComments( data.comments || [] );
+    } catch (error) {
+      console.error(error);
+      toast.error( 'Failed to fetch comments' );
+    }
+  }, [commentFilter]);
+
   const fetchAnalytics = useCallback(async () => {
     try {
       const res = await authFetch('/api/admin/analytics', { method: 'GET' });
@@ -198,14 +217,19 @@ export default function AdminPage() {
       else if (activeTab === 'news') await fetchNews();
       else if (activeTab === 'users' && currentUser?.role === 'admin') await fetchUsers();
       else if (activeTab === 'livestream') await fetchYtConfig();
+      else if (activeTab === 'comments') { await fetchComments(); }
       setLoading(false);
     };
     load();
-  }, [activeTab, fetchCategories, fetchAnalytics, fetchNews, fetchUsers, fetchYtConfig, currentUser]);
+  }, [activeTab, fetchCategories, fetchAnalytics, fetchNews, fetchUsers, fetchComments, fetchYtConfig, currentUser]);
 
   useEffect(() => {
     if (activeTab === 'news') fetchNews();
   }, [newsStatusFilter, activeTab, fetchNews]);
+
+  useEffect(() => {
+    if (activeTab === 'comments') { fetchComments(); }
+  }, [activeTab, commentFilter, fetchComments,]);
 
   const saveYtConfig = async () => {
     setYtSaving(true);
@@ -294,6 +318,30 @@ export default function AdminPage() {
       fetchNews();
       fetchAnalytics();
     } catch (error) { toast.error(`Failed to ${action.replace('_', ' ')} article`); }
+  };
+
+  const moderateComment = async (comment, action) => {
+    try {
+      setCommentLoading(true);
+      const res = await authFetch(`/api/admin/comments/${comment._id}/${action}`, { method: 'POST', body: JSON.stringify({ reason: '', }), });
+      if (!res.ok) { throw new Error(); }
+      toast.success(`Comment ${action}d`);
+      fetchComments();
+      setCommentDialogOpen(false);
+    } catch { toast.error(`Failed to ${action}`);
+    } finally { setCommentLoading(false); }
+  };
+
+  const deleteComment = async (comment) => {
+    try {
+      setCommentLoading(true);
+      const res = await authFetch(`/api/admin/comments/${comment._id}`, { method: 'DELETE', });
+      if (!res.ok) { throw new Error(); }
+      toast.success('Comment deleted');
+      fetchComments();
+      setCommentDialogOpen(false);
+    } catch { toast.error('Delete failed');
+    } finally { setCommentLoading(false); }
   };
 
   const resetNewsForm = () => {
@@ -469,6 +517,19 @@ export default function AdminPage() {
             onDelete={handleDeleteUser}
           />
         );
+      case 'comments':
+        return (
+          <CommentsView
+            comments={comments}
+            loading={loading}
+            filter={commentFilter}
+            onFilterChange={ setCommentFilter }
+            onPreview={(comment)=>{ 
+              setSelectedComment(comment);
+              setCommentDialogOpen(true);
+            }}
+          />
+        );
       case 'livestream':
         return <LiveStreamView ytForm={ytForm} setYtForm={setYtForm} onSave={saveYtConfig} onClear={clearYtConfig} ytSaving={ytSaving} />;
       default:
@@ -525,6 +586,17 @@ export default function AdminPage() {
         editingUser={editingUser}
         userForm={userForm} setUserForm={setUserForm}
         onSave={handleSaveUser}
+      />
+
+      <CommentDetailsDialog
+        open={commentDialogOpen}
+        comment={selectedComment}
+        loading={commentLoading}
+        onClose={() => setCommentDialogOpen(false)}
+        onApprove={(comment)=> moderateComment(comment, 'approve')}
+        onReject={(comment)=> moderateComment(comment, 'reject')}
+        onHide={(comment)=> moderateComment(comment, 'hide')}
+        onDelete={ deleteComment}
       />
 
       <VersionHistoryDialog

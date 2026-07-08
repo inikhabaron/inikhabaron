@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart3, FileText, Video, Tag, LayoutGrid, Users, Pencil } from 'lucide-react';
+import { BarChart3, FileText, Video, Tag, LayoutGrid, Users, Pencil, MessageSquare, } from 'lucide-react';
 import { DS } from './design-system';
 import { SIDEBAR_W } from './constants';
 
@@ -11,6 +11,7 @@ export function Sidebar({ activeTab, onTabChange, currentUser, isOpen, onClose, 
     { id: 'livestream', icon: Video, label: 'Live Stream', roles: null },
     { id: 'categories', icon: LayoutGrid, label: 'Categories', roles: ['admin', 'editor'] },
     { id: 'tags', icon: Tag, label: 'Tags', roles: ['admin', 'editor'] },
+    { id: 'comments', icon: MessageSquare, label: 'Comments', roles: null },
     { id: 'users', icon: Users, label: 'Users', roles: ['admin'] },
   ];
 

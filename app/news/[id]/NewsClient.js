@@ -13,6 +13,12 @@ import CategoryShowcase from '@/components/home/CategoryShowcase';
 import SiteFooter from '@/components/home/SiteFooter';
 import AuthDialog from '@/components/home/AuthDialog';
 import MobileSearch from '@/components/home/MobileSearch';
+import BookmarkButton from '@/components/bookmarks/BookmarkButton';
+import LikeButton from '@/components/likes/LikeButton';
+import { CommentsSection } from '@/components/comments';
+import { WhySeeingThis } from '@/components/personalization';
+
+import useReadingProgress from '@/hooks/useReadingProgress';
 
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
 import { ACCENT, FONT_OPTIONS, translations, getCatAccent, getCatLabel, formatDate } from '@/lib/news-utils';
@@ -111,8 +117,11 @@ export default function NewsDetailsPage() {
   }, []);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, setUser);
-    return unsub;
+    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+    });
+
+    return () => unsub();
   }, []);
 
   useEffect(() => {
@@ -243,25 +252,113 @@ export default function NewsDetailsPage() {
   };
 
   const handleSignOut = async () => {
-    const result = await logOut();
-    if (result.error) toast.error(result.error);
-    else { setUser(null); toast.success('Signed out'); }
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      const r = await logOut();
+
+      if (r.error) {
+        toast.error(r.error);
+        return;
+      }
+
+      setUser(null);
+
+      toast.success('Signed out');
+    } catch (err) {
+      toast.error('Unable to sign out');
+    }
   };
 
   const handleGoogleSignIn = async () => {
     setAuthLoading(true);
-    const result = await signInWithGoogle();
-    if (result.error) toast.error(result.error);
-    else { setUser(result.user); setAuthDialogOpen(false); toast.success('Signed in!'); }
-    setAuthLoading(false);
+
+    try {
+      const r = await signInWithGoogle();
+
+      if (r.error) {
+        toast.error(r.error);
+        return;
+      }
+
+      // Get Firebase ID Token
+      const idToken = await r.user.getIdToken();
+
+      // Create backend session
+      const response = await fetch('/api/auth/session', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          idToken,
+        }),
+      });
+
+      const session = await response.json();
+
+      if (!session.success) {
+        toast.error(session.message || 'Unable to create session');
+        return;
+      }
+
+      setUser(r.user);
+      setAuthDialogOpen(false);
+
+      toast.success('Signed in!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Unable to sign in');
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
   const handleAppleSignIn = async () => {
     setAuthLoading(true);
-    const result = await signInWithApple();
-    if (result.error) toast.error(result.error);
-    else { setUser(result.user); setAuthDialogOpen(false); toast.success('Signed in!'); }
-    setAuthLoading(false);
+
+    try {
+      const r = await signInWithApple();
+
+      if (r.error) {
+        toast.error(r.error);
+        return;
+      }
+
+      const idToken = await r.user.getIdToken();
+
+      const response = await fetch('/api/auth/session', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          idToken,
+        }),
+      });
+
+      const session = await response.json();
+
+      if (!session.success) {
+        toast.error(session.message || 'Unable to create session');
+        return;
+      }
+
+      setUser(r.user);
+      setAuthDialogOpen(false);
+
+      toast.success('Signed in!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Unable to sign in');
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
   const handleNewsletterSubscribe = async () => {
@@ -311,6 +408,12 @@ export default function NewsDetailsPage() {
 
   const author = article?.author || article?.authorName || article?.writer || article?.byline;
   const authorLabel = article?.authorLabel || 'Author';
+
+  useReadingProgress({
+    articleId: article?.id,
+    enabled: !!user,
+    ready: !!article && !loading,
+  });
 
   // const trackShare = (newsId, platform) =>
   //   fetch(`/api/news/${newsId}/share`, {
@@ -416,6 +519,16 @@ export default function NewsDetailsPage() {
                             <p style={{ color: T2, fontSize: '15px', lineHeight: 1.8, marginTop: '16px' }}>{article.excerpt}</p>
                           )}
                           <div className={styles.shareRow}>
+                            <BookmarkButton 
+                                articleId={article.id}
+                                user={user}
+                                onRequireLogin={() => setAuthDialogOpen(true)}
+                            />
+                            <LikeButton 
+                                articleId={article.id}
+                                user={user}
+                                onRequireLogin={() => setAuthDialogOpen(true)}
+                            />
                             <button className={`${styles.shareBtn} ${styles.whatsapp}`} onClick={async () => { 
                               trackEvent({ action: 'share_click', category: 'article', label: 'whatsapp', });
 
@@ -441,6 +554,14 @@ export default function NewsDetailsPage() {
                               Facebook
                             </button>
                           </div>
+
+                          <WhySeeingThis
+                            articleId={article.id}
+                            title={selectedLanguage === 'hi' ? 'मैं यह क्यों देख रहा हूँ?' : 'Why am I seeing this?'}
+                            showMoreLabel={selectedLanguage === 'hi' ? 'और देखें' : 'Show more'}
+                            hideLabel={selectedLanguage === 'hi' ? 'छिपाएँ' : 'Hide'}
+                          />
+
                           <article className={styles.articleContent} dangerouslySetInnerHTML={{ __html: articleHtml }} />
                           {article.images?.length > 0 && (
                             <div
@@ -473,6 +594,12 @@ export default function NewsDetailsPage() {
                               ))}
                             </div>
                           )}
+                          <CommentsSection
+                            articleId={article.id}
+                            article={article}
+                            user={user}
+                            onRequireLogin={() => setAuthDialogOpen(true)}
+                          />
                           <section style={{ marginTop: '36px' }}>
                             <div className="kn-section-label">
                               <div className="kn-section-label-bar" />

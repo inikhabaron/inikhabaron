@@ -1,0 +1,74 @@
+.wrapper{
+  position:relative;
+
+  margin-bottom:30px;
+}
+
+.input{
+
+  width:100%;
+  height:44px;
+
+  border-radius:12px;
+
+  border:1px solid var(--bookmark-border);
+
+  background:var(--bookmark-card);
+
+  color:var(--bookmark-text);
+
+  padding:0 46px;
+
+  transition:.25s;
+}
+
+.input:focus{
+
+  outline:none;
+
+  border-color:var(--bookmark-accent);
+
+  box-shadow:
+      0 0 0 4px
+      color-mix(
+        in srgb,
+        var(--bookmark-accent) 20%,
+        transparent
+      );
+}
+
+.searchIcon{
+
+  position:absolute;
+
+  left:16px;
+  top:50%;
+
+  transform:translateY(-50%);
+
+  color:var(--bookmark-muted);
+}
+
+.clear{
+
+  position:absolute;
+
+  right:12px;
+  top:50%;
+
+  transform:translateY(-50%);
+
+  width:28px;
+  height:28px;
+
+  border:none;
+
+  border-radius:50%;
+
+  background:var(--bookmark-bg);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+
+  cursor:pointer;
+}
