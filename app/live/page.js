@@ -21,6 +21,7 @@ import SiteFooter from '@/components/home/SiteFooter';
 import AuthDialog from '@/components/home/AuthDialog';
 import SubscriptionPlans from '@/components/home/SubscriptionPlans';
 import MobileSearch from '@/components/home/MobileSearch';
+import { PersonalizedFeed } from '@/components/personalization';
 
 // ─── Shared utilities & contexts ──────────────────────────────────────────────
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
@@ -574,6 +575,9 @@ export default function HomePage() {
                 <p style={{ color: T3, fontSize: '13px' }}>{searchQuery ? 'Try different search terms' : t.checkBackLater}</p>
               </div>
             )}
+
+            {/* Personlised News */}
+            <PersonalizedFeed />
 
             {/* Category showcase */}
             {!isMobileView && categories.length > 0 && !loading && (

@@ -17,6 +17,7 @@ import BookmarkButton from '@/components/bookmarks/BookmarkButton';
 import LikeButton from '@/components/likes/LikeButton';
 import { CommentsSection } from '@/components/comments';
 import { WhySeeingThis } from '@/components/personalization';
+import { PersonalizedFeed } from '@/components/personalization';
 
 import useReadingProgress from '@/hooks/useReadingProgress';
 
@@ -647,6 +648,8 @@ export default function NewsDetailsPage() {
                       />
                     </aside>
                   </div>
+
+                  <PersonalizedFeed />
 
                   {!isMobileView && categories.length > 0 && (
                     <CategoryShowcase

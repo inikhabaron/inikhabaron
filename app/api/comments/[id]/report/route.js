@@ -3,7 +3,7 @@ import { requireUser } from '@/lib/auth/user/requireUser';
 import { success, failure, } from '@/lib/api/response';
 import { logApiError, } from '@/lib/api/errors';
 import { getCommentsCollection, } from '@/lib/db/comments';
-import { COMMENT_REPORT_REASONS } from '@/lib/constants/commentReportReasons';
+import { COMMENT_REPORT_REASONS } from '@/lib/services/comments/commentReportService';
 import { reportComment, hasReportedComment, } from '@/lib/services/comments/commentReportService';
 
 export async function POST(request, { params }) {

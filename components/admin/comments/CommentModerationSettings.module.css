@@ -1,0 +1,258 @@
+.card {
+
+  background: white;
+
+  border: 1px solid #E5E7EB;
+
+  border-radius: 10px;
+
+  padding: 24px;
+
+  /* margin-bottom: 24px; */
+}
+
+.header {
+
+  margin-bottom: 24px;
+}
+
+.title {
+
+  margin: 0;
+
+  font-size: 22px;
+
+  font-weight: 700;
+
+  color: #111827;
+}
+
+.subtitle {
+
+  margin-top: 8px;
+
+  color: #6B7280;
+
+  line-height: 1.6;
+}
+
+/* ========================= */
+
+.section {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 18px;
+}
+
+.option {
+
+  display: flex;
+
+  gap: 16px;
+
+  align-items: flex-start;
+
+  padding: 18px;
+
+  border: 1px solid #E5E7EB;
+
+  border-radius: 14px;
+
+  cursor: pointer;
+
+  transition: .2s;
+}
+
+.option:hover {
+
+  border-color: #3B82F6;
+
+  background: #F8FBFF;
+}
+
+.option input {
+
+  margin-top: 4px;
+
+  transform: scale(1.1);
+}
+
+.optionContent {
+
+  flex: 1;
+}
+
+.optionTitle {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  font-weight: 600;
+
+  color: #111827;
+}
+
+.optionDescription {
+
+  margin: 10px 0 0;
+
+  color: #6B7280;
+
+  line-height: 1.7;
+
+  font-size: 14px;
+}
+
+/* ========================= */
+
+.delaySection {
+
+  margin-top: 28px;
+
+  padding-top: 24px;
+
+  border-top: 1px solid #E5E7EB;
+}
+
+.delayLabel {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  margin-bottom: 14px;
+
+  font-weight: 600;
+
+  color: #111827;
+}
+
+.delayInput {
+
+  width: 120px;
+
+  height: 42px;
+
+  padding: 0 12px;
+
+  border: 1px solid #D1D5DB;
+
+  border-radius: 10px;
+
+  outline: none;
+
+  font-size: 15px;
+
+  transition: .2s;
+}
+
+.delayInput:focus {
+
+  border-color: #2563EB;
+
+  box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+}
+
+.delayInput:disabled {
+
+  background: #F3F4F6;
+
+  color: #9CA3AF;
+
+  cursor: not-allowed;
+}
+
+.delayHint {
+
+  margin-top: 12px;
+
+  color: #6B7280;
+
+  font-size: 13px;
+
+  line-height: 1.6;
+}
+
+/* ========================= */
+
+.footer {
+
+  margin-top: 30px;
+
+  display: flex;
+
+  justify-content: flex-end;
+}
+
+.saveButton {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 12px 20px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background: #2563EB;
+
+  color: white;
+
+  cursor: pointer;
+
+  font-weight: 600;
+
+  transition: .2s;
+}
+
+.saveButton:hover:not(:disabled) {
+
+  background: #1D4ED8;
+}
+
+.saveButton:disabled {
+
+  opacity: .65;
+
+  cursor: not-allowed;
+}
+
+/* ========================= */
+
+@media (max-width: 768px) {
+
+  .card {
+
+    padding: 18px;
+  }
+
+  .delayInput {
+
+    width: 100%;
+  }
+
+  .footer {
+
+    justify-content: stretch;
+  }
+
+  .saveButton {
+
+    width: 100%;
+
+    justify-content: center;
+  }
+
+}

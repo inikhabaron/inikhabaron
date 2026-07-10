@@ -2,6 +2,9 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import React, { useContext } from 'react';
+import { DarkCtx, FontCtx } from '@/lib/news-contexts';
+import { getCatAccent, getCatLabel } from '@/lib/news-utils';
 import { ArrowRight, Sparkles, } from 'lucide-react';
 
 import styles from './PersonalizedNewsCard.module.css';
@@ -47,19 +50,24 @@ function getRecommendationReason(article) {
 }
 
 export default function PersonalizedNewsCard({
-  article,
+  article, selectedLanguage,
 }) {
+  const dark = useContext(DarkCtx);
+  const { scale } = useContext(FontCtx);
+  const catColor = getCatAccent(article.category);
+  const catLabel = getCatLabel(article.category, selectedLanguage);
   return (
     <Link
-      href={`/news/${article.slug}`}
-      className={styles.card}
+      href={`/news/${article.id}`}
+      className="kn-card"
+      style={{ backgroundColor: dark ? '#161B27' : '#FFFFFF', border: dark ? '1px solid #252E40' : 'none' }}
     >
-      <div className={styles.imageWrapper}>
+      <div className="kn-card-img-wrap" style={{ backgroundColor: dark ? '#252E40' : '#F0F2F6' }}>
         <Image
-          src={article.featuredImage}
+          src={article.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600'}
           alt={article.title}
           fill
-          className={styles.image}
+          className="kn-card-img"
         />
 
         <div className={styles.badge}>
@@ -67,23 +75,21 @@ export default function PersonalizedNewsCard({
 
           <span>For You</span>
         </div>
+        <div className="kn-card-bar" style={{ backgroundColor: catColor }} />
       </div>
 
-      <div className={styles.content}>
-        <span className={styles.category}>
-          {article.category}
-        </span>
+      <div className="kn-card-body">
+        <div className="kn-card-cat-row">
+          <span className="kn-card-cat-dot" style={{ backgroundColor: catColor }} />
+          <span className="kn-card-cat-label" style={{ color: catColor, fontSize: `${10 * scale}px` }}>{catLabel}</span>
+        </div>
 
-        <h3>
+        <h3 className="kn-card-title" style={{ minHeight: "42px", fontSize: `${15 * scale}px`, color: dark ? '#E8ECF0' : '#111827' }}>
           {article.title}
         </h3>
 
-        <p className={styles.excerpt}>
-          {article.excerpt}
-        </p>
-
         <div className={styles.reason}>
-          <Sparkles size={15} />
+          <Sparkles size={15}/>
 
           <span>
             {getRecommendationReason(article)}

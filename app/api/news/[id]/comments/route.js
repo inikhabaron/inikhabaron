@@ -1,17 +1,15 @@
 import { requireUser } from '@/lib/auth/user/requireUser';
-
 import { getCollection } from '@/lib/mongodb';
-
 import { COLLECTIONS } from '@/lib/constants/collections';
-
 import { success, failure, } from '@/lib/api/response';
-
 import { logApiError, } from '@/lib/api/errors';
-
 import { getComments, addComment, } from '@/lib/services/comments/commentService';
+import { autoApprovePendingComments } from '@/lib/services/comments/autoApproveComments';
 
 export async function GET(request, { params }) {
   try {
+    await autoApprovePendingComments();
+
     const { id: articleId } = await params;
 
     // Check article exists

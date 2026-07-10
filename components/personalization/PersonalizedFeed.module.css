@@ -29,6 +29,60 @@
   line-height: 1.6;
 }
 
+.wrapper {
+  position: relative;
+}
+
+.carousel {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.item {
+  flex: 0 0 300px;
+  scroll-snap-type: start;
+}
+
+.arrowLeft,
+.arrowRight {
+  position: absolute;
+  top: 40%;
+  transform: translateY(-50%);
+
+  width: 42px;
+  height: 42px;
+
+  border-radius: 50%;
+  border: none;
+
+  background: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  z-index: 10;
+}
+
+.arrowLeft {
+  left: -20px;
+}
+
+.arrowRight {
+  right: -20px;
+}
+
 /* =========================================
    Feed Grid
 ========================================= */

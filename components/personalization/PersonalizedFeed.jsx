@@ -1,13 +1,41 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 import PersonalizedNewsCard from './PersonalizedNewsCard';
 import PersonalizedFeedSkeleton from './PersonalizedFeedSkeleton';
 
 import styles from './PersonalizedFeed.module.css';
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function PersonalizedFeed() {
+
+  const scrollRef = useRef(null);
+
+  const scroll = (direction) => {
+    const container = scrollRef.current;
+    if (!container) return;
+    const start = container.scrollLeft;
+    const distance = direction === "left" ? -800 : 800;
+    const duration = 700; // milliseconds
+    let startTime = null;
+    function animate(currentTime) {
+      if (!startTime) startTime = currentTime;
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease in-out
+      const ease =
+        progress < 0.5
+          ? 2 * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+      container.scrollLeft = start + distance * ease;
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    }
+    requestAnimationFrame(animate);
+  };
+
   const [articles, setArticles] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -108,14 +136,31 @@ export default function PersonalizedFeed() {
         </p>
       </div>
 
-      <div className={styles.grid}>
-        {articles.map(article => (
-          <PersonalizedNewsCard
-            key={article.id}
-            article={article}
-          />
-        ))}
-      </div>
+      <section className={styles.wrapper}>
+        <button
+          className={styles.arrowLeft}
+          onClick={() => scroll("left")}
+        >
+          <ChevronLeft size={22} />
+        </button>
+
+        <div ref={scrollRef} className={styles.carousel}>
+          {articles.map(article => (
+            <div key={article._id} className={styles.item}>
+              <PersonalizedNewsCard
+                article={article}
+              />
+            </div>
+          ))}
+        </div>
+
+        <button
+          className={styles.arrowRight}
+          onClick={() => scroll("right")}
+        >
+          <ChevronRight size={22} />
+        </button>
+      </section>
     </section>
   );
 }

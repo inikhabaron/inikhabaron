@@ -45,10 +45,15 @@ export default function AdminPage() {
   const [tags, setTags] = useState([]);
   const [users, setUsers] = useState([]);
   const [comments, setComments] = useState([]);
+  const [commentStats, setCommentStats] = useState({
+    pending: 0, approved: 0, reported: 0, hidden: 0, rejected: 0,
+  });
   const [commentFilter, setCommentFilter] = useState('all');
   const [selectedComment, setSelectedComment] = useState(null);
-  const [commentDialogOpen, setCommentDialogOpen,] = useState(false);
-  const [commentLoading, setCommentLoading,] = useState(false);
+  const [commentDialogOpen, setCommentDialogOpen] = useState(false);
+  const [commentLoading, setCommentLoading] = useState(false);
+  const [moderationSettings, setModerationSettings] = useState({ mode: 'auto', delaySeconds: 3, });
+  const [moderationSaving, setModerationSaving] = useState(false);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [newsStatusFilter, setNewsStatusFilter] = useState('all');
@@ -76,7 +81,7 @@ export default function AdminPage() {
     order: 0,
     isActive: true,
   });
-    const [tagForm, setTagForm] = useState(EMPTY_TAG_FORM);
+  const [tagForm, setTagForm] = useState(EMPTY_TAG_FORM);
   const [userForm, setUserForm] = useState(EMPTY_USER_FORM);
   const [ytForm, setYtForm] = useState({ videoId: '', channelId: '', title: '', isLive: false });
   const [ytSaving, setYtSaving] = useState(false);
@@ -181,12 +186,30 @@ export default function AdminPage() {
       if (commentFilter !== 'all') { url += `&status=${commentFilter}`; }
       const res = await authFetch(url);
       const data = await res.json();
-      setComments( data.comments || [] );
+      const items = data.data?.items || [];
+      setComments(items);
+      setCommentStats({
+        pending: items.filter(c => c.status === 'pending').length,
+        approved: items.filter(c => c.status === 'approved').length,
+        hidden: items.filter(c => c.status === 'hidden').length,
+        rejected: items.filter(c => c.status === 'rejected').length,
+        reported: items.filter(c => (c.reports || 0) > 0).length,
+      });
     } catch (error) {
       console.error(error);
-      toast.error( 'Failed to fetch comments' );
+      toast.error('Failed to fetch comments');
     }
   }, [commentFilter]);
+
+  const fetchModerationSettings = useCallback(async () => {
+    try {
+        const res = await authFetch('/api/admin/settings/comment-moderation');
+        const data = await res.json();
+        if (data.success) { setModerationSettings(data.settings); }
+    } catch (error) {
+        console.error(error);
+    }
+  }, []);
 
   const fetchAnalytics = useCallback(async () => {
     try {
@@ -217,7 +240,7 @@ export default function AdminPage() {
       else if (activeTab === 'news') await fetchNews();
       else if (activeTab === 'users' && currentUser?.role === 'admin') await fetchUsers();
       else if (activeTab === 'livestream') await fetchYtConfig();
-      else if (activeTab === 'comments') { await fetchComments(); }
+      else if (activeTab === 'comments') { await Promise.all([fetchComments(), fetchModerationSettings()]); }
       setLoading(false);
     };
     load();
@@ -318,6 +341,16 @@ export default function AdminPage() {
       fetchNews();
       fetchAnalytics();
     } catch (error) { toast.error(`Failed to ${action.replace('_', ' ')} article`); }
+  };
+
+  const saveModerationSettings = async () => {
+    try {
+        setModerationSaving(true);
+        const res = await authFetch('/api/admin/settings/comment-moderation',{ method: 'POST', body: JSON.stringify( moderationSettings), });
+        if (!res.ok) { throw new Error(); }
+        toast.success('Comment moderation updated');
+    } catch { toast.error('Failed to save settings');
+    } finally { setModerationSaving(false); }
   };
 
   const moderateComment = async (comment, action) => {
@@ -446,6 +479,43 @@ export default function AdminPage() {
     } catch (error) { toast.error('Failed to delete user'); }
   };
 
+  const handleApproveComment = async (comment) => {
+    try {
+      const res = await authFetch(`/api/admin/comments/${comment._id}/approve`, { method: 'PATCH', });
+      if (!res.ok) { throw new Error(); }
+      toast.success('Comment approved');
+      fetchComments();
+    } catch (error) { toast.error('Failed to approve comment');}
+  };
+
+  const handleRejectComment = async (comment) => {
+    try {
+      const res = await authFetch(`/api/admin/comments/${comment._id}/reject`, { method: 'PATCH', });
+      if (!res.ok) { throw new Error(); }
+      toast.success('Comment rejected');
+      fetchComments();
+    } catch { toast.error('Failed to reject comment'); }
+  };
+
+  const handleHideComment = async (comment) => {
+    try {
+      const res = await authFetch(`/api/admin/comments/${comment._id}/hide`, { method: 'PATCH', });
+      if (!res.ok) { throw new Error(); }
+      toast.success('Comment hidden');
+      fetchComments();
+    } catch { toast.error('Failed to hide comment'); }
+  };
+
+  const handleDeleteComment = async (comment) => {
+    if (!confirm('Delete this comment permanently?')) { return; }
+    try {
+      const res = await authFetch( `/api/admin/comments/${comment._id}`, { method: 'DELETE', });
+      if (!res.ok) { throw new Error();}
+      toast.success('Comment deleted');
+      fetchComments();
+    } catch { toast.error('Failed to delete comment'); }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -523,7 +593,16 @@ export default function AdminPage() {
             comments={comments}
             loading={loading}
             filter={commentFilter}
+            stats={commentStats}
             onFilterChange={ setCommentFilter }
+            moderationSettings={ moderationSettings }
+            setModerationSettings={ setModerationSettings }
+            onSaveModeration={ saveModerationSettings }
+            savingModeration={ moderationSaving }
+            onApprove={handleApproveComment}
+            onReject={handleRejectComment}
+            onHide={handleHideComment}
+            onDelete={handleDeleteComment}
             onPreview={(comment)=>{ 
               setSelectedComment(comment);
               setCommentDialogOpen(true);

@@ -11,3 +11,5 @@ export { CommentRow } from './CommentRow';
 export { CommentModerationCard } from './CommentModerationCard';
 
 export { CommentDetailsDialog } from './CommentDetailsDialog';
+
+export { CommentModerationSettings } from './CommentModerationSettings';

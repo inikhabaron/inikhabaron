@@ -1,5 +1,5 @@
 import { getUserFromToken } from '@/lib/auth/admin/token';
-import {  canModerateComments, } from '@/lib/auth/permissions';
+import {  canModerateComments } from '@/lib/auth/permissions';
 import { success, failure, } from '@/lib/api/response';
 import { logApiError, } from '@/lib/api/errors';
 import { getCommentsForModeration, } from '@/lib/services/comments/commentModerationService';
@@ -59,6 +59,7 @@ export async function GET(request) {
       'Comments fetched successfully'
     );
   } catch (error) {
+    console.error(error);
     logApiError(
       'GET /api/admin/comments',
       error
