@@ -40,17 +40,17 @@ export async function POST(request) {
 
     const sessionToken = signSession(user);
 
-    console.log('JWT Length:', sessionToken.length);
-
     await setSessionCookie(sessionToken);
-
-    console.log('Cookie should now be set.');
 
     return NextResponse.json({
       success: true,
       message: 'Login successful',
       data: {
         user,
+        // Web relies on the httpOnly cookie set above and can ignore this.
+        // Mobile clients (no cookie jar) store this and send it back as
+        // `Authorization: Bearer <token>` on every request.
+        token: sessionToken,
       },
     });
   } catch (error) {
