@@ -1,10 +1,14 @@
 import { getCollection } from '@/lib/mongodb';
 import { json, preflight } from '@/lib/api/cors';
+import { requireAdmin } from '@/lib/auth/admin/guard';
 
 export const OPTIONS = preflight;
 
-export async function GET() {
+export async function GET(request) {
   try {
+    const gate = await requireAdmin(request);
+    if (!gate.ok) return gate.response;
+
     const configCollection = await getCollection('config');
     const config = await configCollection.findOne({ key: 'youtube' });
     return json({ config: config || {} });
@@ -16,6 +20,9 @@ export async function GET() {
 
 export async function POST(request) {
   try {
+    const gate = await requireAdmin(request, ['admin', 'editor']);
+    if (!gate.ok) return gate.response;
+
     const body = await request.json().catch(() => ({}));
     const { videoId, channelId, title, isLive } = body;
     const configCollection = await getCollection('config');

@@ -1,10 +1,14 @@
 import { getCollection } from '@/lib/mongodb';
 import { json, preflight } from '@/lib/api/cors';
+import { requireAdmin } from '@/lib/auth/admin/guard';
 
 export const OPTIONS = preflight;
 
-export async function GET() {
+export async function GET(request) {
   try {
+    const gate = await requireAdmin(request);
+    if (!gate.ok) return gate.response;
+
     const newsCollection = await getCollection('news');
     const usersCollection = await getCollection('users');
     const analyticsCollection = await getCollection('analytics');

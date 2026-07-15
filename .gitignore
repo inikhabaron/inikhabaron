@@ -31,8 +31,19 @@ dist/
 dist
 
 # Environment files (comprehensive coverage)
+# NEVER commit secrets. Keep real values in Vercel > Environment Variables.
+.env
+.env.*
+!.env.example
+!.env.sample
+*.env
 *token.json*
 *credentials.json*
+*service-account*.json
+*serviceAccount*.json
+*.key
+*.p8
+firebase-adminsdk*.json
 
 # Logs and debug files
 npm-debug.log*
