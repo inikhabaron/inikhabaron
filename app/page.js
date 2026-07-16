@@ -1,13 +1,13 @@
-﻿'use client';
+import HomeClient from './HomeClient';
+import JsonLd from '@/components/seo/JsonLd';
+import { getLatestArticles } from '@/lib/seo/data';
+import { itemListSchema, websiteSchema } from '@/lib/seo/jsonld';
+import { SITE, SITE_URL } from '@/lib/seo/config';
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { auth, signInWithGoogle, signInWithApple, logOut } from '@/lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-import { toast } from 'sonner';
-import Image from 'next/image';
-import { Newspaper, Crown, ChevronDown } from 'lucide-react';
+// Homepage revalidates frequently so top stories stay fresh for crawlers.
+export const revalidate = 120;
 
+<<<<<<< HEAD
 // ─── Layout & UI components ───────────────────────────────────────────────────
 import Header from '@/components/home/Header';
 import TrendingBar from '@/components/home/TrendingBar';
@@ -24,13 +24,21 @@ import MobileSearch from '@/components/home/MobileSearch';
 import FollowButton from '@/components/follow/FollowButton';
 import { applyFollowChange } from '@/lib/follow/applyFollowChange';
 import { PersonalizedFeed } from '@/components/personalization';
+=======
+export const metadata = {
+  title: `${SITE.name} - Latest Hindi & English News`,
+  description: SITE.description,
+  alternates: { canonical: SITE_URL },
+};
+>>>>>>> a9800e16b2177bc51925b98898508e200bd16e2f
 
-// ─── Shared utilities & contexts ──────────────────────────────────────────────
-import { DarkCtx, FontCtx } from '@/lib/news-contexts';
-import { ACCENT, ACCENT_H, EDITORIAL_RED, FONT_OPTIONS, translations, getCatAccent, getCatLabel, formatDate } from '@/lib/news-utils';
-import { event as trackEvent } from '@/lib/gtag';
-import { recordShare } from '@/lib/share';
+export default async function Page() {
+  // Fetch top stories on the server purely to emit an ItemList of the current
+  // headlines (great for Google + AI "top stories" understanding). The rich
+  // interactive homepage UI is rendered by the existing client component.
+  const latest = await getLatestArticles({ limit: 10 });
 
+<<<<<<< HEAD
 // home.css is imported globally via layout.js — plain kn-* class names used below
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
@@ -670,5 +678,12 @@ useEffect(() => {
 
       </FontCtx.Provider>
     </DarkCtx.Provider>
+=======
+  return (
+    <>
+      <JsonLd data={[websiteSchema(), itemListSchema(latest, { name: `${SITE.name} — Top Stories` })]} />
+      <HomeClient />
+    </>
+>>>>>>> a9800e16b2177bc51925b98898508e200bd16e2f
   );
 }

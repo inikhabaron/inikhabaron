@@ -35,16 +35,18 @@ const Loader = () => (
   </div>
 );
 
-export default function NewsDetailsPage() {
+export default function NewsDetailsPage({ initialArticle = null, initialLatest = [] }) {
   const router = useRouter();
   const params = useParams();
-  const id = params?.id;
-  const [article, setArticle] = useState(null);
-  const [latestNews, setLatestNews] = useState([]);
+  const id = params?.id || initialArticle?.id;
+  // Seed state from server-fetched data so the article renders in the initial
+  // HTML (SSR) — this is what makes the story crawlable and removes load flicker.
+  const [article, setArticle] = useState(initialArticle);
+  const [latestNews, setLatestNews] = useState(initialLatest || []);
   const [relatedNews, setRelatedNews] = useState([]);
   const [categories, setCategories] = useState([]);
   const [breakingNews, setBreakingNews] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialArticle);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
@@ -154,7 +156,8 @@ export default function NewsDetailsPage() {
     }
 
     const load = async () => {
-      setLoading(true);
+      // Don't flip back to the loader if the server already gave us the article.
+      if (!initialArticle) setLoading(true);
       setError(null);
       try {
         const [articleRes, categoryRes, breakingRes, latestRes, tagsRes] = await Promise.all([
