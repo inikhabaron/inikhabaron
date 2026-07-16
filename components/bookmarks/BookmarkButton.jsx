@@ -103,7 +103,7 @@ export default function BookmarkButton({
 
   return (
     <button
-      className={`${styles.bookmarkButton} ${animation}`}
+      className={`${styles.bookmarkButton} ${bookmarked ? styles.active : ''} ${animation}`}
       onClick={toggleBookmark}
       disabled={loading}
       title={bookmarked ? 'Remove Bookmark' : 'Save Article'}
@@ -111,32 +111,7 @@ export default function BookmarkButton({
       style={{
         width: size === 'sm' ? 28 : 44,
         height: size === 'sm' ? 28 : 44,
-
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-
-        borderRadius: '50%',
-
-        border: bookmarked
-          ? `1px solid ${ACCENT}`
-          : '1px solid #E5E7EB',
-
-        background: bookmarked
-          ? `${ACCENT}10`
-          : '#FFFFFF',
-
         cursor: loading ? 'not-allowed' : 'pointer',
-
-        transition: 'all .25s ease',
-
-        boxShadow: bookmarked
-          ? '0 6px 18px rgba(59,175,218,.25)'
-          : 'none',
-      }}
-      onMouseEnter={(e) => {
-        if (!loading)
-          e.currentTarget.style.transform = 'scale(1.08)';
       }}
       
     >
@@ -144,7 +119,7 @@ export default function BookmarkButton({
             <span
                 className={styles.ripple}
                 style={{
-                background: `${ACCENT}40`,
+                background: 'color-mix(in srgb, var(--bookmark-accent) 40%, transparent)',
                 }}
             />
         )}
@@ -161,7 +136,7 @@ export default function BookmarkButton({
                         key={i}
                         className={styles.particle}
                         style={{
-                        background: ACCENT,
+                        background: 'var(--bookmark-accent)',
                         left: `calc(50% + ${x}px)`,
                         top: `calc(50% + ${y}px)`,
                         }}
@@ -173,13 +148,13 @@ export default function BookmarkButton({
         <Loader2
           size={iconSize}
           className="animate-spin"
-          color={ACCENT}
+          color="var(--bookmark-accent)"
         />
       ) : (
         <Bookmark
           size={iconSize}
-          color={bookmarked ? ACCENT : '#6B7280'}
-          fill={bookmarked ? ACCENT : 'none'}
+          color={bookmarked ?'var(--bookmark-accent)' : 'var(--bookmark-muted)'}
+          fill={bookmarked ? 'var(--bookmark-accent)' : 'none'}
           strokeWidth={2.2}
         />
       )}

@@ -11,7 +11,7 @@ const DEMO_USERS = [
 ];
 
 const DEFAULT_CATEGORIES = [
-  { name: 'Nation', slug: 'nation', color: '#EA580C', icon: 'Flag', order: 1 },
+  { name: 'National', slug: 'national', color: '#EA580C', icon: 'Flag', order: 1 },
   { name: 'States', slug: 'states', color: '#059669', icon: 'Building', order: 2 },
   { name: 'Politics', slug: 'politics', color: '#DC2626', icon: 'Building', order: 3 },
   { name: 'World', slug: 'world', color: '#4F46E5', icon: 'Globe', order: 4 },
@@ -27,7 +27,7 @@ const DEFAULT_CATEGORIES = [
   { name: 'Innovation', slug: 'innovation', color: '#8B5CF6', icon: 'Lightbulb', order: 14 },
   { name: 'Auto-Gadget', slug: 'auto-gadget', color: '#EF4444', icon: 'Car', order: 15 },
   { name: 'Court-Room', slug: 'court-room', color: '#6366F1', icon: 'Court', order: 16 },
-  { name: 'Lifestyle', slug: 'lifestyle', color: '#EC4899', icon: 'Heartbeat', order: 17 },
+  { name: 'Feature', slug: 'feature', color: '#EC4899', icon: 'Heartbeat', order: 17 },
   { name: 'Local', slug: 'local', color: '#CA8A04', icon: 'MapPin', order: 18 }
 ];
 

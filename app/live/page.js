@@ -577,7 +577,7 @@ export default function HomePage() {
             )}
 
             {/* Personlised News */}
-            <PersonalizedFeed />
+            <PersonalizedFeed selectedLanguage={selectedLanguage} />
 
             {/* Category showcase */}
             {!isMobileView && categories.length > 0 && !loading && (

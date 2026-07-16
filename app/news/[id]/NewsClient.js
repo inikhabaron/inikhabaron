@@ -15,6 +15,8 @@ import AuthDialog from '@/components/home/AuthDialog';
 import MobileSearch from '@/components/home/MobileSearch';
 import BookmarkButton from '@/components/bookmarks/BookmarkButton';
 import LikeButton from '@/components/likes/LikeButton';
+import FollowButton from '@/components/follow/FollowButton';
+import { applyFollowChange } from '@/lib/follow/applyFollowChange';
 import { CommentsSection } from '@/components/comments';
 import { WhySeeingThis } from '@/components/personalization';
 import { PersonalizedFeed } from '@/components/personalization';
@@ -60,6 +62,7 @@ export default function NewsDetailsPage() {
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [tags, setTags] = useState([]);
+  const [following, setFollowing] = useState({ categories: [], authors: [], cities: [] });
   const countedViewRef = useRef(null);
 
   const t = translations[selectedLanguage];
@@ -124,6 +127,26 @@ export default function NewsDetailsPage() {
 
     return () => unsub();
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setFollowing({ categories: [], authors: [], cities: [] });
+      return;
+    }
+
+    let cancelled = false;
+
+    fetch('/api/users/following', { credentials: 'include', cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled && data.success) setFollowing(data.data);
+      })
+      .catch((err) => console.error(err));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   useEffect(() => {
     if (!id) {
@@ -409,6 +432,51 @@ export default function NewsDetailsPage() {
 
   const author = article?.author || article?.authorName || article?.writer || article?.byline;
   const authorLabel = article?.authorLabel || 'Author';
+  const isHindi = selectedLanguage === 'hi';
+
+  // Author/category/city are three independent follow relationships — each
+  // has its own dedicated button and its own `following` boolean derived
+  // straight from the current article, so toggling one never touches another.
+  const cityId = article?.location?.districtName || article?.location?.stateName || '';
+
+  const followingAuthor = article?.authorId
+    ? following.authors.some((a) => a.id === article.authorId)
+    : false;
+
+  const followingCategory = article?.category
+    ? following.categories.some((c) => c.id === article.category)
+    : false;
+
+  const followingCity = cityId
+    ? following.cities.some((c) => c.id === cityId)
+    : false;
+
+  const handleAuthorFollowChange = (change) => setFollowing((prev) => applyFollowChange(prev, {
+    ...change,
+    item: { id: article.authorId, name: author || 'Author', exists: true },
+  }));
+
+  const handleCategoryFollowChange = (change) => setFollowing((prev) => applyFollowChange(prev, {
+    ...change,
+    item: { id: article.category, name: getCatLabel(article.category, selectedLanguage), exists: true },
+  }));
+
+  const handleCityFollowChange = (change) => setFollowing((prev) => applyFollowChange(prev, {
+    ...change,
+    item: { id: cityId, name: cityId, exists: true },
+  }));
+
+  const authorFollowLabels = isHindi
+    ? { follow: 'लेखक को फॉलो करें', following: 'लेखक को फॉलो कर रहे हैं' }
+    : { follow: 'Follow Author', following: 'Following Author' };
+
+  const categoryFollowLabels = isHindi
+    ? { follow: 'श्रेणी को फॉलो करें', following: 'श्रेणी को फॉलो कर रहे हैं' }
+    : { follow: 'Follow Category', following: 'Following Category' };
+
+  const cityFollowLabels = isHindi
+    ? { follow: `${cityId} को फॉलो करें`, following: `${cityId} को फॉलो कर रहे हैं` }
+    : { follow: `Follow ${cityId} City`, following: `Following ${cityId}` };
 
   useReadingProgress({
     articleId: article?.id,
@@ -514,7 +582,23 @@ export default function NewsDetailsPage() {
                           </h1>
                           <div className={styles.articleMeta}>
                             <span>{publishedAt}</span>
-                            {author && <span className={styles.articleAuthor}>{authorLabel}: {author}</span>}
+                            {(author || article.authorId) && (
+                              <span className={styles.articleAuthor} style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                                {author && <>{authorLabel}: {author}</>}
+                                {article.authorId && (
+                                  <FollowButton
+                                    type="author"
+                                    id={article.authorId}
+                                    user={user}
+                                    following={followingAuthor}
+                                    onRequireLogin={() => setAuthDialogOpen(true)}
+                                    onChange={handleAuthorFollowChange}
+                                    size="sm"
+                                    labels={authorFollowLabels}
+                                  />
+                                )}
+                              </span>
+                            )}
                           </div>
                           {article.excerpt && (
                             <p style={{ color: T2, fontSize: '15px', lineHeight: 1.8, marginTop: '16px' }}>{article.excerpt}</p>
@@ -525,12 +609,23 @@ export default function NewsDetailsPage() {
                                 user={user}
                                 onRequireLogin={() => setAuthDialogOpen(true)}
                             />
-                            <LikeButton 
+                            <LikeButton
                                 articleId={article.id}
                                 user={user}
                                 onRequireLogin={() => setAuthDialogOpen(true)}
                             />
-                            <button className={`${styles.shareBtn} ${styles.whatsapp}`} onClick={async () => { 
+                            {article.category && (
+                              <FollowButton
+                                type="category"
+                                id={article.category}
+                                user={user}
+                                following={followingCategory}
+                                onRequireLogin={() => setAuthDialogOpen(true)}
+                                onChange={handleCategoryFollowChange}
+                                labels={categoryFollowLabels}
+                              />
+                            )}
+                            <button className={`${styles.shareBtn} ${styles.whatsapp}`} onClick={async () => {
                               trackEvent({ action: 'share_click', category: 'article', label: 'whatsapp', });
 
                               await recordShare(article.id, 'whatsapp');
@@ -595,6 +690,22 @@ export default function NewsDetailsPage() {
                               ))}
                             </div>
                           )}
+                          {cityId && (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', padding: '14px 18px', margin: '24px 0', borderRadius: '12px', border: `1px solid ${bdr}`, backgroundColor: surface }}>
+                              <span style={{ fontSize: '14px', fontWeight: 600, color: T1 }}>
+                                📍 {isHindi ? `${cityId} की खबरें` : `News from ${cityId}`}
+                              </span>
+                              <FollowButton
+                                type="city"
+                                id={cityId}
+                                user={user}
+                                following={followingCity}
+                                onRequireLogin={() => setAuthDialogOpen(true)}
+                                onChange={handleCityFollowChange}
+                                labels={cityFollowLabels}
+                              />
+                            </div>
+                          )}
                           <CommentsSection
                             articleId={article.id}
                             article={article}
@@ -649,7 +760,7 @@ export default function NewsDetailsPage() {
                     </aside>
                   </div>
 
-                  <PersonalizedFeed />
+                  <PersonalizedFeed selectedLanguage={selectedLanguage} />
 
                   {!isMobileView && categories.length > 0 && (
                     <CategoryShowcase

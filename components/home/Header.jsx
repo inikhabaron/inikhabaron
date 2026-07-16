@@ -1,7 +1,7 @@
 'use client';
 import React, { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Search, Sun, Moon, User, Home, LogOut as LogOutIcon, Bell, ChevronDown, ChevronLeft, ChevronRight, Video } from 'lucide-react';
+import { Search, Sun, Moon, User, Home, LogOut as LogOutIcon, Bell, ChevronDown, ChevronLeft, ChevronRight, Video, MapPin } from 'lucide-react';
 import { IoHome } from "react-icons/io5";
 import { FaFacebook } from "react-icons/fa";
 import { FaChromecast, FaRegUser, FaFacebookF, FaXTwitter, FaYoutube, FaInstagram } from 'react-icons/fa6';
@@ -48,6 +48,7 @@ export default function Header({
   const mobileNavItems = [
     { label: t.latestNews, slug: 'all' },
     { label: selectedLanguage === 'hi' ? 'वीडियो' : 'Video', slug: 'live-video', isVideo: true, },
+    { label: selectedLanguage === 'hi' ? 'मेरा शहर' : 'My City', slug: 'my-city', isMyCity: true, },
     ...categories.map(cat => ({
       label: selectedLanguage === 'hi' ? (cat.nameHi || cat.name) : cat.name, slug: cat.slug,
     })),
@@ -120,6 +121,12 @@ export default function Header({
           </p>
           <p style={{ fontSize: '11px', color: T3, margin: '0 0 10px' }}>{user.email}</p>
           <button
+            onClick={() => { router.push('/settings'); setShowProfileMenu(false); }}
+            style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: `1px solid ${bdr}`, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'transparent', color: T1, fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}
+          >
+            <MapPin size={14} />Settings
+          </button>
+          <button
             onClick={() => { onSignOut(); setShowProfileMenu(false); }}
             style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: dark ? 'rgba(239,68,68,0.12)' : '#FEE2E2', color: '#EF4444', fontSize: '13px', fontWeight: 600 }}
           >
@@ -174,7 +181,7 @@ export default function Header({
           {mobileNavItems.map(item => {
             const isActive = selectedCategory === item.slug;
             return (
-              <button key={item.slug} onClick={() => { if (item.isVideo) { router.push('/live'); return; } setSelectedCategory(item.slug); router.push(`/?category=${item.slug}`); }}
+              <button key={item.slug} onClick={() => { if (item.isVideo) { router.push('/live'); return; } if (item.isMyCity) { router.push('/my-city'); return; } setSelectedCategory(item.slug); router.push(`/?category=${item.slug}`); }}
                 style={{ whiteSpace: 'nowrap', padding: '5px 14px', borderRadius: '20px', border: 'none', fontSize: '13px', cursor: 'pointer', flexShrink: 0, backgroundColor: isActive ? ACCENT : dark ? '#252838' : '#F1F3F5', color: isActive ? 'white' : T2 }}>
                 {item.label}
               </button>
@@ -218,6 +225,12 @@ export default function Header({
 
           {/* Right: utility links + social icons */}
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '14px', flexShrink: 0 }}>
+            <button
+              onClick={() => router.push('/my-city')}
+              style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '5px', background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '16px', fontWeight: 600, padding: 0, whiteSpace: 'nowrap' }}
+            >
+              <MapPin size={16} /> {selectedLanguage === 'hi' ? 'मेरा शहर' : 'My City'}
+            </button>
             {[ selectedLanguage === 'hi' ? 'हमारे बारे में' : 'About Us', selectedLanguage === 'hi' ? 'विज्ञापन दें' : 'Advertise with us', selectedLanguage === 'hi' ? 'संपर्क करें' : 'Contact Us'].map(link => (
               <button key={link} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '16px', fontWeight: 600, padding: 0, whiteSpace: 'nowrap' }}>{link}</button>
             ))}
@@ -440,7 +453,6 @@ export default function Header({
               onClick={() => router.push("/live")} >
               {selectedLanguage === 'hi' ? 'वीडियो' : 'Video'}
             </button>
-
 
             {/* More dropdown
             <div style={{ position: 'relative', marginLeft: 'auto', flexShrink: 0 }}>

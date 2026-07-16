@@ -18,11 +18,16 @@ import { UserFormDialog } from '@/components/admin/UserFormDialog';
 import { VersionHistoryDialog } from '@/components/admin/VersionHistoryDialog';
 import { CommentsView, CommentDetailsDialog } from '@/components/admin/comments';
 
+const EMPTY_LOCATION_FORM = {
+  enabled: false, scope: 'national', country: 'India', stateId: null, stateSlug: null, stateName: null, districtId: null, districtSlug: null, districtName: null,
+};
+
 const EMPTY_NEWS_FORM = {
   title: '', content: '', excerpt: '', category: '', tags: '', featuredImage: '', images: [],
   status: 'draft', isBreaking: false, breakingSuggested: false, isTrending: false,
   trendingSuggested: false, isFeatured: false, authorLabel: 'Author', authorName: 'Admin',
   source: '', sourceUrl: '', seoTitle: '', seoDescription: '', seoKeywords: '', scheduledAt: '',
+  location: EMPTY_LOCATION_FORM,
 };
 
 const EMPTY_CATEGORY_FORM = {
@@ -396,6 +401,7 @@ export default function AdminPage() {
       seoTitle: item.seoTitle || '', seoDescription: item.seoDescription || '',
       seoKeywords: item.seoKeywords?.join(', ') || '',
       scheduledAt: item.scheduledAt ? new Date(item.scheduledAt).toISOString().slice(0, 16) : '',
+      location: item.location || EMPTY_LOCATION_FORM,
     });
     setIsNewsDialogOpen(true);
   };

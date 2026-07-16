@@ -61,6 +61,7 @@ export async function POST(request) {
       ),
       featuredImage: body.featuredImage || null,
       images: body.images || [],
+      location: body.location || { enabled: false, scope: "national", country: "India", },
       status,
       scheduledAt: status === 'scheduled' && body.scheduledAt ? new Date(body.scheduledAt) : null,
       publishedAt: status === 'published' ? new Date() : null,

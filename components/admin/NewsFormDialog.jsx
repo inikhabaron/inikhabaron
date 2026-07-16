@@ -15,6 +15,7 @@ import { DS } from './design-system';
 import { statusOptionsByRole } from './constants';
 import { ImageUpload } from '@/components/upload/ImageUpload';
 import { MultiImageUpload } from '@/components/upload/MultiImageUpload';
+import LocationSelector from '@/components/location/LocationSelector';
 
 // const ReactQuill = dynamic(() => import('nereact-quill'), { ssr: false });
 
@@ -65,6 +66,8 @@ export function NewsFormDialog({
               </Select>
             </div>
           </div>
+
+          <LocationSelector value={newsForm.location} onChange={(location) => setNewsForm({ ...newsForm, location, })}/>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
             <div style={DS.sectionNum}>2</div>

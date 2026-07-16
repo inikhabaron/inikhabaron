@@ -9,44 +9,60 @@ import { ArrowRight, Sparkles, } from 'lucide-react';
 
 import styles from './PersonalizedNewsCard.module.css';
 
-function getRecommendationReason(article) {
+function getRecommendationReason(article, selectedLanguage) {
+  const hi = selectedLanguage === 'hi';
   if (
     article.recommendationReason?.message
   ) {
     return article.recommendationReason.message;
   }
-
   if (
     article.recommendationMatches?.length
   ) {
-    const match =
-      article.recommendationMatches[0];
+      const match =
+        article.recommendationMatches[0];
 
-    switch (match.type) {
-      case 'interest':
-        return `Because you frequently read ${match.value} news.`;
+      switch (match.type) {
+        case 'interest':
+          return hi
+            ? `क्योंकि आप अक्सर ${getCatLabel(match.value, 'hi')} समाचार पढ़ते हैं।`
+            : `Because you frequently read ${match.value} news.`;
 
-      case 'author':
-        return 'Because you often read this author.';
+        case 'author':
+          return hi
+            ? 'क्योंकि आप इस लेखक के लेख अक्सर पढ़ते हैं।'
+            : 'Because you often read this author.';
 
-      case 'city':
-        return `Because you read news from ${match.value}.`;
+        case 'city':
+          return hi
+            ? `क्योंकि आप अक्सर ${match.value} की खबरें पढ़ते हैं।`
+            : `Because you read news from ${match.value}.`;
 
-      case 'language':
-        return 'Because it matches your preferred language.';
+        case 'language':
+          return hi
+            ? 'क्योंकि यह आपकी पसंदीदा भाषा से मेल खाती है।'
+            : 'Because it matches your preferred language.';
 
-      case 'tag':
-        return `Because you're interested in ${match.value}.`;
+        case 'tag':
+          return hi
+            ? `क्योंकि आपने ${match.value} में रुचि दिखाई है।`
+            : `Because you're interested in ${match.value}.`;
 
-      case 'trending':
-        return 'Because this article is trending.';
+        case 'trending':
+          return hi
+            ? 'क्योंकि यह खबर ट्रेंड कर रही है।'
+            : 'Because this article is trending.';
 
-      default:
-        return 'Recommended for you.';
+        default:
+          return hi
+            ? 'आपके लिए अनुशंसित।'
+            : 'Recommended for you.';
+      }
     }
-  }
 
-  return 'Recommended for you.';
+  return hi
+    ? 'आपके लिए अनुशंसित।'
+    : 'Recommended for you.';
 }
 
 export default function PersonalizedNewsCard({
@@ -73,7 +89,7 @@ export default function PersonalizedNewsCard({
         <div className={styles.badge}>
           <Sparkles size={14} />
 
-          <span>For You</span>
+          <span> {selectedLanguage === 'hi' ? 'आपके लिए' : 'For You'}</span>
         </div>
         <div className="kn-card-bar" style={{ backgroundColor: catColor }} />
       </div>
@@ -92,7 +108,7 @@ export default function PersonalizedNewsCard({
           <Sparkles size={15}/>
 
           <span>
-            {getRecommendationReason(article)}
+            {getRecommendationReason(article, selectedLanguage)}
           </span>
         </div>
 

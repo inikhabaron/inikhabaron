@@ -36,7 +36,7 @@ export default function Header({
   // Build nav items list
   const navItems = [
     { label: selectedLanguage === 'hi' ? 'होम'       : 'Home',          slug: 'all',           icon: true },
-    { label: selectedLanguage === 'hi' ? 'देश'        : 'Nation',      slug: 'nation' },
+    { label: selectedLanguage === 'hi' ? 'देश'        : 'National',      slug: 'national' },
     { label: selectedLanguage === 'hi' ? 'राज्य'      : 'States',        slug: 'states' },
     { label: selectedLanguage === 'hi' ? 'राजनीति'   : 'Politics',      slug: 'politics' },
     { label: selectedLanguage === 'hi' ? 'दुनिया'     : 'World',         slug: 'world' },
@@ -52,7 +52,7 @@ export default function Header({
     { label: selectedLanguage === 'hi' ? 'छलांग'      : 'Innovation',        slug: 'innovation' },
     { label: selectedLanguage === 'hi' ? 'ऑटोमोबाइल-गैजेट'     : 'Auto-Gadget',         slug: 'auto-gadget' },
     { label: selectedLanguage === 'hi' ? 'न्यायालय'     : 'Court-Room',         slug: 'court-room' },
-    { label: selectedLanguage === 'hi' ? 'लोकरुचि'      : 'Lifestyle',        slug: 'lifestyle' },
+    { label: selectedLanguage === 'hi' ? 'लोकरुचि'      : 'Feature',        slug: 'feature' },
     { label: selectedLanguage === 'hi' ? 'स्थानीय'     : 'Local',         slug: 'local' }
   ];
 

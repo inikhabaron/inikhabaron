@@ -17,7 +17,7 @@ export async function GET(request) {
     const user = await getCurrentUser();
 
     const result = await getPersonalizedFeed({
-      userId: user?.id,
+      user,
       page,
       limit,
     });

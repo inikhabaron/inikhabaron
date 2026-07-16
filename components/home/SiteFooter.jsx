@@ -103,7 +103,7 @@ export default function SiteFooter({ dark, categories, selectedLanguage, onCateg
             <h4 className="kn-footer-col-title" style={{ color: T1 }}>{selectedLanguage === 'hi' ? 'श्रेणियाँ' : 'Categories'}</h4>
             <ul className="kn-footer-link-list">
               {[
-                { slug: 'nation', name: 'देश' },
+                { slug: 'national', name: 'देश' },
                 { slug: 'states', name: 'राज्य' },
                 { slug: 'politics', name: 'राजनीति' },
                 { slug: 'world', name: 'दुनिया' },

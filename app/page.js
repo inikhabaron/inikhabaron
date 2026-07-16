@@ -21,6 +21,8 @@ import SiteFooter from '@/components/home/SiteFooter';
 import AuthDialog from '@/components/home/AuthDialog';
 import SubscriptionPlans from '@/components/home/SubscriptionPlans';
 import MobileSearch from '@/components/home/MobileSearch';
+import FollowButton from '@/components/follow/FollowButton';
+import { applyFollowChange } from '@/lib/follow/applyFollowChange';
 import { PersonalizedFeed } from '@/components/personalization';
 
 // ─── Shared utilities & contexts ──────────────────────────────────────────────
@@ -73,6 +75,7 @@ export default function HomePage() {
   const [newsletterLoading, setNLLoading] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(null);
   const [topStoriesCount, setTopStoriesCount] = useState(6);
+  const [following, setFollowing] = useState({ categories: [], authors: [], cities: [] });
 
   const shareMenuRef = useRef(null);
   const router = useRouter();
@@ -117,6 +120,33 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => { const unsub = onAuthStateChanged(auth, setUser); return unsub; }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setFollowing({ categories: [], authors: [], cities: [] });
+      return;
+    }
+
+    let cancelled = false;
+
+    fetch('/api/users/following', { credentials: 'include', cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled && data.success) setFollowing(data.data);
+      })
+      .catch((err) => console.error(err));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  // Opens the auth dialog when a page redirected here for a login-gated action
+  // (e.g. /settings). Sign-in success handlers below own redirecting back.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('authRequired') === '1') setAuthDialogOpen(true);
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem('newsdesk_user_id');
@@ -203,6 +233,16 @@ useEffect(() => {
     }
   };
 
+  // After a successful sign-in, sends the user back to whatever page
+  // redirected them here to log in (e.g. /settings), if any.
+  const redirectAfterAuth = () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('authRequired') !== '1') return;
+
+    const redirectTo = params.get('redirect');
+    router.replace(redirectTo || '/');
+  };
+
   const handleGoogleSignIn = async () => {
     setAuthLoading(true);
 
@@ -238,6 +278,7 @@ useEffect(() => {
 
       setUser(r.user);
       setAuthDialogOpen(false);
+      redirectAfterAuth();
 
       toast.success('Signed in!');
     } catch (err) {
@@ -281,6 +322,7 @@ useEffect(() => {
 
       setUser(r.user);
       setAuthDialogOpen(false);
+      redirectAfterAuth();
 
       toast.success('Signed in!');
     } catch (err) {
@@ -412,6 +454,39 @@ useEffect(() => {
 
           {/* Main content */}
           <div className="kn-content-wrap" style={{ padding: contentPad }}>
+
+            {/* Category banner */}
+            {selectedCategory && selectedCategory !== 'all' && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, padding: '14px 18px', marginBottom: '18px', borderRadius: '12px', border: `1px solid ${bdr}`, backgroundColor: surface }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: getCatAccent(selectedCategory), flexShrink: 0 }} />
+                  <span style={{ fontSize: '16px', fontWeight: 700, color: T1 }}>
+                    {getCatLabel(selectedCategory, selectedLanguage)}
+                  </span>
+                </div>
+                <FollowButton
+                  type="category"
+                  id={selectedCategory}
+                  user={user}
+                  following={following.categories.some(c => c.id === selectedCategory)}
+                  onRequireLogin={() => setAuthDialogOpen(true)}
+                  onChange={(change) => setFollowing(prev => {
+                    const cat = categories.find(c => c.slug === selectedCategory);
+                    return applyFollowChange(prev, {
+                      ...change,
+                      item: {
+                        id: selectedCategory,
+                        name: cat?.name || getCatLabel(selectedCategory, selectedLanguage),
+                        nameHi: cat?.nameHi,
+                        color: cat?.color || getCatAccent(selectedCategory),
+                        exists: true,
+                      },
+                    });
+                  })}
+                  labels={selectedLanguage === 'hi' ? { follow: 'फॉलो करें', following: 'फॉलो कर रहे हैं' } : undefined}
+                />
+              </div>
+            )}
 
             {/* YouTube live embed */}
             {/* {youtubeLive?.videoId && (
@@ -574,7 +649,7 @@ useEffect(() => {
             )}
 
             {/* Personlised News */}
-            <PersonalizedFeed />
+            <PersonalizedFeed selectedLanguage={selectedLanguage} />
 
             {/* Category showcase */}
             {!isMobileView && categories.length > 0 && !loading && (

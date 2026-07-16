@@ -7,7 +7,12 @@
         "dev:no-reload": "next dev --hostname 0.0.0.0 --port 3000",
         "dev:webpack": "next dev --hostname 0.0.0.0 --port 3000",
         "build": "next build",
-        "start": "next start"
+        "start": "next start",
+        "transform:locations": "node --env-file=.env scripts/transformLocations.js",
+        "seed:locations": "node --env-file=.env scripts/seedLocations.js",
+        "backfill:news-locations": "node --env-file=.env scripts/backfillNewsLocations.js",
+        "backfill:user-location-slugs": "node --env-file=.env scripts/backfillUserLocationSlugs.js",
+        "seed:all-locations": "npm run transform:locations && npm run seed:locations && npm run backfill:news-locations && npm run backfill:user-location-slugs"
     },
     "dependencies": {
         "@hookform/resolvers": "^5.1.1",

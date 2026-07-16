@@ -8,7 +8,7 @@ import PersonalizedFeedSkeleton from './PersonalizedFeedSkeleton';
 import styles from './PersonalizedFeed.module.css';
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-export default function PersonalizedFeed() {
+export default function PersonalizedFeed({selectedLanguage = 'en',}) {
 
   const scrollRef = useRef(null);
 
@@ -119,8 +119,9 @@ export default function PersonalizedFeed() {
   if (articles.length === 0) {
     return (
       <div className={styles.message}>
-        Continue reading articles to build your
-        personalized feed.
+        {selectedLanguage === 'hi'
+          ? 'अपना व्यक्तिगत न्यूज़ फ़ीड बनाने के लिए और लेख पढ़ें।'
+          : 'Continue reading articles to build your personalized feed.'}
       </div>
     );
   }
@@ -128,12 +129,9 @@ export default function PersonalizedFeed() {
   return (
     <section className={styles.container}>
       <div className={styles.header}>
-        <h2>Personalized For You</h2>
+        <h2>{selectedLanguage === 'hi' ? 'आपके लिए विशेष' : 'Personalized For You'}</h2>
 
-        <p>
-          Stories selected based on your reading
-          interests.
-        </p>
+        <p>{selectedLanguage === 'hi' ? 'आपकी पढ़ने की रुचियों के आधार पर चुनी गई खबरें।' : 'Stories selected based on your reading interests.'}</p>
       </div>
 
       <section className={styles.wrapper}>
@@ -149,6 +147,7 @@ export default function PersonalizedFeed() {
             <div key={article._id} className={styles.item}>
               <PersonalizedNewsCard
                 article={article}
+                selectedLanguage={selectedLanguage}
               />
             </div>
           ))}
