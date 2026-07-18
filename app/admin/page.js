@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { DS } from '@/components/admin/design-system';
 import { Sidebar } from '@/components/admin/Sidebar';
@@ -17,6 +18,8 @@ import { TagFormDialog } from '@/components/admin/TagFormDialog';
 import { UserFormDialog } from '@/components/admin/UserFormDialog';
 import { VersionHistoryDialog } from '@/components/admin/VersionHistoryDialog';
 import { CommentsView, CommentDetailsDialog } from '@/components/admin/comments';
+import { NewsletterView } from '@/components/admin/newsletter';
+import { ReporterMetricsView, ReporterDetailDialog } from '@/components/admin/reporterMetrics';
 
 const EMPTY_LOCATION_FORM = {
   enabled: false, scope: 'national', country: 'India', stateId: null, stateSlug: null, stateName: null, districtId: null, districtSlug: null, districtName: null,
@@ -44,7 +47,17 @@ const EMPTY_USER_FORM = {
 };
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  return (
+    <Suspense fallback={null}>
+      <AdminPageContent />
+    </Suspense>
+  );
+}
+
+function AdminPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'dashboard');
   const [news, setNews] = useState([]);
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
@@ -59,6 +72,24 @@ export default function AdminPage() {
   const [commentLoading, setCommentLoading] = useState(false);
   const [moderationSettings, setModerationSettings] = useState({ mode: 'auto', delaySeconds: 3, });
   const [moderationSaving, setModerationSaving] = useState(false);
+  const [newsletterSubscribers, setNewsletterSubscribers] = useState([]);
+  const [newsletterStats, setNewsletterStats] = useState({ total: 0, active: 0, unsubscribed: 0 });
+  const [newsletterStatusFilter, setNewsletterStatusFilter] = useState('all');
+  const [newsletterLanguageFilter, setNewsletterLanguageFilter] = useState('all');
+  const [newsletterSearch, setNewsletterSearch] = useState('');
+  const [newsletterPage, setNewsletterPage] = useState(1);
+  const [newsletterHasNext, setNewsletterHasNext] = useState(false);
+  const [newsletterSendType, setNewsletterSendType] = useState('monthly');
+  const [newsletterSending, setNewsletterSending] = useState(false);
+  const [newsletterPreviewLoading, setNewsletterPreviewLoading] = useState(false);
+  const [newsletterPreviewData, setNewsletterPreviewData] = useState(null);
+  const [newsletterLastSendResult, setNewsletterLastSendResult] = useState(null);
+  const [newsletterForceResend, setNewsletterForceResend] = useState(false);
+  const [newsletterCampaigns, setNewsletterCampaigns] = useState([]);
+  const [reporterMetrics, setReporterMetrics] = useState([]);
+  const [reporterDetailOpen, setReporterDetailOpen] = useState(false);
+  const [reporterDetail, setReporterDetail] = useState(null);
+  const [reporterDetailLoading, setReporterDetailLoading] = useState(false);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [newsStatusFilter, setNewsStatusFilter] = useState('all');
@@ -216,6 +247,36 @@ export default function AdminPage() {
     }
   }, []);
 
+  const fetchNewsletter = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({
+        page: String(newsletterPage),
+        limit: '20',
+        status: newsletterStatusFilter,
+        language: newsletterLanguageFilter,
+      });
+      if (newsletterSearch.trim()) params.set('search', newsletterSearch.trim());
+      const res = await authFetch(`/api/admin/newsletter?${params.toString()}`);
+      const data = await res.json();
+      setNewsletterSubscribers(data.data?.items || []);
+      setNewsletterHasNext(!!data.data?.hasNext);
+      setNewsletterStats(data.data?.stats || { total: 0, active: 0, unsubscribed: 0 });
+    } catch (error) {
+      console.error('Error fetching newsletter subscribers:', error);
+      toast.error('Failed to fetch subscribers');
+    }
+  }, [newsletterPage, newsletterStatusFilter, newsletterLanguageFilter, newsletterSearch]);
+
+  const fetchNewsletterCampaigns = useCallback(async () => {
+    try {
+      const res = await authFetch('/api/admin/newsletter/campaigns?limit=10');
+      const data = await res.json();
+      setNewsletterCampaigns(data.data?.campaigns || []);
+    } catch (error) {
+      console.error('Error fetching newsletter campaigns:', error);
+    }
+  }, []);
+
   const fetchAnalytics = useCallback(async () => {
     try {
       const res = await authFetch('/api/admin/analytics', { method: 'GET' });
@@ -223,6 +284,32 @@ export default function AdminPage() {
       setAnalytics(data);
     } catch (error) { console.error('Error fetching analytics:', error); }
   }, []);
+
+  const fetchReporterMetrics = useCallback(async () => {
+    try {
+      const res = await authFetch('/api/admin/reporter-metrics');
+      const data = await res.json();
+      setReporterMetrics(data.reporters || []);
+    } catch (error) {
+      console.error('Error fetching reporter metrics:', error);
+      toast.error('Failed to fetch reporter metrics');
+    }
+  }, []);
+
+  const fetchReporterDetail = async (id) => {
+    setReporterDetailOpen(true);
+    setReporterDetailLoading(true);
+    setReporterDetail(null);
+    try {
+      const res = await authFetch(`/api/admin/reporter-metrics/${id}`);
+      const data = await res.json();
+      setReporterDetail(data);
+    } catch (error) {
+      toast.error('Failed to load reporter metrics');
+    } finally {
+      setReporterDetailLoading(false);
+    }
+  };
 
   const fetchYtConfig = useCallback(async () => {
     try {
@@ -246,10 +333,22 @@ export default function AdminPage() {
       else if (activeTab === 'users' && currentUser?.role === 'admin') await fetchUsers();
       else if (activeTab === 'livestream') await fetchYtConfig();
       else if (activeTab === 'comments') { await Promise.all([fetchComments(), fetchModerationSettings()]); }
+      else if (activeTab === 'newsletter') { await Promise.all([fetchNewsletter(), fetchNewsletterCampaigns()]); }
+      else if (activeTab === 'reporter-metrics') await fetchReporterMetrics();
       setLoading(false);
     };
     load();
-  }, [activeTab, fetchCategories, fetchAnalytics, fetchNews, fetchUsers, fetchComments, fetchYtConfig, currentUser]);
+  }, [activeTab, fetchCategories, fetchAnalytics, fetchNews, fetchUsers, fetchComments, fetchYtConfig, fetchNewsletter, fetchNewsletterCampaigns, fetchReporterMetrics, currentUser]);
+
+  useEffect(() => {
+    const articleId = searchParams.get('openEdit');
+    if (!articleId || activeTab !== 'news' || news.length === 0) return;
+    const target = news.find(n => n.id === articleId);
+    if (target) openEditNews(target);
+    else toast.error('Could not find that article in the current list — try searching for it in Posts.');
+    router.replace('/admin?tab=news');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [news, activeTab, searchParams]);
 
   useEffect(() => {
     if (activeTab === 'news') fetchNews();
@@ -258,6 +357,25 @@ export default function AdminPage() {
   useEffect(() => {
     if (activeTab === 'comments') { fetchComments(); }
   }, [activeTab, commentFilter, fetchComments,]);
+
+  useEffect(() => {
+    if (activeTab === 'newsletter') { fetchNewsletter(); }
+  }, [activeTab, newsletterPage, newsletterStatusFilter, newsletterLanguageFilter, fetchNewsletter]);
+
+  useEffect(() => {
+    if (activeTab !== 'newsletter') return;
+    setNewsletterPage(1);
+  }, [newsletterStatusFilter, newsletterLanguageFilter, activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== 'newsletter') return;
+    const timeout = setTimeout(() => {
+      setNewsletterPage(1);
+      fetchNewsletter();
+    }, 400);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newsletterSearch]);
 
   const saveYtConfig = async () => {
     setYtSaving(true);
@@ -522,6 +640,93 @@ export default function AdminPage() {
     } catch { toast.error('Failed to delete comment'); }
   };
 
+  const handleToggleNewsletterStatus = async (subscriber) => {
+    const nextStatus = subscriber.status === 'active' ? 'unsubscribed' : 'active';
+    try {
+      const res = await authFetch(`/api/admin/newsletter/${subscriber._id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (!res.ok) { throw new Error(); }
+      toast.success(nextStatus === 'active' ? 'Subscriber reactivated' : 'Subscriber deactivated');
+      fetchNewsletter();
+    } catch { toast.error('Failed to update subscriber'); }
+  };
+
+  const handleDeleteNewsletterSubscriber = async (subscriber) => {
+    if (!confirm(`Delete subscriber ${subscriber.email}?`)) { return; }
+    try {
+      const res = await authFetch(`/api/admin/newsletter/${subscriber._id}`, { method: 'DELETE' });
+      if (!res.ok) { throw new Error(); }
+      toast.success('Subscriber deleted');
+      fetchNewsletter();
+    } catch { toast.error('Failed to delete subscriber'); }
+  };
+
+  const handleExportNewsletterCsv = async () => {
+    try {
+      const params = new URLSearchParams({
+        format: 'csv',
+        status: newsletterStatusFilter,
+        language: newsletterLanguageFilter,
+      });
+      if (newsletterSearch.trim()) params.set('search', newsletterSearch.trim());
+      // Admin tokens only travel via headers (no query-string fallback, see
+      // lib/auth/admin/token.js), so the CSV must be fetched with authFetch
+      // and downloaded as a blob rather than opened as a direct URL.
+      const res = await authFetch(`/api/admin/newsletter?${params.toString()}`);
+      if (!res.ok) { throw new Error(); }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'newsletter-subscribers.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch { toast.error('Failed to export subscribers'); }
+  };
+
+  const handlePreviewNewsletter = async () => {
+    setNewsletterPreviewLoading(true);
+    try {
+      const res = await authFetch(`/api/admin/newsletter/preview?type=${newsletterSendType}`);
+      const data = await res.json();
+      if (!res.ok || !data.success) { throw new Error(data.message || 'Preview failed'); }
+      setNewsletterPreviewData(data.data);
+    } catch (error) {
+      toast.error(error.message || 'Failed to generate preview');
+    } finally {
+      setNewsletterPreviewLoading(false);
+    }
+  };
+
+  const handleSendNewsletter = async () => {
+    const label = newsletterSendType === 'breaking' ? 'breaking news alert' : 'monthly newsletter';
+    if (!confirm(`Send the ${label} to ${newsletterStats.active || 0} active subscriber(s)? This cannot be undone.`)) {
+      return;
+    }
+    setNewsletterSending(true);
+    try {
+      const res = await authFetch('/api/admin/newsletter/send', {
+        method: 'POST',
+        body: JSON.stringify({ type: newsletterSendType, force: newsletterForceResend }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) { throw new Error(data.message || 'Send failed'); }
+      setNewsletterLastSendResult(data.data);
+      setNewsletterForceResend(false);
+      toast.success(data.message || 'Newsletter sent');
+      fetchNewsletter();
+      fetchNewsletterCampaigns();
+    } catch (error) {
+      toast.error(error.message || 'Failed to send newsletter');
+    } finally {
+      setNewsletterSending(false);
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -615,6 +820,47 @@ export default function AdminPage() {
             }}
           />
         );
+      case 'newsletter':
+        return (
+          <NewsletterView
+            subscribers={newsletterSubscribers}
+            loading={loading}
+            stats={newsletterStats}
+            statusFilter={newsletterStatusFilter}
+            onStatusFilterChange={setNewsletterStatusFilter}
+            languageFilter={newsletterLanguageFilter}
+            onLanguageFilterChange={setNewsletterLanguageFilter}
+            searchQuery={newsletterSearch}
+            onSearchChange={setNewsletterSearch}
+            onExportCsv={handleExportNewsletterCsv}
+            page={newsletterPage}
+            hasNext={newsletterHasNext}
+            onPrevPage={() => setNewsletterPage((p) => Math.max(1, p - 1))}
+            onNextPage={() => setNewsletterPage((p) => p + 1)}
+            onToggleStatus={handleToggleNewsletterStatus}
+            onDelete={handleDeleteNewsletterSubscriber}
+            sendType={newsletterSendType}
+            onSendTypeChange={setNewsletterSendType}
+            onPreview={handlePreviewNewsletter}
+            previewLoading={newsletterPreviewLoading}
+            previewData={newsletterPreviewData}
+            onClosePreview={() => setNewsletterPreviewData(null)}
+            onSend={handleSendNewsletter}
+            sending={newsletterSending}
+            forceResend={newsletterForceResend}
+            onForceResendChange={setNewsletterForceResend}
+            lastSendResult={newsletterLastSendResult}
+            campaigns={newsletterCampaigns}
+          />
+        );
+      case 'reporter-metrics':
+        return (
+          <ReporterMetricsView
+            metrics={reporterMetrics}
+            loading={loading}
+            onSelectReporter={fetchReporterDetail}
+          />
+        );
       case 'livestream':
         return <LiveStreamView ytForm={ytForm} setYtForm={setYtForm} onSave={saveYtConfig} onClear={clearYtConfig} ytSaving={ytSaving} />;
       default:
@@ -622,10 +868,16 @@ export default function AdminPage() {
     }
   };
 
+  const handleTabChange = (id) => {
+    if (id === 'calendar') { router.push('/admin/editorial-calendar'); return; }
+    setActiveTab(id);
+    router.replace(`/admin?tab=${id}`, { scroll: false });
+  };
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: "'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" }}>
       <Sidebar
-        activeTab={activeTab} onTabChange={setActiveTab}
+        activeTab={activeTab} onTabChange={handleTabChange}
         currentUser={currentUser} isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)} isMobile={isMobile}
       />
@@ -634,7 +886,7 @@ export default function AdminPage() {
         <Header
           currentUser={currentUser} onLogout={handleLogout}
           searchQuery={searchQuery}
-          onSearchChange={(q) => { setSearchQuery(q); if (activeTab !== 'news') setActiveTab('news'); }}
+          onSearchChange={(q) => { setSearchQuery(q); if (activeTab !== 'news') handleTabChange('news'); }}
           activeTab={activeTab}
         />
         <div style={{ flex: 1 }}>
@@ -687,6 +939,14 @@ export default function AdminPage() {
       <VersionHistoryDialog
         open={isVersionHistoryOpen} onOpenChange={setIsVersionHistoryOpen}
         versionHistory={versionHistory} formatDate={formatDate}
+      />
+
+      <ReporterDetailDialog
+        open={reporterDetailOpen}
+        reporter={reporterDetail}
+        loading={reporterDetailLoading}
+        onClose={() => setReporterDetailOpen(false)}
+        isMobile={isMobile}
       />
     </div>
   );

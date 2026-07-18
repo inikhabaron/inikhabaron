@@ -39,6 +39,17 @@ const nextConfig = {
     // SEO-friendly security headers. Framing is left permissive (frame-ancestors *)
     // to preserve existing embed/ad behaviour, but we add the headers search
     // engines and browsers expect on a trustworthy site.
+    //
+    // CORS is deliberately NOT set here. next.config.js headers() are static
+    // (config-time), so they can't inspect the request's Origin and reflect
+    // only allowlisted ones back — they can only ever emit one fixed value for
+    // every caller. lib/api/cors.js does that check per-request instead
+    // (see corsHeadersFor); adding a second, blanket CORS header here
+    // previously both duplicated it (spec-invalid — browsers reject a
+    // response with two Access-Control-Allow-Origin values) and defeated it
+    // (disallowed origins still got the config-level wildcard). CORS for the
+    // API surface is owned exclusively by lib/api/cors.js — do not reintroduce
+    // it here.
     const securityHeaders = [
       { key: 'X-Content-Type-Options', value: 'nosniff' },
       { key: 'X-DNS-Prefetch-Control', value: 'on' },
@@ -48,15 +59,8 @@ const nextConfig = {
       // Keep the site embeddable (unchanged from previous behaviour).
       { key: 'Content-Security-Policy', value: 'frame-ancestors *;' },
     ];
-    const corsHeaders = [
-      { key: 'Access-Control-Allow-Origin', value: process.env.CORS_ORIGINS || '*' },
-      { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, OPTIONS' },
-      { key: 'Access-Control-Allow-Headers', value: '*' },
-    ];
     return [
       { source: '/(.*)', headers: securityHeaders },
-      // CORS only needs to apply to the API surface.
-      { source: '/api/(.*)', headers: corsHeaders },
     ];
   },
 };

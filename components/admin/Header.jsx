@@ -6,7 +6,7 @@ import { DS } from './design-system';
 
 const BREADCRUMBS = {
   dashboard: ['Dashboard'], news: ['Posts'], categories: ['Categories'],
-  users: ['Users'], livestream: ['Live Stream'],
+  users: ['Users'], livestream: ['Live Stream'], calendar: ['Editorial Calendar'],
 };
 
 export function Header({ currentUser, onLogout, searchQuery, onSearchChange, activeTab }) {

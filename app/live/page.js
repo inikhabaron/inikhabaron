@@ -22,6 +22,7 @@ import AuthDialog from '@/components/home/AuthDialog';
 import SubscriptionPlans from '@/components/home/SubscriptionPlans';
 import MobileSearch from '@/components/home/MobileSearch';
 import { PersonalizedFeed } from '@/components/personalization';
+import useNewsletterSubscribe from '@/hooks/useNewsletterSubscribe';
 
 // ─── Shared utilities & contexts ──────────────────────────────────────────────
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
@@ -69,8 +70,7 @@ export default function HomePage() {
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [youtubeLive, setYoutubeLive] = useState(null);
-  const [newsletterEmail, setNewsletterEmail] = useState('');
-  const [newsletterLoading, setNLLoading] = useState(false);
+  const { newsletterEmail, setNewsletterEmail, newsletterLoading, handleNewsletterSubscribe } = useNewsletterSubscribe(selectedLanguage);
   const [showShareMenu, setShowShareMenu] = useState(null);
   const [topStoriesCount, setTopStoriesCount] = useState(6);
 
@@ -303,17 +303,6 @@ export default function HomePage() {
 //     } catch (e) { console.error(e); }
 //   };
 
-  const handleNewsletterSubscribe = async () => {
-    if (!newsletterEmail.trim()) { toast.error(selectedLanguage === 'hi' ? 'ईमेल दर्ज करें' : 'Please enter email'); return; }
-    try {
-      setNLLoading(true);
-      const res = await fetch('/api/newsletter', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: newsletterEmail }) });
-      const data = await res.json();
-      if (res.ok) { toast.success(selectedLanguage === 'hi' ? 'सफलतापूर्वक सब्सक्राइब किया गया' : 'Subscribed!'); setNewsletterEmail(''); }
-      else toast.error(data.error || 'Something went wrong');
-    } catch { toast.error('Server error'); }
-    finally { setNLLoading(false); }
-  };
 
   // ── Theme palette ──────────────────────────────────────────────────────────
   const bg = dark ? '#0D1117' : '#F6F7F9';

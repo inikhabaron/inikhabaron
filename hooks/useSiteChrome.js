@@ -6,6 +6,7 @@ import { auth, signInWithGoogle, signInWithApple, logOut } from '@/lib/firebase'
 import { onAuthStateChanged } from 'firebase/auth';
 import { toast } from 'sonner';
 import { translations } from '@/lib/news-utils';
+import useNewsletterSubscribe from './useNewsletterSubscribe';
 
 // Shared header/footer chrome (auth, theme, language, categories, breaking news)
 // so utility pages like /my-city and /settings match the rest of the site.
@@ -24,8 +25,7 @@ export default function useSiteChrome() {
   const [isMobileView, setIsMobileView] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [newsletterEmail, setNewsletterEmail] = useState('');
-  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const { newsletterEmail, setNewsletterEmail, newsletterLoading, handleNewsletterSubscribe } = useNewsletterSubscribe(selectedLanguage);
 
   const t = translations[selectedLanguage];
 
@@ -107,18 +107,6 @@ export default function useSiteChrome() {
     try { await completeSignIn(await signInWithApple()); }
     catch (err) { console.error(err); toast.error('Unable to sign in'); }
     finally { setAuthLoading(false); }
-  };
-
-  const handleNewsletterSubscribe = async () => {
-    if (!newsletterEmail.trim()) { toast.error(selectedLanguage === 'hi' ? 'ईमेल दर्ज करें' : 'Please enter email'); return; }
-    try {
-      setNewsletterLoading(true);
-      const res = await fetch('/api/newsletter', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: newsletterEmail }) });
-      const data = await res.json();
-      if (res.ok) { toast.success(selectedLanguage === 'hi' ? 'सफलतापूर्वक सब्सक्राइब किया गया' : 'Subscribed!'); setNewsletterEmail(''); }
-      else toast.error(data.error || 'Something went wrong');
-    } catch { toast.error('Server error'); }
-    finally { setNewsletterLoading(false); }
   };
 
   const bg = dark ? '#0D1117' : '#F6F7F9';

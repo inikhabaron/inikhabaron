@@ -22,6 +22,7 @@ import { WhySeeingThis } from '@/components/personalization';
 import { PersonalizedFeed } from '@/components/personalization';
 
 import useReadingProgress from '@/hooks/useReadingProgress';
+import useNewsletterSubscribe from '@/hooks/useNewsletterSubscribe';
 
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
 import { ACCENT, FONT_OPTIONS, translations, getCatAccent, getCatLabel, formatDate } from '@/lib/news-utils';
@@ -58,8 +59,7 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
   const [languageLoaded, setLanguageLoaded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [newsletterEmail, setNewsletterEmail] = useState('');
-  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const { newsletterEmail, setNewsletterEmail, newsletterLoading, handleNewsletterSubscribe } = useNewsletterSubscribe(selectedLanguage);
   const [isMobileView, setIsMobileView] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState(false);
@@ -385,33 +385,6 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
       toast.error('Unable to sign in');
     } finally {
       setAuthLoading(false);
-    }
-  };
-
-  const handleNewsletterSubscribe = async () => {
-    if (!newsletterEmail.trim()) {
-      toast.error(selectedLanguage === 'hi' ? 'ईमेल दर्ज करें' : 'Please enter email');
-      return;
-    }
-    try {
-      setNewsletterLoading(true);
-      const res = await fetch('/api/newsletter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: newsletterEmail }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        toast.success(selectedLanguage === 'hi' ? 'सफलतापूर्वक सब्सक्राइब किया गया' : 'Subscribed!');
-        setNewsletterEmail('');
-      } else {
-        toast.error(data.error || 'Something went wrong');
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error('Server error');
-    } finally {
-      setNewsletterLoading(false);
     }
   };
 

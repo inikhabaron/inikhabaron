@@ -17,6 +17,14 @@ export const DS = {
   main: (sidebarVisible) => ({
     marginLeft: sidebarVisible ? SIDEBAR_W : 0, display: 'flex',
     flexDirection: 'column', minHeight: '100vh', background: '#f0f2f5', flex: 1,
+    // minWidth: 0 overrides the flex default (min-width: auto), which would
+    // otherwise refuse to shrink this item below its content's min-content
+    // size — the standard "flex child won't shrink" gotcha. Without it, any
+    // sufficiently wide descendant (e.g. a wide table or calendar grid) can
+    // force this box past the sidebar-adjusted available width and overflow
+    // the page horizontally, even though flexbox correctly accounts for the
+    // marginLeft above in every other case.
+    minWidth: 0,
     transition: 'margin-left 0.25s ease', fontFamily: "'DM Sans', sans-serif",
   }),
   header: {

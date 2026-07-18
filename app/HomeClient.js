@@ -21,7 +21,10 @@ import SiteFooter from '@/components/home/SiteFooter';
 import AuthDialog from '@/components/home/AuthDialog';
 import SubscriptionPlans from '@/components/home/SubscriptionPlans';
 import MobileSearch from '@/components/home/MobileSearch';
+import FollowButton from '@/components/follow/FollowButton';
+import { applyFollowChange } from '@/lib/follow/applyFollowChange';
 import { PersonalizedFeed } from '@/components/personalization';
+import useNewsletterSubscribe from '@/hooks/useNewsletterSubscribe';
 
 // ─── Shared utilities & contexts ──────────────────────────────────────────────
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
@@ -35,7 +38,7 @@ import { recordShare } from '@/lib/share';
 const Loader = () => <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}><div className="loader" /></div>;
 
 // ─── HomePage ─────────────────────────────────────────────────────────────────
-export default function HomePage() {
+export default function HomePage({ initialCategory = 'all' }) {
   // ── Data state ───────────────────────────────────────────────────────────
   const [news, setNews] = useState([]);
   const [breakingNews, setBreaking] = useState([]);
@@ -43,7 +46,12 @@ export default function HomePage() {
   const [tags, setTags] = useState([]);
 
   // ── UI state ─────────────────────────────────────────────────────────────
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  // initialCategory comes from app/page.js's searchParams (read server-side),
+  // so the server and the client's first render agree from the start — no
+  // mount-time correction/race, and no hydration mismatch from reading
+  // window.location directly in a useState initializer (which the server
+  // can't do at all, since window doesn't exist there).
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [searchQuery, setSearchQuery] = useState('');
   // const [selectedNews, setSelectedNews] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -69,10 +77,10 @@ export default function HomePage() {
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [youtubeLive, setYoutubeLive] = useState(null);
-  const [newsletterEmail, setNewsletterEmail] = useState('');
-  const [newsletterLoading, setNLLoading] = useState(false);
+  const { newsletterEmail, setNewsletterEmail, newsletterLoading, handleNewsletterSubscribe } = useNewsletterSubscribe(selectedLanguage);
   const [showShareMenu, setShowShareMenu] = useState(null);
   const [topStoriesCount, setTopStoriesCount] = useState(6);
+  const [following, setFollowing] = useState({ categories: [], authors: [], cities: [] });
 
   const shareMenuRef = useRef(null);
   const router = useRouter();
@@ -119,19 +127,39 @@ export default function HomePage() {
   useEffect(() => { const unsub = onAuthStateChanged(auth, setUser); return unsub; }, []);
 
   useEffect(() => {
+    if (!user) {
+      setFollowing({ categories: [], authors: [], cities: [] });
+      return;
+    }
+
+    let cancelled = false;
+
+    fetch('/api/users/following', { credentials: 'include', cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled && data.success) setFollowing(data.data);
+      })
+      .catch((err) => console.error(err));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  // Opens the auth dialog when a page redirected here for a login-gated action
+  // (e.g. /settings). Sign-in success handlers below own redirecting back.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('authRequired') === '1') setAuthDialogOpen(true);
+  }, []);
+
+  useEffect(() => {
     const saved = localStorage.getItem('newsdesk_user_id');
     if (saved) { setUserId(saved); return; }
     const id = 'user_' + Math.random().toString(36).substr(2, 9);
     localStorage.setItem('newsdesk_user_id', id);
     setUserId(id);
   }, []);
-
-useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  const category = params.get('category');
-
-  setSelectedCategory(category || 'all');
-}, []);
 
   // ── Data fetching ─────────────────────────────────────────────────────────
   const fetchNews = useCallback(async (cat = 'all', search = '', pageNum = 1) => {
@@ -203,6 +231,16 @@ useEffect(() => {
     }
   };
 
+  // After a successful sign-in, sends the user back to whatever page
+  // redirected them here to log in (e.g. /settings), if any.
+  const redirectAfterAuth = () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('authRequired') !== '1') return;
+
+    const redirectTo = params.get('redirect');
+    router.replace(redirectTo || '/');
+  };
+
   const handleGoogleSignIn = async () => {
     setAuthLoading(true);
 
@@ -238,6 +276,7 @@ useEffect(() => {
 
       setUser(r.user);
       setAuthDialogOpen(false);
+      redirectAfterAuth();
 
       toast.success('Signed in!');
     } catch (err) {
@@ -281,6 +320,7 @@ useEffect(() => {
 
       setUser(r.user);
       setAuthDialogOpen(false);
+      redirectAfterAuth();
 
       toast.success('Signed in!');
     } catch (err) {
@@ -303,18 +343,6 @@ useEffect(() => {
   //     await fetch('/api/users/reading-history', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, newsId: selectedNews.id, newsTitle: selectedNews.title, newsExcerpt: selectedNews.excerpt, newsFeaturedImage: selectedNews.featuredImage, newsCategory: selectedNews.category, scrollPosition: scrollPct, readPercentage: scrollPct }) });
   //   } catch (e) { console.error(e); }
   // };
-
-  const handleNewsletterSubscribe = async () => {
-    if (!newsletterEmail.trim()) { toast.error(selectedLanguage === 'hi' ? 'ईमेल दर्ज करें' : 'Please enter email'); return; }
-    try {
-      setNLLoading(true);
-      const res = await fetch('/api/newsletter', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: newsletterEmail }) });
-      const data = await res.json();
-      if (res.ok) { toast.success(selectedLanguage === 'hi' ? 'सफलतापूर्वक सब्सक्राइब किया गया' : 'Subscribed!'); setNewsletterEmail(''); }
-      else toast.error(data.error || 'Something went wrong');
-    } catch { toast.error('Server error'); }
-    finally { setNLLoading(false); }
-  };
 
   // ── Theme palette ──────────────────────────────────────────────────────────
   const bg = dark ? '#0D1117' : '#F6F7F9';
@@ -412,6 +440,39 @@ useEffect(() => {
 
           {/* Main content */}
           <div className="kn-content-wrap" style={{ padding: contentPad }}>
+
+            {/* Category banner */}
+            {selectedCategory && selectedCategory !== 'all' && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, padding: '14px 18px', marginBottom: '18px', borderRadius: '12px', border: `1px solid ${bdr}`, backgroundColor: surface }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: getCatAccent(selectedCategory), flexShrink: 0 }} />
+                  <span style={{ fontSize: '16px', fontWeight: 700, color: T1 }}>
+                    {getCatLabel(selectedCategory, selectedLanguage)}
+                  </span>
+                </div>
+                <FollowButton
+                  type="category"
+                  id={selectedCategory}
+                  user={user}
+                  following={following.categories.some(c => c.id === selectedCategory)}
+                  onRequireLogin={() => setAuthDialogOpen(true)}
+                  onChange={(change) => setFollowing(prev => {
+                    const cat = categories.find(c => c.slug === selectedCategory);
+                    return applyFollowChange(prev, {
+                      ...change,
+                      item: {
+                        id: selectedCategory,
+                        name: cat?.name || getCatLabel(selectedCategory, selectedLanguage),
+                        nameHi: cat?.nameHi,
+                        color: cat?.color || getCatAccent(selectedCategory),
+                        exists: true,
+                      },
+                    });
+                  })}
+                  labels={selectedLanguage === 'hi' ? { follow: 'फॉलो करें', following: 'फॉलो कर रहे हैं' } : undefined}
+                />
+              </div>
+            )}
 
             {/* YouTube live embed */}
             {/* {youtubeLive?.videoId && (
@@ -574,7 +635,7 @@ useEffect(() => {
             )}
 
             {/* Personlised News */}
-            <PersonalizedFeed />
+            <PersonalizedFeed selectedLanguage={selectedLanguage} />
 
             {/* Category showcase */}
             {!isMobileView && categories.length > 0 && !loading && (

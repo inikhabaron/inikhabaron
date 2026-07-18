@@ -1,7 +1,7 @@
 'use client';
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, Settings } from "lucide-react";
 import { getCatLabel } from '@/lib/news-utils';
 import {
   FaFacebookF,
@@ -14,6 +14,26 @@ export default function SiteFooter({ dark, categories, selectedLanguage, onCateg
   const T1 = dark ? '#E8ECF0' : '#111827';
   const T2 = dark ? '#9BA5B4' : '#4B5563';
   const T3 = '#8A8F98';
+
+  const [nlLanguage, setNlLanguage] = useState(selectedLanguage === 'hi' ? 'hi' : 'en');
+  const [nlCategories, setNlCategories] = useState([]);
+  const [nlSettingsOpen, setNlSettingsOpen] = useState(false);
+  const nlSettingsRef = useRef(null);
+
+  useEffect(() => {
+    function handleOutside(e) {
+      if (nlSettingsRef.current && !nlSettingsRef.current.contains(e.target)) setNlSettingsOpen(false);
+    }
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  const toggleNlCategory = (slug) => {
+    setNlCategories((prev) => (prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]));
+  };
+
+  const nlTopicOptions = (categories || []).slice(0, 6);
+  const nlHasCustomSettings = nlLanguage !== (selectedLanguage === 'hi' ? 'hi' : 'en') || nlCategories.length > 0;
 
   const aboutLinks  = selectedLanguage === 'hi' ? ['हमारे बारे में', 'संपादकीय नीति', 'विज्ञापन दें', 'गोपनीयता नीति', 'सम्पर्क करें'] : ['About Us', 'Editorial Policy', 'Advertise', 'Privacy Policy', 'Contact Us'];
   const usefulLinks = selectedLanguage === 'hi' ? ['ई-पेपर', 'लाइव टीवी', 'फोटो गैलरी', 'वीडियो', 'साइट मैप'] : ['E-Paper', 'LIVE TV', 'Photo Gallery', 'Videos', 'Site Map'];
@@ -32,11 +52,61 @@ export default function SiteFooter({ dark, categories, selectedLanguage, onCateg
               <p className="kn-footer-nl-sub">{selectedLanguage === 'hi' ? 'हर बड़ी खबर सीधे आपके ईमेल पर' : 'Get top stories delivered to your inbox'}</p>
             </div>
           </div>
-          <div className="kn-footer-nl-form">
-            <input type="email" value={newsletterEmail} onChange={e => setNewsletterEmail(e.target.value)} placeholder={selectedLanguage === 'hi' ? 'अपना ईमेल पता दर्ज करें' : 'Enter your email address'} className="kn-footer-nl-input" />
-            <button onClick={onNewsletterSubscribe} disabled={newsletterLoading} className="kn-footer-nl-btn">
-              {newsletterLoading ? (selectedLanguage === 'hi' ? 'लोड हो रहा...' : 'Loading...') : (selectedLanguage === 'hi' ? 'सब्सक्राइब करें' : 'Subscribe')}
-            </button>
+          <div className="kn-footer-nl-form-col">
+            <div className="kn-footer-nl-form">
+              <input type="email" value={newsletterEmail} onChange={e => setNewsletterEmail(e.target.value)} placeholder={selectedLanguage === 'hi' ? 'अपना ईमेल पता दर्ज करें' : 'Enter your email address'} className="kn-footer-nl-input" />
+              <button onClick={() => onNewsletterSubscribe({ language: nlLanguage, categories: nlCategories })} disabled={newsletterLoading} className="kn-footer-nl-btn">
+                {newsletterLoading ? (selectedLanguage === 'hi' ? 'लोड हो रहा...' : 'Loading...') : (selectedLanguage === 'hi' ? 'सब्सक्राइब करें' : 'Subscribe')}
+              </button>
+              <div ref={nlSettingsRef} style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setNlSettingsOpen(o => !o)}
+                  className={`kn-footer-nl-settings-btn${nlHasCustomSettings ? ' active' : ''}`}
+                  title={selectedLanguage === 'hi' ? 'न्यूज़लेटर प्राथमिकताएँ' : 'Newsletter preferences'}
+                  aria-label={selectedLanguage === 'hi' ? 'न्यूज़लेटर प्राथमिकताएँ' : 'Newsletter preferences'}
+                >
+                  <Settings size={20} />
+                  {nlHasCustomSettings && <span className="kn-footer-nl-settings-dot" />}
+                </button>
+                {nlSettingsOpen && (
+                  <div className="kn-footer-nl-settings-panel">
+                    <div className="kn-footer-nl-settings-group">
+                      <span className="kn-footer-nl-settings-label">
+                        {selectedLanguage === 'hi' ? 'भाषा' : 'Language'}
+                      </span>
+                      <select
+                        value={nlLanguage}
+                        onChange={e => setNlLanguage(e.target.value)}
+                        className="kn-footer-nl-settings-select"
+                      >
+                        <option value="en">English</option>
+                        <option value="hi">हिन्दी</option>
+                      </select>
+                    </div>
+                    {nlTopicOptions.length > 0 && (
+                      <div className="kn-footer-nl-settings-group">
+                        <span className="kn-footer-nl-settings-label">
+                          {selectedLanguage === 'hi' ? 'रुचि की श्रेणियाँ (वैकल्पिक)' : 'Topics of interest (optional)'}
+                        </span>
+                        <div className="kn-footer-nl-topics">
+                          {nlTopicOptions.map(cat => (
+                            <button
+                              type="button"
+                              key={cat.slug}
+                              onClick={() => toggleNlCategory(cat.slug)}
+                              className={`kn-footer-nl-topic-chip${nlCategories.includes(cat.slug) ? ' active' : ''}`}
+                            >
+                              {selectedLanguage === 'hi' && cat.nameHi ? cat.nameHi : cat.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
