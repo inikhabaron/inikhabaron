@@ -42,6 +42,7 @@ export default function SiteFooter({ dark, categories, selectedLanguage, onCateg
     <footer style={{ backgroundColor: dark ? '#0d1117' : '#ffffff', borderTop: `1px solid ${dark ? '#252E40' : '#E8EAED'}` }}>
       {/* Newsletter */}
       <div className="kn-footer-newsletter">
+        <div className="kn-footer-newsletter-bg" aria-hidden="true" />
         <div className="kn-footer-nl-inner">
           <div className="kn-footer-nl-text">
             <div className="kn-footer-nl-icon">

@@ -187,10 +187,15 @@
 /* ─────────────────────────────────────────────────────────────────
    SITE FOOTER
 ───────────────────────────────────────────────────────────────── */
-.kn-footer-newsletter  { position:relative; overflow:hidden; background: radial-gradient(circle at left center, rgba(255,255,255,.08), transparent 35%), linear-gradient( 135deg, #172b57 0%, #213d7a 55%, #2a4f9f 100% ); padding:20px; }
-.kn-footer-newsletter::before{ content:''; position:absolute; width:220px; height:220px; border-radius:50%; background:rgba(255,255,255,.04); left:-100px; top:-80px; }
-.kn-footer-newsletter::after{ content:''; position:absolute; width:280px; height:280px; border-radius:50%; background:rgba(255,255,255,.03); right:-120px; bottom:-120px; }
-.kn-footer-nl-inner    { max-width: 1300px; margin: 0 auto; padding: 0 10px; display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.kn-footer-newsletter  { position:relative; background: radial-gradient(circle at left center, rgba(255,255,255,.08), transparent 35%), linear-gradient( 135deg, #172b57 0%, #213d7a 55%, #2a4f9f 100% ); padding:20px; }
+/* Decorative blobs live in their own absolutely-positioned, clipped layer
+   (not on .kn-footer-newsletter itself) so overflow:hidden only clips this
+   background layer — not real content like the settings dropdown, which
+   needs to be free to render outside the banner's box. */
+.kn-footer-newsletter-bg { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+.kn-footer-newsletter-bg::before{ content:''; position:absolute; width:220px; height:220px; border-radius:50%; background:rgba(255,255,255,.04); left:-100px; top:-80px; }
+.kn-footer-newsletter-bg::after{ content:''; position:absolute; width:280px; height:280px; border-radius:50%; background:rgba(255,255,255,.03); right:-120px; bottom:-120px; }
+.kn-footer-nl-inner    { position:relative; max-width: 1300px; margin: 0 auto; padding: 0 10px; display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
 .kn-footer-nl-text     { display: flex; align-items: center; gap: 16px; color: #fff; }
 .kn-footer-nl-icon{ width:64px; height:64px; border-radius:16px; background:rgba(255,255,255,.12); display:flex; align-items:center; justify-content:center; font-size:32px; color:#fff; backdrop-filter:blur(10px); box-shadow: 0 8px 20px rgba(0,0,0,.18); flex-shrink:0; }
 .kn-footer-nl-heading  { font-size: 20px; font-weight: 700; color: #fff; margin: 0 0 4px; line-height:1.3; }
@@ -205,7 +210,7 @@
 .kn-footer-nl-settings-btn:hover { background: rgba(255,255,255,.2); }
 .kn-footer-nl-settings-btn.active { border-color: #fff; background: rgba(255,255,255,.22); }
 .kn-footer-nl-settings-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; border: 1.5px solid #fff; }
-.kn-footer-nl-settings-panel { position: absolute; top: calc(100% + 10px); right: 0; width: 280px; max-width: 80vw; background: #fff; border-radius: 14px; padding: 18px; box-shadow: 0 16px 40px rgba(0,0,0,.22); z-index: 300; text-align: left; }
+.kn-footer-nl-settings-panel { position: absolute; top: calc(100% + 10px); right: 0; width: 280px; max-width: 80vw; background: #fff; border-radius: 14px; padding: 18px; box-shadow: 0 16px 40px rgba(0,0,0,.22); z-index: 30; text-align: left; }
 .kn-footer-nl-settings-group + .kn-footer-nl-settings-group { margin-top: 16px; }
 .kn-footer-nl-settings-label { display: block; font-size: 12px; font-weight: 600; color: #4B5563; margin-bottom: 8px; }
 .kn-footer-nl-settings-select { width: 100%; height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid #E5E7EB; background: #fff; color: #111; font-size: 14px; outline: none; cursor: pointer; }
