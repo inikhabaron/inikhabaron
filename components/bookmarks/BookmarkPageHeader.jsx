@@ -6,6 +6,11 @@ import styles from './BookmarkPageHeader.module.css';
 export default function BookmarkPageHeader({
   total,
   lastSaved,
+  title = 'Saved Articles',
+  subtitle = 'Keep articles for later reading.',
+  icon = <Bookmark size={22} />,
+  countLabel = 'Saved Articles',
+  lastLabel = 'Last Saved',
 }) {
   return (
     <div
@@ -16,13 +21,13 @@ export default function BookmarkPageHeader({
       <h1
         className={styles.title}
       >
-        Saved Articles
+        {title}
       </h1>
 
       <p
         className={styles.subtitle}
       >
-        Keep articles for later reading.
+        {subtitle}
       </p>
 
       {/* Summary */}
@@ -31,14 +36,14 @@ export default function BookmarkPageHeader({
         className={styles.summary}
       >
         <SummaryCard
-          icon={<Bookmark size={22} />}
-          title="Saved Articles"
+          icon={icon}
+          title={countLabel}
           value={total}
         />
 
         <SummaryCard
           icon={<CalendarDays size={22} />}
-          title="Last Saved"
+          title={lastLabel}
           value={lastSaved || '—'}
         />
 

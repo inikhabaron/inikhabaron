@@ -15,6 +15,16 @@ export default function BookmarkList({
   bookmarks,
   user,
   onRefresh,
+  type = 'bookmark',
+  dark = false,
+  showTopBar = true,
+  showHeader = true,
+  title,
+  subtitle,
+  icon,
+  countLabel,
+  lastLabel,
+  searchPlaceholder,
 }) {
   const [search, setSearch] = useState('');
   const router = useRouter();
@@ -33,44 +43,56 @@ export default function BookmarkList({
     });
   }, [bookmarks, search]);
 
+  const dateField = type === 'like' ? 'likedAt' : 'bookmarkedAt';
+
   const lastSaved =
     bookmarks.length > 0
-      ? new Date(bookmarks[0].bookmarkedAt).toLocaleDateString()
+      ? new Date(bookmarks[0][dateField]).toLocaleDateString()
       : '—';
 
   return (
     <div
-      className={styles.container}
+      className={`${styles.container} ${dark ? 'dark' : ''}`}
     >
-      <div
-        className={styles.topBar}
-      >
-        <button
-          className={styles.backButton}
-          onClick={() => router.back()}
-          aria-label="Go Back"
+      {showTopBar && (
+        <div
+          className={styles.topBar}
         >
-          <ArrowLeft size={18} />
-          <span>Back</span>
-        </button>
-        <UserProfileChip user={user} compact={false} showProvider={true} />
-      </div>
+          <button
+            className={styles.backButton}
+            onClick={() => router.back()}
+            aria-label="Go Back"
+          >
+            <ArrowLeft size={18} />
+            <span>Back</span>
+          </button>
+          <UserProfileChip user={user} compact={false} showProvider={true} />
+        </div>
+      )}
       {/* Header + User */}
 
-      <div
-        className={styles.headerSection}
-      >
-        <BookmarkPageHeader
-          total={bookmarks.length}
-          lastSaved={lastSaved}
-        />        
-      </div>
+      {showHeader && (
+        <div
+          className={styles.headerSection}
+        >
+          <BookmarkPageHeader
+            total={bookmarks.length}
+            lastSaved={lastSaved}
+            title={title}
+            subtitle={subtitle}
+            icon={icon}
+            countLabel={countLabel}
+            lastLabel={lastLabel}
+          />
+        </div>
+      )}
 
       {/* Search */}
 
       <BookmarkSearch
         value={search}
         onChange={setSearch}
+        placeholder={searchPlaceholder}
       />
 
       {/* Search Result Count */}
@@ -100,6 +122,8 @@ export default function BookmarkList({
             <BookmarkCard
               key={article.id}
               article={article}
+              type={type}
+              dark={dark}
               onRemoved={onRefresh}
             />
           ))

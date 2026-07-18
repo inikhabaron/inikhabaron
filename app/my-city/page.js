@@ -11,6 +11,7 @@ import HorizontalArticleCard from '@/components/home/HorizontalArticleCard';
 import FollowButton from '@/components/follow/FollowButton';
 import { applyFollowChange } from '@/lib/follow/applyFollowChange';
 import useSiteChrome from '@/hooks/useSiteChrome';
+import { DarkCtx } from '@/lib/news-contexts';
 import { ACCENT, ACCENT_H, formatDate } from '@/lib/news-utils';
 
 function locationBadge(article) {
@@ -114,7 +115,7 @@ export default function MyCityPage() {
   const goToArticle = (item) => router.push(`/news/${item.id}`);
 
   return (
-    <>
+    <DarkCtx.Provider value={dark}>
       <Header
         dark={dark} toggleDark={toggleDark}
         selectedLanguage={selectedLanguage} setSelectedLanguage={setSelectedLanguage}
@@ -271,6 +272,6 @@ export default function MyCityPage() {
       </div>
 
       <AuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} onGoogleSignIn={handleGoogleSignIn} onAppleSignIn={handleAppleSignIn} loading={authLoading} bdr={bdr} />
-    </>
+    </DarkCtx.Provider>
   );
 }

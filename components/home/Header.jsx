@@ -1,7 +1,7 @@
 'use client';
 import React, { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Search, Sun, Moon, User, Home, LogOut as LogOutIcon, Bell, ChevronDown, ChevronLeft, ChevronRight, Video, MapPin } from 'lucide-react';
+import { Search, Sun, Moon, User, Home, LogOut as LogOutIcon, Bell, ChevronDown, ChevronLeft, ChevronRight, Video, MapPin, Bookmark, Users } from 'lucide-react';
 import { IoHome } from "react-icons/io5";
 import { FaFacebook } from "react-icons/fa";
 import { FaChromecast, FaRegUser, FaFacebookF, FaXTwitter, FaYoutube, FaInstagram } from 'react-icons/fa6';
@@ -120,6 +120,18 @@ export default function Header({
             {user.displayName || user.email?.split('@')[0]}
           </p>
           <p style={{ fontSize: '11px', color: T3, margin: '0 0 10px' }}>{user.email}</p>
+          <button
+            onClick={() => { router.push('/saved'); setShowProfileMenu(false); }}
+            style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: `1px solid ${bdr}`, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'transparent', color: T1, fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}
+          >
+            <Bookmark size={14} />{selectedLanguage === 'hi' ? 'सेव किए गए लेख' : 'Saved Articles'}
+          </button>
+          <button
+            onClick={() => { router.push('/following'); setShowProfileMenu(false); }}
+            style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: `1px solid ${bdr}`, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'transparent', color: T1, fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}
+          >
+            <Users size={14} />{selectedLanguage === 'hi' ? 'फॉलो' : 'Following'}
+          </button>
           <button
             onClick={() => { router.push('/settings'); setShowProfileMenu(false); }}
             style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: `1px solid ${bdr}`, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'transparent', color: T1, fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}

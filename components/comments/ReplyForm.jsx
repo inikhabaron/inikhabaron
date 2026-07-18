@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { Loader2, Send, X } from 'lucide-react';
 import { toast } from 'sonner';
 
-import styles from './Comments.module.css';
+import styles from './CommentActions.module.css';
 
 const MAX_LENGTH = 1000;
 
@@ -97,7 +97,7 @@ export default function ReplyForm({
         <button
           type="button"
           onClick={onCancel}
-          className={styles.cancelReplyButton}
+          className={styles.replyCancel}
         >
           <X size={16} />
           Cancel
@@ -109,7 +109,7 @@ export default function ReplyForm({
             disabled ||
             !content.trim()
           }
-          className={styles.replyButton}
+          className={styles.replySubmit}
         >
           {disabled ? (
             <>

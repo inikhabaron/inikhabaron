@@ -723,6 +723,17 @@ code {
   animation: skeleton-loading 1.4s ease infinite;
 }
 
+.dark .loader-skeleton {
+  background: linear-gradient(
+    90deg,
+    #1e293b 25%,
+    #334155 37%,
+    #1e293b 63%
+  );
+
+  background-size: 400% 100%;
+}
+
 @keyframes skeleton-loading {
   0% {
     background-position: 100% 50%;

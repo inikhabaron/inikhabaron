@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import {
   Info,
   ChevronDown,
@@ -13,6 +13,7 @@ import {
   FolderOpen,
   Globe
 } from 'lucide-react';
+import { DarkCtx } from '@/lib/news-contexts';
 
 import styles from './WhySeeingThis.module.css';
 
@@ -33,6 +34,7 @@ export default function WhySeeingThis({
     showMoreLabel = 'Show more',
     hideLabel = 'Hide',
 }) {
+  const dark = useContext(DarkCtx);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const [reasons, setReasons] = useState([]);
@@ -73,7 +75,7 @@ export default function WhySeeingThis({
 
   if (loading) {
     return (
-      <div className={styles.container}>
+      <div className={`${styles.container} ${dark ? 'dark' : ''}`}>
         <div className={styles.skeletonTitle} />
         <div className={styles.skeletonText} />
       </div>
@@ -88,7 +90,7 @@ export default function WhySeeingThis({
   const extraReasons = reasons.slice(1);
 
   return (
-    <section className={styles.container}>
+    <section className={`${styles.container} ${dark ? 'dark' : ''}`}>
         <div className={styles.header}>
             <Info size={18} />
             <h3>{title}</h3>

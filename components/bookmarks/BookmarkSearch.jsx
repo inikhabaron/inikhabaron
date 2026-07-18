@@ -6,6 +6,7 @@ import styles from './BookmarkSearch.module.css';
 export default function BookmarkSearch({
   value,
   onChange,
+  placeholder = 'Search saved articles...',
 }) {
   return (
     <div
@@ -21,7 +22,7 @@ export default function BookmarkSearch({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Search saved articles..."
+        placeholder={placeholder}
         onBlur={(e) => {
           e.target.style.borderColor = '#E5E7EB';
           e.target.style.boxShadow = 'none';

@@ -523,3 +523,68 @@
     gap: 4px;
   }
 }
+
+/* ==========================================================
+   DARK MODE
+   Gated by an ancestor `.dark` class set on the
+   CommentsSection root (see Comments.module.css).
+========================================================== */
+
+:global(.dark) .actionButton {
+  color: #9BA5B4;
+}
+
+:global(.dark) .actionButton:hover:not(:disabled) {
+  color: #E8ECF0;
+}
+
+:global(.dark) .likeButton {
+  color: #9BA5B4;
+}
+
+:global(.dark) .replyForm {
+  border-left-color: #252E40;
+}
+
+:global(.dark) .replyTextarea {
+  background: #0D1117;
+  border-color: #252E40;
+  color: #E8ECF0;
+}
+
+:global(.dark) .replyTextarea:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, .16);
+}
+
+:global(.dark) .replyCancel {
+  background: #161B27;
+  border-color: #252E40;
+  color: #E8ECF0;
+}
+
+:global(.dark) .replyCancel:hover {
+  background: #1C2333;
+}
+
+:global(.dark) .replyContainer {
+  border-left-color: #252E40;
+}
+
+:global(.dark) .replyCard {
+  background: #1A2233;
+  border-color: #252E40;
+}
+
+:global(.dark) .replyUser {
+  color: #E8ECF0;
+}
+
+:global(.dark) .replyDate,
+:global(.dark) .loadingReplies {
+  color: #9BA5B4;
+}
+
+:global(.dark) .replyContent {
+  color: #C7CDD6;
+}

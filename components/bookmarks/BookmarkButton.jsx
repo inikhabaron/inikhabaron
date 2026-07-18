@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Bookmark, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { DarkCtx } from '@/lib/news-contexts';
 import styles from './BookmarkButton.module.css';
 
 const ACCENT = '#3BAFDA';
@@ -13,6 +14,7 @@ export default function BookmarkButton({
   onRequireLogin,
   size = 'lg',
 }) {
+  const dark = useContext(DarkCtx);
   const [bookmarked, setBookmarked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [animation, setAnimation] = useState('');
@@ -103,7 +105,7 @@ export default function BookmarkButton({
 
   return (
     <button
-      className={`${styles.bookmarkButton} ${bookmarked ? styles.active : ''} ${animation}`}
+      className={`${styles.bookmarkButton} ${dark ? 'dark' : ''} ${bookmarked ? styles.active : ''} ${animation}`}
       onClick={toggleBookmark}
       disabled={loading}
       title={bookmarked ? 'Remove Bookmark' : 'Save Article'}

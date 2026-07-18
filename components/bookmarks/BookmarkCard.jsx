@@ -6,11 +6,31 @@ import { BookmarkX, Calendar, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import styles from './BookmarkCard.module.css';
 
+const TYPE_CONFIG = {
+  bookmark: {
+    endpoint: (id) => `/api/news/${id}/bookmark`,
+    dateField: 'bookmarkedAt',
+    dateLabel: 'Saved',
+    removedMessage: 'Bookmark removed',
+    errorMessage: 'Unable to remove bookmark',
+  },
+  like: {
+    endpoint: (id) => `/api/news/${id}/like`,
+    dateField: 'likedAt',
+    dateLabel: 'Liked',
+    removedMessage: 'Like removed',
+    errorMessage: 'Unable to remove like',
+  },
+};
+
 export default function BookmarkCard({
   article,
+  type = 'bookmark',
+  dark = false,
   onRemoved,
 }) {
   const router = useRouter();
+  const config = TYPE_CONFIG[type] || TYPE_CONFIG.bookmark;
 
   const [loading, setLoading] = useState(false);
 
@@ -18,8 +38,8 @@ export default function BookmarkCard({
     ? new Date(article.publishedAt).toLocaleDateString()
     : '';
 
-  const savedDate = article.bookmarkedAt
-    ? new Date(article.bookmarkedAt).toLocaleDateString()
+  const savedDate = article[config.dateField]
+    ? new Date(article[config.dateField]).toLocaleDateString()
     : '';
 
   async function removeBookmark(e) {
@@ -29,7 +49,7 @@ export default function BookmarkCard({
       setLoading(true);
 
       const res = await fetch(
-        `/api/news/${article.id}/bookmark`,
+        config.endpoint(article.id),
         {
           method: 'DELETE',
           credentials: 'include',
@@ -43,12 +63,12 @@ export default function BookmarkCard({
         return;
       }
 
-      toast.success('Bookmark removed');
+      toast.success(config.removedMessage);
 
       onRemoved?.();
     } catch (err) {
       console.error(err);
-      toast.error('Unable to remove bookmark');
+      toast.error(config.errorMessage);
     } finally {
       setLoading(false);
     }
@@ -56,7 +76,7 @@ export default function BookmarkCard({
 
   return (
     <div
-      className={styles.card}
+      className={`${styles.card} ${dark ? 'dark' : ''}`}
       onClick={() => router.push(`/news/${article.id}`)}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-2px)';
@@ -116,7 +136,7 @@ export default function BookmarkCard({
           >
             <Clock size={15} />
 
-            Saved {savedDate}
+            {config.dateLabel} {savedDate}
           </span>
         </div>
       </div>

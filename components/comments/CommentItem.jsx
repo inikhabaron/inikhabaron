@@ -11,6 +11,7 @@ import ReplyForm from './ReplyForm';
 import CommentActions from './CommentActions';
 
 import styles from './Comments.module.css';
+import actionStyles from './CommentActions.module.css';
 
 export default function CommentItem({
   comment,
@@ -320,7 +321,7 @@ export default function CommentItem({
             {canEdit && (
               <button
                 className={
-                  styles.actionButton
+                  actionStyles.actionButton
                 }
                 onClick={() =>
                   setEditing(true)
@@ -335,7 +336,7 @@ export default function CommentItem({
             {canDelete && (
               <button
                 className={
-                  styles.actionButton
+                  actionStyles.actionButton
                 }
                 onClick={
                   deleteComment
@@ -374,7 +375,7 @@ export default function CommentItem({
             >
               <button
                 className={
-                  styles.cancelReplyButton
+                  actionStyles.replyCancel
                 }
                 onClick={() => {
                   setEditing(
@@ -391,7 +392,7 @@ export default function CommentItem({
 
               <button
                 className={
-                  styles.replyButton
+                  actionStyles.replySubmit
                 }
                 onClick={
                   saveEdit
@@ -443,7 +444,7 @@ export default function CommentItem({
 
         <div style={{ marginTop: 14, }} >
             <button
-                className={styles.actionButton}
+                className={actionStyles.actionButton}
                 onClick={loadReplies}
             >
                 {loadingReplies ? (

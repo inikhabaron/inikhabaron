@@ -1,8 +1,9 @@
 'use client';
 
-export default function BookmarkSkeleton() {
+export default function BookmarkSkeleton({ dark = false }) {
   return (
     <div
+      className={dark ? 'dark' : ''}
       style={{
         maxWidth: 1100,
         margin: '40px auto',
@@ -18,8 +19,8 @@ export default function BookmarkSkeleton() {
             marginBottom: 24,
             padding: 20,
             borderRadius: 18,
-            border: '1px solid #E5E7EB',
-            background: '#fff',
+            border: '1px solid var(--bookmark-border)',
+            background: 'var(--bookmark-card)',
           }}
         >
           <div

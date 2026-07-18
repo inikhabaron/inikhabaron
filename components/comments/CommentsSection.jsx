@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { Loader2, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 import CommentForm from './CommentForm';
 import CommentList from './CommentList';
+import { DarkCtx } from '@/lib/news-contexts';
 
 import styles from './Comments.module.css';
 
@@ -14,6 +15,7 @@ export default function CommentsSection({
   user,
   onRequireLogin,
 }) {
+  const dark = useContext(DarkCtx);
   const [comments, setComments] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -162,7 +164,7 @@ export default function CommentsSection({
   return (
     <section
       className={
-        styles.commentsSection
+        `${styles.commentsSection} ${dark ? 'dark' : ''}`
       }
     >
       <div

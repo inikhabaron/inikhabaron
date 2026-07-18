@@ -13,6 +13,7 @@ import './home.css';
 import { Toaster } from '@/components/ui/sonner';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import SessionTracker from '@/components/analytics/SessionTracker';
+import SiteChromeProvider from '@/components/providers/SiteChromeProvider';
 import JsonLd from '@/components/seo/JsonLd';
 import { websiteSchema, organizationGraph } from '@/lib/seo/jsonld';
 import { SITE, SITE_URL, VERIFICATION } from '@/lib/seo/config';
@@ -141,7 +142,9 @@ export default function RootLayout({ children }) {
       <body>
         <GoogleAnalytics />
         <SessionTracker />
-        {children}
+        <SiteChromeProvider>
+          {children}
+        </SiteChromeProvider>
         <Toaster position="top-right" />
       </body>
     </html>

@@ -5,8 +5,9 @@ import { SITE_URL } from '@/lib/seo/config';
  *
  * Policy: allow all mainstream search + AI crawlers full access to editorial
  * content (this is a publisher — we WANT to be indexed and cited by AI search),
- * while blocking private/app surfaces (admin, api, auth, bookmarks, personal
- * feeds). Search-result URLs (?search=) are disallowed to avoid thin/dup pages.
+ * while blocking private/app surfaces (admin, api, auth, saved articles,
+ * following, settings, personal feeds). Search-result URLs (?search=) are
+ * disallowed to avoid thin/dup pages.
  */
 export default function robots() {
   const disallow = [
@@ -14,6 +15,9 @@ export default function robots() {
     '/admin/',
     '/api/',
     '/bookmarks',
+    '/saved',
+    '/following',
+    '/settings',
     '/personalized',
     '/api-docs',
     '/*?search=',

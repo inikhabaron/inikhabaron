@@ -2,8 +2,6 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth, signInWithGoogle, signInWithApple, logOut } from '@/lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { Newspaper, Crown, ChevronDown } from 'lucide-react';
@@ -23,10 +21,11 @@ import SubscriptionPlans from '@/components/home/SubscriptionPlans';
 import MobileSearch from '@/components/home/MobileSearch';
 import { PersonalizedFeed } from '@/components/personalization';
 import useNewsletterSubscribe from '@/hooks/useNewsletterSubscribe';
+import useSiteChrome from '@/hooks/useSiteChrome';
 
 // ─── Shared utilities & contexts ──────────────────────────────────────────────
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
-import { ACCENT, ACCENT_H, EDITORIAL_RED, FONT_OPTIONS, translations, getCatAccent, getCatLabel, formatDate } from '@/lib/news-utils';
+import { ACCENT, ACCENT_H, EDITORIAL_RED, FONT_OPTIONS, getCatAccent, getCatLabel, formatDate } from '@/lib/news-utils';
 import { event as trackEvent } from '@/lib/gtag';
 import { recordShare } from '@/lib/share';
 
@@ -52,18 +51,17 @@ export default function HomePage() {
   const [hasMore, setHasMore] = useState(true);
 
   // ── Auth state ───────────────────────────────────────────────────────────
-  const [user, setUser] = useState(null);
+  const {
+    dark, toggleDark, selectedLanguage, setSelectedLanguage, translations, t,
+    user, authLoading, authDialogOpen, setAuthDialogOpen,
+    handleGoogleSignIn, handleAppleSignIn, handleSignOut,
+  } = useSiteChrome();
   const [userId, setUserId] = useState(null);
-  const [authLoading, setAuthLoading] = useState(false);
-  const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [subscriptionOpen, setSubscriptionOpen] = useState(false);
 
   // ── Preferences ──────────────────────────────────────────────────────────
-  const [dark, setDark] = useState(false);
   const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]);
   const [textScale] = useState(1);
-  const [selectedLanguage, setSelectedLanguage] = useState('hi');
-  const [languageLoaded, setLanguageLoaded] = useState(false);
 
   // ── Misc ─────────────────────────────────────────────────────────────────
   const [isMobileView, setIsMobileView] = useState(false);
@@ -77,7 +75,6 @@ export default function HomePage() {
   const shareMenuRef = useRef(null);
   const router = useRouter();
   const goToArticle = (item) => router.push(`/news/${item.id}`);
-  const t = translations[selectedLanguage];
 
   // ── Effects ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -95,17 +92,6 @@ export default function HomePage() {
   }, [searchQuery, selectedCategory, isMobileView]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('news_language');
-    setSelectedLanguage(saved || 'hi');
-    if (!saved) localStorage.setItem('news_language', 'hi');
-    setLanguageLoaded(true);
-  }, []);
-
-  useEffect(() => { if (languageLoaded) localStorage.setItem('news_language', selectedLanguage); }, [selectedLanguage, languageLoaded]);
-
-  useEffect(() => {
-    const d = localStorage.getItem('newsdesk_dark');
-    if (d === 'true') setDark(true);
     const f = localStorage.getItem('newsdesk_font');
     if (f) { const found = FONT_OPTIONS.find(o => o.label === f); if (found) setSelectedFont(found); }
   }, []);
@@ -115,8 +101,6 @@ export default function HomePage() {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
-
-  useEffect(() => { const unsub = onAuthStateChanged(auth, setUser); return unsub; }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem('newsdesk_user_id');
@@ -176,119 +160,8 @@ export default function HomePage() {
   useEffect(() => { setPage(1); fetchNews(selectedCategory, searchQuery, 1); }, [selectedCategory, fetchNews, searchQuery]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
-  const toggleDark = () => setDark(p => { localStorage.setItem('newsdesk_dark', String(!p)); return !p; });
   const handleSearch = (e) => { e?.preventDefault(); setPage(1); fetchNews(selectedCategory, searchQuery, 1); };
   const loadMore = () => { const n = page + 1; setPage(n); fetchNews(selectedCategory, searchQuery, n); };
-
-  const handleSignOut = async () => {
-    try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      const r = await logOut();
-
-      if (r.error) {
-        toast.error(r.error);
-        return;
-      }
-
-      setUser(null);
-
-      toast.success('Signed out');
-    } catch (err) {
-      toast.error('Unable to sign out');
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setAuthLoading(true);
-
-    try {
-      const r = await signInWithGoogle();
-
-      if (r.error) {
-        toast.error(r.error);
-        return;
-      }
-
-      // Get Firebase ID Token
-      const idToken = await r.user.getIdToken();
-
-      // Create backend session
-      const response = await fetch('/api/auth/session', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          idToken,
-        }),
-      });
-
-      const session = await response.json();
-
-      if (!session.success) {
-        toast.error(session.message || 'Unable to create session');
-        return;
-      }
-
-      setUser(r.user);
-      setAuthDialogOpen(false);
-
-      toast.success('Signed in!');
-    } catch (err) {
-      console.error(err);
-      toast.error('Unable to sign in');
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  const handleAppleSignIn = async () => {
-    setAuthLoading(true);
-
-    try {
-      const r = await signInWithApple();
-
-      if (r.error) {
-        toast.error(r.error);
-        return;
-      }
-
-      const idToken = await r.user.getIdToken();
-
-      const response = await fetch('/api/auth/session', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          idToken,
-        }),
-      });
-
-      const session = await response.json();
-
-      if (!session.success) {
-        toast.error(session.message || 'Unable to create session');
-        return;
-      }
-
-      setUser(r.user);
-      setAuthDialogOpen(false);
-
-      toast.success('Signed in!');
-    } catch (err) {
-      console.error(err);
-      toast.error('Unable to sign in');
-    } finally {
-      setAuthLoading(false);
-    }
-  };
 
   // const trackShare = (newsId, platform) => fetch(`/api/news/${newsId}/share`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ platform }) }).catch(console.error);
   const shareOnWhatsApp = async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'whatsapp', }); await recordShare(item.id, 'whatsapp'); window.open(`https://wa.me/?text=${encodeURIComponent('*' + item.title + '*' + '\n\n' + window.location.origin + '/news/' + item.id)}`, '_blank'); };

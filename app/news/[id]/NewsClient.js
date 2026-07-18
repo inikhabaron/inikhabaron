@@ -2,9 +2,6 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { auth, signInWithGoogle, signInWithApple, logOut } from '@/lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-import { toast } from 'sonner';
 import { Newspaper } from 'lucide-react';
 
 import Header from '@/components/home/Header';
@@ -23,9 +20,10 @@ import { PersonalizedFeed } from '@/components/personalization';
 
 import useReadingProgress from '@/hooks/useReadingProgress';
 import useNewsletterSubscribe from '@/hooks/useNewsletterSubscribe';
+import useSiteChrome from '@/hooks/useSiteChrome';
 
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
-import { ACCENT, FONT_OPTIONS, translations, getCatAccent, getCatLabel, formatDate } from '@/lib/news-utils';
+import { ACCENT, FONT_OPTIONS, getCatAccent, getCatLabel, formatDate } from '@/lib/news-utils';
 import styles from './page.module.css';
 import { event as trackEvent } from '@/lib/gtag';
 import { recordShare } from '@/lib/share';
@@ -49,14 +47,13 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
   const [breakingNews, setBreakingNews] = useState([]);
   const [loading, setLoading] = useState(!initialArticle);
   const [error, setError] = useState(null);
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(false);
-  const [authDialogOpen, setAuthDialogOpen] = useState(false);
-  const [dark, setDark] = useState(false);
+  const {
+    dark, toggleDark, selectedLanguage, setSelectedLanguage, translations, t,
+    user, authLoading, authDialogOpen, setAuthDialogOpen,
+    handleGoogleSignIn, handleAppleSignIn, handleSignOut,
+  } = useSiteChrome();
   const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]);
   const [textScale] = useState(1);
-  const [selectedLanguage, setSelectedLanguage] = useState('hi');
-  const [languageLoaded, setLanguageLoaded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const { newsletterEmail, setNewsletterEmail, newsletterLoading, handleNewsletterSubscribe } = useNewsletterSubscribe(selectedLanguage);
@@ -67,7 +64,6 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
   const [following, setFollowing] = useState({ categories: [], authors: [], cities: [] });
   const countedViewRef = useRef(null);
 
-  const t = translations[selectedLanguage];
   const bg = dark ? '#0D1117' : '#F6F7F9';
   const surface = dark ? '#161B27' : '#FFFFFF';
   const bdr = dark ? '#252E40' : '#E8EAED';
@@ -101,33 +97,11 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
   }, []);
 
   useEffect(() => {
-    if (!languageLoaded) return;
-    localStorage.setItem('news_language', selectedLanguage);
-  }, [selectedLanguage, languageLoaded]);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('news_language');
-    setSelectedLanguage(saved || 'hi');
-    if (!saved) localStorage.setItem('news_language', 'hi');
-    setLanguageLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('newsdesk_dark');
-    if (saved === 'true') setDark(true);
     const font = localStorage.getItem('newsdesk_font');
     if (font) {
       const found = FONT_OPTIONS.find(option => option.label === font);
       if (found) setSelectedFont(found);
     }
-  }, []);
-
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-    });
-
-    return () => unsub();
   }, []);
 
   useEffect(() => {
@@ -268,124 +242,9 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
     if (!saved) localStorage.setItem('newsdesk_user_id', 'user_' + Math.random().toString(36).substr(2, 9));
   }, []);
 
-  const toggleDark = () => setDark(prev => {
-    localStorage.setItem('newsdesk_dark', String(!prev));
-    return !prev;
-  });
-
   const handleSearch = (e) => {
     e?.preventDefault();
     router.push('/');
-  };
-
-  const handleSignOut = async () => {
-    try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      const r = await logOut();
-
-      if (r.error) {
-        toast.error(r.error);
-        return;
-      }
-
-      setUser(null);
-
-      toast.success('Signed out');
-    } catch (err) {
-      toast.error('Unable to sign out');
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setAuthLoading(true);
-
-    try {
-      const r = await signInWithGoogle();
-
-      if (r.error) {
-        toast.error(r.error);
-        return;
-      }
-
-      // Get Firebase ID Token
-      const idToken = await r.user.getIdToken();
-
-      // Create backend session
-      const response = await fetch('/api/auth/session', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          idToken,
-        }),
-      });
-
-      const session = await response.json();
-
-      if (!session.success) {
-        toast.error(session.message || 'Unable to create session');
-        return;
-      }
-
-      setUser(r.user);
-      setAuthDialogOpen(false);
-
-      toast.success('Signed in!');
-    } catch (err) {
-      console.error(err);
-      toast.error('Unable to sign in');
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  const handleAppleSignIn = async () => {
-    setAuthLoading(true);
-
-    try {
-      const r = await signInWithApple();
-
-      if (r.error) {
-        toast.error(r.error);
-        return;
-      }
-
-      const idToken = await r.user.getIdToken();
-
-      const response = await fetch('/api/auth/session', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          idToken,
-        }),
-      });
-
-      const session = await response.json();
-
-      if (!session.success) {
-        toast.error(session.message || 'Unable to create session');
-        return;
-      }
-
-      setUser(r.user);
-      setAuthDialogOpen(false);
-
-      toast.success('Signed in!');
-    } catch (err) {
-      console.error(err);
-      toast.error('Unable to sign in');
-    } finally {
-      setAuthLoading(false);
-    }
   };
 
   const navigateToArticle = (item) => {

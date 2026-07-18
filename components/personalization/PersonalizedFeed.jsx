@@ -1,15 +1,17 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useContext, useEffect, useState, useRef } from 'react';
 
 import PersonalizedNewsCard from './PersonalizedNewsCard';
 import PersonalizedFeedSkeleton from './PersonalizedFeedSkeleton';
+import { DarkCtx } from '@/lib/news-contexts';
 
 import styles from './PersonalizedFeed.module.css';
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function PersonalizedFeed({selectedLanguage = 'en',}) {
 
+  const dark = useContext(DarkCtx);
   const scrollRef = useRef(null);
 
   const scroll = (direction) => {
@@ -138,8 +140,13 @@ export default function PersonalizedFeed({selectedLanguage = 'en',}) {
         <button
           className={styles.arrowLeft}
           onClick={() => scroll("left")}
+          style={{
+            background: dark ? '#161B27' : '#fff',
+            border: dark ? '1px solid #252E40' : 'none',
+            boxShadow: dark ? '0 4px 12px rgba(0,0,0,.45)' : '0 4px 12px rgba(0,0,0,.15)',
+          }}
         >
-          <ChevronLeft size={22} />
+          <ChevronLeft size={22} color={dark ? '#E8ECF0' : '#111827'} />
         </button>
 
         <div ref={scrollRef} className={styles.carousel}>
@@ -156,8 +163,13 @@ export default function PersonalizedFeed({selectedLanguage = 'en',}) {
         <button
           className={styles.arrowRight}
           onClick={() => scroll("right")}
+          style={{
+            background: dark ? '#161B27' : '#fff',
+            border: dark ? '1px solid #252E40' : 'none',
+            boxShadow: dark ? '0 4px 12px rgba(0,0,0,.45)' : '0 4px 12px rgba(0,0,0,.15)',
+          }}
         >
-          <ChevronRight size={22} />
+          <ChevronRight size={22} color={dark ? '#E8ECF0' : '#111827'} />
         </button>
       </section>
     </section>

@@ -943,3 +943,105 @@
     font-size: .92rem;
   }
 }
+
+/* ==========================================================
+   DARK MODE
+   Gated by an ancestor `.dark` class, applied to the
+   CommentsSection root from the page existing dark boolean
+   (via DarkCtx) - matches the News Details page palette
+   (#161B27 surface / #252E40 border / #E8ECF0 text).
+========================================================== */
+
+:global(.dark) .commentsTitle h2 {
+  color: #E8ECF0;
+}
+
+:global(.dark) .commentCount {
+  background: rgba(56, 189, 248, .14);
+  color: #38bdf8;
+}
+
+:global(.dark) .commentForm {
+  background: #161B27;
+  border-color: #252E40;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+}
+
+:global(.dark) .commentTextarea {
+  background: #0D1117;
+  border-color: #252E40;
+  color: #E8ECF0;
+}
+
+:global(.dark) .commentTextarea::placeholder {
+  color: #6b7280;
+}
+
+:global(.dark) .commentTextarea:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, .16);
+}
+
+:global(.dark) .characterCount,
+:global(.dark) .formHint {
+  color: #9BA5B4;
+}
+
+:global(.dark) .commentCard {
+  background: #161B27;
+  border-color: #252E40;
+}
+
+:global(.dark) .commentCard:hover {
+  border-color: #38bdf8;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .35);
+}
+
+:global(.dark) .avatar {
+  background: #252E40;
+}
+
+:global(.dark) .userName {
+  color: #E8ECF0;
+}
+
+:global(.dark) .commentDate {
+  color: #9BA5B4;
+}
+
+:global(.dark) .editedBadge {
+  background: #252E40;
+  color: #9BA5B4;
+}
+
+:global(.dark) .commentContent {
+  color: #C7CDD6;
+}
+
+:global(.dark) .deletedComment {
+  color: #6b7280;
+}
+
+:global(.dark) .loadMoreButton {
+  background: #161B27;
+  border-color: #252E40;
+  color: #E8ECF0;
+}
+
+:global(.dark) .loadMoreButton:hover {
+  background: #1C2333;
+  border-color: #38bdf8;
+}
+
+:global(.dark) .emptyState {
+  border-color: #252E40;
+  color: #9BA5B4;
+}
+
+:global(.dark) .emptyState h3 {
+  color: #E8ECF0;
+}
+
+:global(.dark) .loading {
+  color: #9BA5B4;
+}

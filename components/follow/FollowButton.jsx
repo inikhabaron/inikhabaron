@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Plus, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { DarkCtx } from '@/lib/news-contexts';
 import styles from './FollowButton.module.css';
 
 export default function FollowButton({
@@ -15,6 +16,7 @@ export default function FollowButton({
   size = 'lg',
   labels,
 }) {
+  const dark = useContext(DarkCtx);
   const [isFollowing, setIsFollowing] = useState(following);
   const [loading, setLoading] = useState(false);
   const [animation, setAnimation] = useState('');
@@ -84,7 +86,7 @@ export default function FollowButton({
 
   return (
     <button
-      className={`${styles.followButton} ${isFollowing ? styles.active : ''} ${animation}`}
+      className={`${styles.followButton} ${dark ? 'dark' : ''} ${isFollowing ? styles.active : ''} ${animation}`}
       onClick={toggleFollow}
       disabled={loading}
       title={isFollowing ? followingLabel : followLabel}

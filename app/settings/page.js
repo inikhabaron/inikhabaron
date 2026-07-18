@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MapPin, CheckCircle2, AlertCircle } from 'lucide-react';
+import { MapPin, CheckCircle2, AlertCircle, Sun, Moon, Globe } from 'lucide-react';
 
 import Header from '@/components/home/Header';
 import SiteFooter from '@/components/home/SiteFooter';
 import AuthDialog from '@/components/home/AuthDialog';
 import LocationSelector from '@/components/location/LocationSelector';
 import useSiteChrome from '@/hooks/useSiteChrome';
+import { DarkCtx } from '@/lib/news-contexts';
 import { ACCENT, ACCENT_H } from '@/lib/news-utils';
 
 const DEFAULT_LOCATION = {
@@ -95,7 +96,7 @@ export default function SettingsPage() {
   }
 
   const chromeShell = (children) => (
-    <>
+    <DarkCtx.Provider value={dark}>
       <Header
         dark={dark} toggleDark={toggleDark}
         selectedLanguage={selectedLanguage} setSelectedLanguage={setSelectedLanguage}
@@ -111,7 +112,7 @@ export default function SettingsPage() {
         {children}
       </div>
       <AuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} onGoogleSignIn={handleGoogleSignIn} onAppleSignIn={handleAppleSignIn} loading={authLoading} bdr={bdr} />
-    </>
+    </DarkCtx.Provider>
   );
 
   if (authRequired) {
@@ -148,17 +149,65 @@ export default function SettingsPage() {
           {isHindi ? 'सेटिंग्स' : 'Settings'}
         </div>
         <h1 style={{ fontSize: isMobileView ? 22 : 28, fontWeight: 800, margin: '0 0 8px', lineHeight: 1.25 }}>
-          {isHindi ? 'अपनी लोकेशन चुनें' : 'Choose your location'}
+          {isHindi ? 'अपनी प्राथमिकताएँ प्रबंधित करें' : 'Manage your preferences'}
         </h1>
         <p style={{ color: 'rgba(255,255,255,0.85)', margin: 0, fontSize: 14, maxWidth: 480 }}>
           {isHindi
-            ? 'अपनी लोकेशन सेट करें ताकि माय सिटी आपको राष्ट्रीय, राज्य और ज़िले की प्रासंगिक खबरें दिखा सके।'
-            : 'Choose your location so My City can show you national, state, and district news that matters to you.'}
+            ? 'थीम, भाषा और लोकेशन — सभी एक ही जगह से।'
+            : 'Appearance, language, and location — all from one place.'}
         </p>
       </section>
 
-      {/* Form card */}
+      {/* Appearance card */}
+      <section style={{ borderRadius: 16, background: surface, border: `1px solid ${bdr}`, padding: isMobileView ? 20 : 28, marginBottom: 20 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, color: T1, margin: '0 0 16px' }}>
+          {isHindi ? 'दिखावट' : 'Appearance'}
+        </h2>
+        <button
+          onClick={toggleDark}
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
+            borderRadius: 12, border: `1px solid ${bdr}`, background: 'transparent', cursor: 'pointer', textAlign: 'left',
+          }}
+        >
+          {dark ? <Moon size={20} color={T2} /> : <Sun size={20} color={T2} />}
+          <span style={{ flex: 1 }}>
+            <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: T1 }}>
+              {dark ? (isHindi ? 'डार्क मोड' : 'Dark mode') : (isHindi ? 'लाइट मोड' : 'Light mode')}
+            </span>
+            <span style={{ display: 'block', fontSize: 12, color: T3, marginTop: 2 }}>
+              {isHindi ? 'टॉगल करने के लिए क्लिक करें' : 'Click to toggle'}
+            </span>
+          </span>
+        </button>
+      </section>
+
+      {/* Language card */}
+      <section style={{ borderRadius: 16, background: surface, border: `1px solid ${bdr}`, padding: isMobileView ? 20 : 28, marginBottom: 20 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, color: T1, margin: '0 0 16px' }}>
+          {isHindi ? 'भाषा' : 'Language'}
+        </h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 12, border: `1px solid ${bdr}` }}>
+          <Globe size={20} color={T2} />
+          <select
+            value={selectedLanguage}
+            onChange={e => setSelectedLanguage(e.target.value)}
+            style={{ flex: 1, background: 'transparent', border: 'none', color: T1, fontSize: 14, fontWeight: 600, outline: 'none', cursor: 'pointer' }}
+          >
+            <option value="hi" style={{ color: '#000' }}>हिंदी</option>
+            <option value="en" style={{ color: '#000' }}>English</option>
+          </select>
+        </div>
+      </section>
+
+      {/* Location card */}
       <section style={{ borderRadius: 16, background: surface, border: `1px solid ${bdr}`, padding: isMobileView ? 20 : 28 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, color: T1, margin: '0 0 8px' }}>
+          {isHindi ? 'लोकेशन' : 'Location'}
+        </h2>
+        <p style={{ fontSize: 13, color: T3, margin: '0 0 16px' }}>
+          🌍 {isHindi ? 'मेरा देश: भारत' : 'My Country: India'}
+        </p>
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[0, 1].map(i => (

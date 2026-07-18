@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Heart, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { DarkCtx } from '@/lib/news-contexts';
 import styles from './LikeButton.module.css';
 
 const ACCENT = '#EF4444';
@@ -13,6 +14,7 @@ export default function LikeButton({
   onRequireLogin,
   size = 'lg',
 }) {
+  const dark = useContext(DarkCtx);
   const [liked, setLiked] = useState(false);
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -134,7 +136,7 @@ export default function LikeButton({
       }}
     >
       <button
-        className={`${styles.likeButton} ${animation}`}
+        className={`${styles.likeButton} ${dark ? 'dark' : ''} ${animation}`}
         onClick={toggleLike}
         disabled={loading}
         title={liked ? 'Unlike Article' : 'Like Article'}
@@ -153,11 +155,11 @@ export default function LikeButton({
 
           border: liked
             ? `1px solid ${ACCENT}`
-            : '1px solid #E5E7EB',
+            : '1px solid var(--bookmark-border)',
 
           background: liked
             ? `${ACCENT}12`
-            : '#FFFFFF',
+            : 'var(--bookmark-card)',
 
           cursor: loading ? 'not-allowed' : 'pointer',
 
@@ -215,7 +217,7 @@ export default function LikeButton({
         ) : (
           <Heart
             size={iconSize}
-            color={liked ? ACCENT : '#6B7280'}
+            color={liked ? ACCENT : 'var(--bookmark-muted)'}
             fill={liked ? ACCENT : 'none'}
             strokeWidth={2.2}
           />

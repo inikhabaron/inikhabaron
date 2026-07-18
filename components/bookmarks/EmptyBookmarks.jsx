@@ -3,13 +3,25 @@
 import { Bookmark } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-const ACCENT = '#3BAFDA';
-
-export default function EmptyBookmarks() {
+export default function EmptyBookmarks({
+  dark = false,
+  icon: Icon = Bookmark,
+  title = 'No bookmarks yet',
+  subtitle = (
+    <>
+      Articles you save will appear here.
+      <br />
+      Start bookmarking stories to read later.
+    </>
+  ),
+  ctaLabel = 'Browse News',
+  ctaHref = '/',
+}) {
   const router = useRouter();
 
   return (
     <div
+      className={dark ? 'dark' : ''}
       style={{
         minHeight: '70vh',
         display: 'flex',
@@ -23,8 +35,8 @@ export default function EmptyBookmarks() {
           maxWidth: 420,
           width: '100%',
           textAlign: 'center',
-          background: '#fff',
-          border: '1px solid #E5E7EB',
+          background: 'var(--bookmark-card)',
+          border: '1px solid var(--bookmark-border)',
           borderRadius: 20,
           padding: '48px 32px',
           boxShadow: '0 10px 30px rgba(0,0,0,.06)',
@@ -35,16 +47,16 @@ export default function EmptyBookmarks() {
             width: 90,
             height: 90,
             borderRadius: '50%',
-            background: `${ACCENT}15`,
+            background: 'color-mix(in srgb, var(--bookmark-accent) 15%, transparent)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 24px',
           }}
         >
-          <Bookmark
+          <Icon
             size={42}
-            color={ACCENT}
+            color="var(--bookmark-accent)"
           />
         </div>
 
@@ -53,27 +65,26 @@ export default function EmptyBookmarks() {
             fontSize: 24,
             fontWeight: 700,
             marginBottom: 12,
+            color: 'var(--bookmark-text)',
           }}
         >
-          No bookmarks yet
+          {title}
         </h2>
 
         <p
           style={{
-            color: '#6B7280',
+            color: 'var(--bookmark-muted)',
             lineHeight: 1.7,
             marginBottom: 30,
           }}
         >
-          Articles you save will appear here.
-          <br />
-          Start bookmarking stories to read later.
+          {subtitle}
         </p>
 
         <button
-          onClick={() => router.push('/')}
+          onClick={() => router.push(ctaHref)}
           style={{
-            background: ACCENT,
+            background: 'var(--bookmark-accent)',
             color: '#fff',
             border: 'none',
             borderRadius: 12,
@@ -83,7 +94,7 @@ export default function EmptyBookmarks() {
             transition: '.2s',
           }}
         >
-          Browse News
+          {ctaLabel}
         </button>
       </div>
     </div>

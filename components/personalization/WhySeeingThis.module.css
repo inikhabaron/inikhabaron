@@ -179,3 +179,58 @@
     font-size: 15px;
   }
 }
+
+/* ==========================================================
+   DARK MODE
+   Gated by an ancestor `.dark` class set from the page's
+   existing DarkCtx — matches the News Details page palette
+   (#161B27 surface / #252E40 border / #E8ECF0 text).
+========================================================== */
+
+:global(.dark).container {
+  background: #161B27;
+  border-color: #252E40;
+}
+
+:global(.dark) .header {
+  color: #E8ECF0;
+}
+
+:global(.dark) .subtitle {
+  color: #9BA5B4;
+}
+
+:global(.dark) .primaryCard {
+  background: #1A2233;
+  border-color: #252E40;
+}
+
+:global(.dark) .primaryIcon {
+  background: rgba(56, 189, 248, .15);
+  color: #38bdf8;
+}
+
+:global(.dark) .primaryMessage {
+  color: #E8ECF0;
+}
+
+:global(.dark) .reasonItem {
+  background: #1A2233;
+}
+
+:global(.dark) .reasonItem span {
+  color: #C7CDD6;
+}
+
+:global(.dark) .reasonItem svg {
+  color: #9BA5B4;
+}
+
+:global(.dark) .toggle {
+  color: #38bdf8;
+}
+
+:global(.dark).container .skeletonTitle,
+:global(.dark).container .skeletonText {
+  background: #252E40;
+}
