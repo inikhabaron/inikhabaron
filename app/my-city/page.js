@@ -4,14 +4,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MapPin, Navigation, RefreshCw, Newspaper } from 'lucide-react';
 
-import Header from '@/components/home/Header';
-import SiteFooter from '@/components/home/SiteFooter';
-import AuthDialog from '@/components/home/AuthDialog';
 import HorizontalArticleCard from '@/components/home/HorizontalArticleCard';
 import FollowButton from '@/components/follow/FollowButton';
+import PublicPageLayout from '@/components/layout/PublicPageLayout';
 import { applyFollowChange } from '@/lib/follow/applyFollowChange';
 import useSiteChrome from '@/hooks/useSiteChrome';
-import { DarkCtx } from '@/lib/news-contexts';
 import { ACCENT, ACCENT_H, formatDate } from '@/lib/news-utils';
 
 function locationBadge(article) {
@@ -39,13 +36,8 @@ export default function MyCityPage() {
   const router = useRouter();
   const chrome = useSiteChrome();
   const {
-    dark, toggleDark, selectedLanguage, setSelectedLanguage, translations, t,
-    user, authLoading, authDialogOpen, setAuthDialogOpen, handleGoogleSignIn, handleAppleSignIn, handleSignOut,
-    categories, breakingNews, selectedCategory, setSelectedCategory,
-    isMobileView, isSearchActive, setIsSearchActive,
-    searchQuery, setSearchQuery, handleSearch,
-    newsletterEmail, setNewsletterEmail, newsletterLoading, handleNewsletterSubscribe,
-    bg, surface, bdr, T1, T2, T3, HEADER_H,
+    dark, selectedLanguage, user, setAuthDialogOpen,
+    isMobileView, surface, bdr, T1, T2, T3,
   } = chrome;
 
   const [articles, setArticles] = useState([]);
@@ -115,20 +107,7 @@ export default function MyCityPage() {
   const goToArticle = (item) => router.push(`/news/${item.id}`);
 
   return (
-    <DarkCtx.Provider value={dark}>
-      <Header
-        dark={dark} toggleDark={toggleDark}
-        selectedLanguage={selectedLanguage} setSelectedLanguage={setSelectedLanguage}
-        translations={translations}
-        user={user} onSignIn={() => setAuthDialogOpen(true)} onSignOut={handleSignOut}
-        categories={categories} selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory}
-        searchQuery={searchQuery} setSearchQuery={setSearchQuery} onSearch={handleSearch}
-        breakingNews={breakingNews} isMobileView={isMobileView}
-        setShowMobileSearch={() => router.push('/')} setIsSearchActive={setIsSearchActive}
-        t={t} surface={surface} bdr={bdr} T1={T1} T2={T2} T3={T3}
-      />
-
-      <div style={{ backgroundColor: bg, minHeight: '100vh', paddingTop: `${HEADER_H}px` }}>
+    <PublicPageLayout chrome={chrome}>
         <div className="kn-content-wrap" style={{ padding: isMobileView ? '16px 14px 60px' : '28px 5px 70px' }}>
 
           {/* Hero */}
@@ -262,16 +241,6 @@ export default function MyCityPage() {
             </>
           )}
         </div>
-
-        <SiteFooter
-          dark={dark} categories={categories} selectedLanguage={selectedLanguage}
-          onCategoryClick={(slug) => router.push(`/?category=${slug}`)}
-          newsletterEmail={newsletterEmail} setNewsletterEmail={setNewsletterEmail}
-          onNewsletterSubscribe={handleNewsletterSubscribe} newsletterLoading={newsletterLoading}
-        />
-      </div>
-
-      <AuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} onGoogleSignIn={handleGoogleSignIn} onAppleSignIn={handleAppleSignIn} loading={authLoading} bdr={bdr} />
-    </DarkCtx.Provider>
+    </PublicPageLayout>
   );
 }

@@ -4,26 +4,18 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Users, FolderOpen, UserPen, MapPin } from 'lucide-react';
 
-import Header from '@/components/home/Header';
-import SiteFooter from '@/components/home/SiteFooter';
-import AuthDialog from '@/components/home/AuthDialog';
 import FollowButton from '@/components/follow/FollowButton';
+import PublicPageLayout from '@/components/layout/PublicPageLayout';
 import { applyFollowChange } from '@/lib/follow/applyFollowChange';
 import useSiteChrome from '@/hooks/useSiteChrome';
-import { DarkCtx } from '@/lib/news-contexts';
 import { ACCENT, ACCENT_H } from '@/lib/news-utils';
 
 export default function FollowingPage() {
   const router = useRouter();
   const chrome = useSiteChrome();
   const {
-    dark, toggleDark, selectedLanguage, setSelectedLanguage, translations, t,
-    user, authLoading, authDialogOpen, setAuthDialogOpen, handleGoogleSignIn, handleAppleSignIn, handleSignOut,
-    categories, breakingNews, selectedCategory, setSelectedCategory,
-    isMobileView, isSearchActive, setIsSearchActive,
-    searchQuery, setSearchQuery, handleSearch,
-    newsletterEmail, setNewsletterEmail, newsletterLoading, handleNewsletterSubscribe,
-    bg, surface, bdr, T1, T2, T3, HEADER_H,
+    dark, selectedLanguage, user, setAuthDialogOpen,
+    isMobileView, surface, bdr, T1, T2, T3,
   } = chrome;
 
   const isHindi = selectedLanguage === 'hi';
@@ -72,38 +64,20 @@ export default function FollowingPage() {
     return (change) => setFollowing((prev) => applyFollowChange(prev, { ...change, item }));
   }
 
-  const chromeShell = (children) => (
-    <DarkCtx.Provider value={dark}>
-      <Header
-        dark={dark} toggleDark={toggleDark}
-        selectedLanguage={selectedLanguage} setSelectedLanguage={setSelectedLanguage}
-        translations={translations}
-        user={user} onSignIn={() => setAuthDialogOpen(true)} onSignOut={handleSignOut}
-        categories={categories} selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory}
-        searchQuery={searchQuery} setSearchQuery={setSearchQuery} onSearch={handleSearch}
-        breakingNews={breakingNews} isMobileView={isMobileView}
-        setShowMobileSearch={() => router.push('/')} setIsSearchActive={setIsSearchActive}
-        t={t} surface={surface} bdr={bdr} T1={T1} T2={T2} T3={T3}
-      />
-      <div style={{ backgroundColor: bg, minHeight: '100vh', paddingTop: `${HEADER_H}px` }}>
-        {children}
-      </div>
-      <AuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} onGoogleSignIn={handleGoogleSignIn} onAppleSignIn={handleAppleSignIn} loading={authLoading} bdr={bdr} />
-    </DarkCtx.Provider>
-  );
-
   if (authRequired) {
-    return chromeShell(
-      <div className="kn-content-wrap" style={{ padding: '60px 16px', display: 'flex', justifyContent: 'center' }}>
-        <div style={{ maxWidth: 420, width: '100%', borderRadius: 16, background: surface, border: `1px solid ${bdr}`, padding: 32, textAlign: 'center' }}>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: T1, margin: '0 0 8px' }}>
-            {isHindi ? 'साइन इन आवश्यक है' : 'Sign in required'}
-          </h1>
-          <p style={{ fontSize: 14, color: T2, margin: 0 }}>
-            {isHindi ? 'आपको साइन इन पेज पर भेजा जा रहा है...' : 'Redirecting you to sign in...'}
-          </p>
+    return (
+      <PublicPageLayout chrome={chrome}>
+        <div className="kn-content-wrap" style={{ padding: '60px 16px', display: 'flex', justifyContent: 'center' }}>
+          <div style={{ maxWidth: 420, width: '100%', borderRadius: 16, background: surface, border: `1px solid ${bdr}`, padding: 32, textAlign: 'center' }}>
+            <h1 style={{ fontSize: 20, fontWeight: 700, color: T1, margin: '0 0 8px' }}>
+              {isHindi ? 'साइन इन आवश्यक है' : 'Sign in required'}
+            </h1>
+            <p style={{ fontSize: 14, color: T2, margin: 0 }}>
+              {isHindi ? 'आपको साइन इन पेज पर भेजा जा रहा है...' : 'Redirecting you to sign in...'}
+            </p>
+          </div>
         </div>
-      </div>
+      </PublicPageLayout>
     );
   }
 
@@ -136,7 +110,8 @@ export default function FollowingPage() {
     },
   ];
 
-  return chromeShell(
+  return (
+    <PublicPageLayout chrome={chrome}>
     <div className="kn-content-wrap" style={{ padding: isMobileView ? '16px 14px 60px' : '28px 5px 70px', maxWidth: 760 }}>
 
       {/* Hero */}
@@ -251,5 +226,6 @@ export default function FollowingPage() {
         </div>
       )}
     </div>
+    </PublicPageLayout>
   );
 }

@@ -35,13 +35,6 @@ const nextConfig = {
     maxInactiveAge: 10000,
     pagesBufferLength: 2,
   },
-  async redirects() {
-    // /bookmarks is superseded by the consolidated Saved Articles page
-    // (Bookmarked + Liked tabs) reachable from the account menu.
-    return [
-      { source: '/bookmarks', destination: '/saved?tab=bookmarked', permanent: false },
-    ];
-  },
   async headers() {
     // SEO-friendly security headers. Framing is left permissive (frame-ancestors *)
     // to preserve existing embed/ad behaviour, but we add the headers search
