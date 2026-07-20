@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Plus, Edit, Trash2, Check, X, Send, AlertCircle,
-  Loader2, ChevronRight, CheckCircle, History, TrendingUp, MoreVertical,
+  Loader2, ChevronRight, CheckCircle, History, TrendingUp, MoreVertical, Bell,
 } from 'lucide-react';
 import { DS } from './design-system';
 import { STATUS_LABELS, statusFilterOptionsByRole } from './constants';
@@ -215,7 +215,10 @@ export function NewsListView({
                                 </>
                               )}
                               {currentUser?.role === 'admin' && item.status === 'ready_to_publish' && (
-                                <MenuBtn icon={CheckCircle} label="Publish" color="#059669" onClick={() => { onWorkflow(item.id, 'publish'); }} />
+                                <>
+                                  <MenuBtn icon={CheckCircle} label="Publish" color="#059669" onClick={() => { onWorkflow(item.id, 'publish'); }} />
+                                  <MenuBtn icon={Bell} label="Publish & Notify" color="#059669" onClick={() => { onWorkflow(item.id, 'publish', '', { notify: true }); }} />
+                                </>
                               )}
                               {currentUser?.role === 'admin' && item.breakingSuggested && !item.breakingApproved && (
                                 <MenuBtn icon={AlertCircle} label="Approve Breaking" color="#dc2626" onClick={() => { onWorkflow(item.id, 'approve-breaking'); }} />

@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MapPin, CheckCircle2, AlertCircle, Sun, Moon, Globe } from 'lucide-react';
+import { MapPin, CheckCircle2, AlertCircle, Sun, Moon, Globe, Bell } from 'lucide-react';
 
 import LocationSelector from '@/components/location/LocationSelector';
 import PublicPageLayout from '@/components/layout/PublicPageLayout';
 import useSiteChrome from '@/hooks/useSiteChrome';
+import useNotificationOptIn from '@/hooks/useNotificationOptIn';
 import { ACCENT, ACCENT_H } from '@/lib/news-utils';
 
 const DEFAULT_LOCATION = {
@@ -29,6 +30,9 @@ export default function SettingsPage() {
   const [location, setLocation] = useState(DEFAULT_LOCATION);
   const [error, setError] = useState('');
   const [savedMessage, setSavedMessage] = useState('');
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [notificationsSaving, setNotificationsSaving] = useState(false);
+  const { subscribed, subscribe, loading: subscribing } = useNotificationOptIn();
 
   const isHindi = selectedLanguage === 'hi';
 
@@ -61,6 +65,41 @@ export default function SettingsPage() {
     loadLocation();
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadNotificationPrefs() {
+      try {
+        const response = await fetch('/api/users/notifications', { credentials: 'include', cache: 'no-store' });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (active && data.success) setNotificationsEnabled(data.data.enabled);
+      } catch (err) {
+        // Non-critical — the toggle just falls back to its default (enabled).
+      }
+    }
+
+    loadNotificationPrefs();
+    return () => { active = false; };
+  }, []);
+
+  async function handleToggleNotifications() {
+    const next = !notificationsEnabled;
+    setNotificationsSaving(true);
+    try {
+      const response = await fetch('/api/users/notifications', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: next }),
+      });
+      const data = await response.json();
+      if (data.success) setNotificationsEnabled(data.data.enabled);
+    } finally {
+      setNotificationsSaving(false);
+    }
+  }
 
   async function handleSave() {
     try {
@@ -173,6 +212,68 @@ export default function SettingsPage() {
               <option value="en" style={{ color: '#000' }}>English</option>
             </select>
           </div>
+        </section>
+
+        {/* Notifications card */}
+        <section style={{ borderRadius: 16, background: surface, border: `1px solid ${bdr}`, padding: isMobileView ? 20 : 28, marginBottom: 20 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: T1, margin: '0 0 16px' }}>
+            {isHindi ? 'सूचनाएँ' : 'Notifications'}
+          </h2>
+
+          <button
+            onClick={subscribe}
+            disabled={subscribing || subscribed}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
+              borderRadius: 12, border: `1px solid ${bdr}`, background: 'transparent',
+              cursor: subscribing || subscribed ? 'default' : 'pointer', textAlign: 'left', marginBottom: 12,
+              opacity: subscribing ? 0.7 : 1,
+            }}
+          >
+            <Bell size={20} color={T2} />
+            <span style={{ flex: 1 }}>
+              <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: T1 }}>
+                {subscribed
+                  ? (isHindi ? 'इस डिवाइस पर सक्षम' : 'Enabled on this device')
+                  : (isHindi ? 'इस डिवाइस पर पुश नोटिफिकेशन सक्षम करें' : 'Enable push notifications on this device')}
+              </span>
+              <span style={{ display: 'block', fontSize: 12, color: T3, marginTop: 2 }}>
+                {isHindi ? 'ब्रेकिंग न्यूज़ और अपडेट तुरंत पाएं' : 'Get breaking news and updates instantly'}
+              </span>
+            </span>
+          </button>
+
+          <button
+            onClick={handleToggleNotifications}
+            disabled={notificationsSaving}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, padding: '14px 16px',
+              borderRadius: 12, border: `1px solid ${bdr}`, background: 'transparent', cursor: 'pointer', textAlign: 'left',
+              opacity: notificationsSaving ? 0.7 : 1,
+            }}
+          >
+            <span>
+              <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: T1 }}>
+                {isHindi ? 'सभी नोटिफिकेशन प्राप्त करें' : 'Receive notifications'}
+              </span>
+              <span style={{ display: 'block', fontSize: 12, color: T3, marginTop: 2 }}>
+                {isHindi ? 'बंद करने पर आपको कोई पुश नोटिफिकेशन नहीं मिलेगा' : "Turn off to stop receiving any push notifications"}
+              </span>
+            </span>
+            <span
+              style={{
+                width: 40, height: 22, borderRadius: 999, background: notificationsEnabled ? ACCENT : bdr,
+                position: 'relative', flexShrink: 0, transition: 'background 0.15s',
+              }}
+            >
+              <span
+                style={{
+                  position: 'absolute', top: 2, left: notificationsEnabled ? 20 : 2, width: 18, height: 18,
+                  borderRadius: '50%', background: '#fff', transition: 'left 0.15s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                }}
+              />
+            </span>
+          </button>
         </section>
 
         {/* Location card */}

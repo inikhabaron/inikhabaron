@@ -11,11 +11,18 @@ const ACCENT = '#3BAFDA';
 export default function BookmarkButton({
   articleId,
   user,
+  bookmarked = false,
+  onChange,
   onRequireLogin,
   size = 'lg',
 }) {
   const dark = useContext(DarkCtx);
-  const [bookmarked, setBookmarked] = useState(false);
+  // Mirrors the `bookmarked` prop into local state (like FollowButton's
+  // `isFollowing`) so the toggle can update instantly without waiting on
+  // the parent to re-fetch. Status itself is owned by the parent page,
+  // which fetches it once for every card via GET /api/users/bookmarks/ids
+  // instead of each button calling GET /api/news/[id]/bookmark individually.
+  const [isBookmarked, setIsBookmarked] = useState(bookmarked);
   const [loading, setLoading] = useState(false);
   const [animation, setAnimation] = useState('');
   const [showRipple, setShowRipple] = useState(false);
@@ -24,36 +31,8 @@ export default function BookmarkButton({
   const iconSize = size === 'sm' ? 14 : 22;
 
   useEffect(() => {
-    if (!user || !articleId) {
-      setBookmarked(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    async function loadStatus() {
-      try {
-        const res = await fetch(`/api/news/${articleId}/bookmark`, {
-          credentials: 'include',
-          cache: 'no-store',
-        });
-
-        const data = await res.json();
-
-        if (!cancelled && data.success) {
-          setBookmarked(data.data.bookmarked);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    loadStatus();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [articleId, user]);
+    setIsBookmarked(bookmarked);
+  }, [bookmarked]);
 
   async function toggleBookmark() {
     if (!user) {
@@ -64,7 +43,7 @@ export default function BookmarkButton({
     try {
       setLoading(true);
 
-      const method = bookmarked ? 'DELETE' : 'POST';
+      const method = isBookmarked ? 'DELETE' : 'POST';
 
       const res = await fetch(`/api/news/${articleId}/bookmark`, {
         method,
@@ -78,9 +57,11 @@ export default function BookmarkButton({
         return;
       }
 
-      setBookmarked(!bookmarked);
+      const next = !isBookmarked;
+      setIsBookmarked(next);
+      onChange?.({ articleId, bookmarked: next });
 
-      if (!bookmarked) {
+      if (next) {
         setAnimation(styles.saved);
         setShowRipple(true);
         setShowParticles(true);
@@ -105,11 +86,11 @@ export default function BookmarkButton({
 
   return (
     <button
-      className={`${styles.bookmarkButton} ${dark ? 'dark' : ''} ${bookmarked ? styles.active : ''} ${animation}`}
+      className={`${styles.bookmarkButton} ${dark ? 'dark' : ''} ${isBookmarked ? styles.active : ''} ${animation}`}
       onClick={toggleBookmark}
       disabled={loading}
-      title={bookmarked ? 'Remove Bookmark' : 'Save Article'}
-      aria-label={bookmarked ? 'Remove Bookmark' : 'Save Article'}
+      title={isBookmarked ? 'Remove Bookmark' : 'Save Article'}
+      aria-label={isBookmarked ? 'Remove Bookmark' : 'Save Article'}
       style={{
         width: size === 'sm' ? 28 : 44,
         height: size === 'sm' ? 28 : 44,
@@ -155,8 +136,8 @@ export default function BookmarkButton({
       ) : (
         <Bookmark
           size={iconSize}
-          color={bookmarked ?'var(--bookmark-accent)' : 'var(--bookmark-muted)'}
-          fill={bookmarked ? 'var(--bookmark-accent)' : 'none'}
+          color={isBookmarked ? 'var(--bookmark-accent)' : 'var(--bookmark-muted)'}
+          fill={isBookmarked ? 'var(--bookmark-accent)' : 'none'}
           strokeWidth={2.2}
         />
       )}

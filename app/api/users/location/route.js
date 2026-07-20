@@ -21,10 +21,13 @@ export async function GET() {
 
     return json({
       success: true,
-      data: user.location || {
-        enabled: false,
-        scope: 'national',
-        country: 'India',
+      data: {
+        ...(user.location || {
+          enabled: false,
+          scope: 'national',
+          country: 'India',
+        }),
+        locationPromptSeenAt: user.locationPromptSeenAt || null,
       },
     });
   } catch (error) {
@@ -97,17 +100,16 @@ export async function PUT(request) {
       districtId,
       districtName,
       districtSlug,
+      source: body.source === 'auto' ? 'auto' : 'manual',
     };
 
-    await usersCollection.updateOne(
-      { id: user.id },
-      {
-        $set: {
-          location,
-          updatedAt: new Date(),
-        },
-      }
-    );
+    const update = { $set: { location, updatedAt: new Date() } };
+    // Any save (manual or auto-confirmed) counts as "the prompt no longer
+    // needs to be shown" — set it here too in case the client saves without
+    // ever calling prompt-seen directly (e.g. a fresh manual Settings save).
+    if (!user.locationPromptSeenAt) update.$set.locationPromptSeenAt = new Date();
+
+    await usersCollection.updateOne({ id: user.id }, update);
 
     return json({
       success: true,

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import Image from 'next/image';
@@ -13,6 +13,7 @@ import HeroCard from '@/components/home/HeroCard';
 import HorizontalArticleCard from '@/components/home/HorizontalArticleCard';
 import ArticleCard from '@/components/home/ArticleCard';
 import LatestNews from '@/components/home/LatestNews';
+import BreakingTicker from '@/components/home/BreakingTicker';
 import CategoryShowcase from '@/components/home/CategoryShowcase';
 import SiteFooter from '@/components/home/SiteFooter';
 // import ArticleModal from '@/components/home/ArticleModal';
@@ -24,6 +25,7 @@ import { applyFollowChange } from '@/lib/follow/applyFollowChange';
 import { PersonalizedFeed } from '@/components/personalization';
 import useNewsletterSubscribe from '@/hooks/useNewsletterSubscribe';
 import useSiteChrome from '@/hooks/useSiteChrome';
+import useBookmarkedIds from '@/hooks/useBookmarkedIds';
 
 // ─── Shared utilities & contexts ──────────────────────────────────────────────
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
@@ -40,8 +42,6 @@ const Loader = () => <div style={{ display: 'flex', justifyContent: 'center', pa
 export default function HomePage({ initialCategory = 'all' }) {
   // ── Data state ───────────────────────────────────────────────────────────
   const [news, setNews] = useState([]);
-  const [breakingNews, setBreaking] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
 
   // ── UI state ─────────────────────────────────────────────────────────────
@@ -62,7 +62,9 @@ export default function HomePage({ initialCategory = 'all' }) {
     dark, toggleDark, selectedLanguage, setSelectedLanguage, translations, t,
     user, authLoading, authDialogOpen, setAuthDialogOpen,
     handleGoogleSignIn: signInWithGoogleShared, handleAppleSignIn: signInWithAppleShared, handleSignOut,
+    categories, breakingNews,
   } = useSiteChrome();
+  const { bookmarkedIds, handleBookmarkChange } = useBookmarkedIds(user);
   const [userId, setUserId] = useState(null);
   const [subscriptionOpen, setSubscriptionOpen] = useState(false);
 
@@ -82,7 +84,8 @@ export default function HomePage({ initialCategory = 'all' }) {
 
   const shareMenuRef = useRef(null);
   const router = useRouter();
-  const goToArticle = (item) => router.push(`/news/${item.id}`);
+  const goToArticle = useCallback((item) => router.push(`/news/${item.id}`), [router]);
+  const handleRequireLogin = useCallback(() => setAuthDialogOpen(true), [setAuthDialogOpen]);
 
   // ── Effects ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -159,16 +162,8 @@ export default function HomePage({ initialCategory = 'all' }) {
     finally { setLoading(false); }
   }, []);
 
-  const fetchCategories = useCallback(async () => {
-    try { const d = await fetch('/api/categories').then(r => r.json()); setCategories(d.categories || []); } catch (e) { console.error(e); }
-  }, []);
-
   const fetchTags = useCallback(async () => {
     try { const d = await fetch('/api/tags').then(r => r.json()); setTags((d.tags || []).filter(t => t.active && t.popular)); } catch (e) { console.error(e); }
-  }, []);
-
-  const fetchBreaking = useCallback(async () => {
-    try { const d = await fetch('/api/news/breaking').then(r => r.json()); setBreaking(d.news || []); } catch (e) { console.error(e); }
   }, []);
 
   const fetchYoutube = useCallback(async () => {
@@ -176,16 +171,16 @@ export default function HomePage({ initialCategory = 'all' }) {
   }, []);
 
   useEffect(() => {
-    const init = async () => {
-      await fetch('/api/seed', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => { });
-      await Promise.all([fetchCategories(), fetchTags(), fetchBreaking(), fetchNews()]);
-      fetchYoutube();
-    };
-    init();
+    fetchTags();
+    fetchYoutube();
     const interval = setInterval(() => { fetchYoutube(); }, 60000);
     return () => clearInterval(interval);
-  }, [fetchCategories, fetchTags, fetchBreaking, fetchNews, fetchYoutube]);
+  }, [fetchTags, fetchYoutube]);
 
+  // Sole owner of the news fetch — also covers the very first load (fires on
+  // mount with the server-provided initialCategory/empty search), so a
+  // second "initial" fetchNews() call here would race this one and could
+  // briefly show the wrong category's articles.
   useEffect(() => { setPage(1); fetchNews(selectedCategory, searchQuery, 1); }, [selectedCategory, fetchNews, searchQuery]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
@@ -213,10 +208,10 @@ export default function HomePage({ initialCategory = 'all' }) {
   };
 
   // const trackShare = (newsId, platform) => fetch(`/api/news/${newsId}/share`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ platform }) }).catch(console.error);
-  const shareOnWhatsApp = async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'whatsapp', }); await recordShare(item.id, 'whatsapp'); window.open(`https://wa.me/?text=${encodeURIComponent('*' + item.title + '*' + '\n\n' + window.location.origin + '/news/' + item.id)}`, '_blank'); };
-  const shareOnTwitter = async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'twitter', }); await recordShare(item.id, 'twitter'); window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(item.title)}&url=${encodeURIComponent(window.location.origin + '/news/' + item.id)}`, '_blank'); };
-  const shareOnFacebook = async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'facebook', }); await recordShare(item.id, 'facebook'); window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/news/' + item.id)}`, '_blank'); };
-    const copyArticleLink = async (item) => { try { await navigator.clipboard.writeText(`${window.location.origin}/news/${item.id}`); trackEvent({ action: 'share_click', category: 'article', label: 'copy_link', }); toast.success('Link copied!'); } catch (error) { console.error(error); toast.error('Failed to copy link'); }};
+  const shareOnWhatsApp = useCallback(async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'whatsapp', }); await recordShare(item.id, 'whatsapp'); window.open(`https://wa.me/?text=${encodeURIComponent('*' + item.title + '*' + '\n\n' + window.location.origin + '/news/' + item.id)}`, '_blank'); }, []);
+  const shareOnTwitter = useCallback(async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'twitter', }); await recordShare(item.id, 'twitter'); window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(item.title)}&url=${encodeURIComponent(window.location.origin + '/news/' + item.id)}`, '_blank'); }, []);
+  const shareOnFacebook = useCallback(async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'facebook', }); await recordShare(item.id, 'facebook'); window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/news/' + item.id)}`, '_blank'); }, []);
+  const copyArticleLink = useCallback(async (item) => { try { await navigator.clipboard.writeText(`${window.location.origin}/news/${item.id}`); trackEvent({ action: 'share_click', category: 'article', label: 'copy_link', }); toast.success('Link copied!'); } catch (error) { console.error(error); toast.error('Failed to copy link'); }}, []);
 
   // const handleSaveProgress = async (scrollPct) => {
   //   if (!selectedNews || !userId || scrollPct <= 0) return;
@@ -238,17 +233,6 @@ export default function HomePage({ initialCategory = 'all' }) {
 
   // ─── Shared article card props ─────────────────────────────────────────────
   const sharedCardProps = { formatDate, selectedLanguage, dark, textScale, selectedFont, bdr, T1, T2, T3 };
-
-  // Marquee items memoized to avoid recreating duplicated arrays on every render
-  const marqueeItems = useMemo(() => {
-    if (!breakingNews || breakingNews.length === 0) return [];
-    const items = [];
-    breakingNews.forEach((item) => items.push({ key: `${item.id}-a`, title: item.title }));
-    breakingNews.forEach((item) => items.push({ key: `${item.id}-b`, title: item.title }));
-    return items;
-  }, [breakingNews]);
-
-  const marqueeDuration = Math.max(20, (breakingNews?.length || 0) * 6); // seconds
 
   // ──────────────────────────────────────────────────────────────────────────
   return (
@@ -289,30 +273,7 @@ export default function HomePage({ initialCategory = 'all' }) {
           style={{ backgroundColor: bg, fontFamily: selectedLanguage === 'hi' ? 'var(--font-devanagari), sans-serif' : selectedFont.value, paddingTop: `${HEADER_H}px` }}
         >
           {/* Breaking news ticker */}
-          
-          {breakingNews.length > 0 && (
-            <div className="kn-breaking-ticker" style={{ height: '46px', background: dark ? '#150e0e' : '#FFF5F5', borderTop: `1px solid ${dark ? '#3a1f1f' : '#FED7D7'}`, borderBottom: `1px solid ${dark ? '#3a1f1f' : '#FED7D7'}` }}>
-              <div style={{ maxWidth: '1300px', margin: '0 auto', height: '100%', display: 'flex', alignItems: 'center' }}>
-                {/* Breaking Label */}
-                <div className="kn-breaking-label" style={{ minWidth: '105px', height: '24px', background: '#D72638', color: '#fff', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, letterSpacing: '1px' }}>
-                  ● BREAKING
-                </div>
-                {/* News Scroll */}
-                <div className="kn-marquee-wrap" style={{ flex: 1, overflow: 'hidden', marginLeft: '20px', marginRight: '10px' }}>
-                  <div className="animate-marquee" style={{ animationDuration: `${marqueeDuration}s` }}>
-                    <div className="kn-breaking-track">
-                      {marqueeItems.map((item) => (
-                        <span key={item.key} className="kn-breaking-item">
-                          {item.title}
-                          <span className="kn-breaking-separator">◆</span>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          <BreakingTicker breakingNews={breakingNews} dark={dark} onArticleClick={goToArticle} />
 
           {/* Trending bar (desktop) */}
           {!isMobileView && (
@@ -384,7 +345,13 @@ export default function HomePage({ initialCategory = 'all' }) {
                   {news.map(item => (
                     <div key={item.id} onClick={() => goToArticle(item)} className="kn-mobile-item" style={{ borderBottom: `1px solid ${bdr}` }}>
                       <div className="kn-mobile-thumb">
-                        <img src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=300'} alt={item.title} />
+                        <Image
+                          src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=300'}
+                          alt={item.title}
+                          width={96}
+                          height={68}
+                          sizes="96px"
+                        />
                       </div>
                       <div className="kn-mobile-item-text" style={{ marginLeft: '12px' }}>
                         <div className="kn-mobile-item-cat-row">
@@ -464,7 +431,7 @@ export default function HomePage({ initialCategory = 'all' }) {
                       </div>
                       <div className="kn-article-grid">
                         {news.slice(5).map(item => (
-                          <ArticleCard key={item.id} item={item} onClick={goToArticle} formatDate={formatDate} showShareMenu={showShareMenu} setShowShareMenu={setShowShareMenu} selectedLanguage={selectedLanguage} onShareWhatsApp={shareOnWhatsApp} onShareTwitter={shareOnTwitter} onShareFacebook={shareOnFacebook} onCopyLink={copyArticleLink} user={user} onRequireLogin={() => setAuthDialogOpen(true)} />
+                          <ArticleCard key={item.id} item={item} onClick={goToArticle} formatDate={formatDate} showShareMenu={showShareMenu} setShowShareMenu={setShowShareMenu} selectedLanguage={selectedLanguage} onShareWhatsApp={shareOnWhatsApp} onShareTwitter={shareOnTwitter} onShareFacebook={shareOnFacebook} onCopyLink={copyArticleLink} user={user} onRequireLogin={handleRequireLogin} bookmarked={bookmarkedIds.has(item.id)} onBookmarkChange={handleBookmarkChange} />
                         ))}
                       </div>
                     </>

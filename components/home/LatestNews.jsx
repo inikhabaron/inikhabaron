@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import Image from 'next/image';
 import { getCatLabel } from '@/lib/news-utils';
 
 export default function LatestNews({ items, onArticleClick, dark, selectedLanguage, formatDate }) {
@@ -25,9 +26,12 @@ export default function LatestNews({ items, onArticleClick, dark, selectedLangua
             <span className="kn-latest-date">{formatDate(item.publishedAt)}</span>
           </div>
           <div className="kn-latest-thumb">
-            <img
+            <Image
               src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=200'}
               alt={item.title}
+              width={64}
+              height={64}
+              sizes="64px"
             />
           </div>
         </div>

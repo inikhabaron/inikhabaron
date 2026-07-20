@@ -1,29 +1,30 @@
-import { getCollection } from '@/lib/mongodb';
+import { requireUser } from '@/lib/auth/user/requireUser';
+import { registerToken } from '@/lib/services/notifications/pushTokenService';
 import { json, preflight } from '@/lib/api/cors';
 
 export const OPTIONS = preflight;
 
 export async function POST(request) {
   try {
+    const auth = await requireUser();
+    if (!auth.success) return auth.response;
+
     const body = await request.json();
 
-    if (!body.firebaseUid) {
-      return json({ error: 'firebaseUid is required' }, { status: 400 });
+    if (!body.token || !body.provider) {
+      return json({ error: 'token and provider are required' }, { status: 400 });
+    }
+    if (!['fcm', 'expo'].includes(body.provider)) {
+      return json({ error: 'provider must be fcm or expo' }, { status: 400 });
     }
 
-    const usersCollection = await getCollection('users');
+    await registerToken(auth.user.id, {
+      token: body.token,
+      provider: body.provider,
+      platform: body.platform || 'web',
+      userAgent: request.headers.get('user-agent'),
+    });
 
-    // Web sends `fcmToken` (Firebase Cloud Messaging, web push).
-    // Mobile (Expo) sends `expoPushToken` — kept as a separate field since a
-    // reader can have both a web and a mobile session active at once.
-    const update = { updatedAt: new Date() };
-    if (body.fcmToken) update.fcmToken = body.fcmToken;
-    if (body.expoPushToken) update.expoPushToken = body.expoPushToken;
-
-    await usersCollection.updateOne(
-      { firebaseUid: body.firebaseUid },
-      { $set: update }
-    );
     return json({ success: true });
   } catch (error) {
     console.error('POST /api/users/fcm-token error:', error);

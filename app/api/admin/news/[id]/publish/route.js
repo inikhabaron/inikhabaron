@@ -2,6 +2,7 @@ import { getCollection } from '@/lib/mongodb';
 import { json, preflight } from '@/lib/api/cors';
 import { getUserFromToken } from '@/lib/auth/admin/token';
 import { canPublishArticle, normalizeStatus } from '@/lib/auth/permissions';
+import { notifyPublished } from '@/lib/services/notifications/articleNotifications';
 
 export const OPTIONS = preflight;
 
@@ -35,6 +36,11 @@ export async function POST(request, { params }) {
         },
       }
     );
+
+    if (body.notify === true && result.modifiedCount > 0) {
+      const article = await newsCollection.findOne({ id: params.id });
+      if (article) await notifyPublished(article, user.id);
+    }
 
     return json({ success: result.modifiedCount > 0 });
   } catch (error) {

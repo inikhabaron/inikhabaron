@@ -7,6 +7,8 @@ import { FaFacebook } from "react-icons/fa";
 import { FaChromecast, FaRegUser, FaFacebookF, FaXTwitter, FaYoutube, FaInstagram } from 'react-icons/fa6';
 import styles from './Header.module.css';
 import { useRouter } from "next/navigation";
+import { toast } from 'sonner';
+import useNotificationOptIn from '@/hooks/useNotificationOptIn';
 
 const ACCENT        = '#3BAFDA';
 const EDITORIAL_RED = '#D72638';
@@ -28,6 +30,7 @@ export default function Header({
   const profileRef  = useRef(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const router = useRouter();
+  const { subscribed, subscribe } = useNotificationOptIn();
 
   useEffect(() => {
     function handleOutside(e) {
@@ -36,6 +39,19 @@ export default function Header({
     document.addEventListener('mousedown', handleOutside);
     return () => document.removeEventListener('mousedown', handleOutside);
   }, []);
+
+  const handleNotificationClick = async () => {
+    if (subscribed) {
+      toast.info(selectedLanguage === 'hi' ? 'आप पहले से सब्सक्राइब हैं' : 'You are already subscribed!');
+      return;
+    }
+    const { success, error } = await subscribe();
+    if (success) {
+      toast.success(selectedLanguage === 'hi' ? 'सब्सक्राइब हो गया ✅' : 'Subscribed ✅ You will receive breaking news alerts!');
+    } else {
+      toast.error(error || (selectedLanguage === 'hi' ? 'सब्सक्राइब नहीं हो सका' : 'Unable to subscribe'));
+    }
+  };
 
   // Build nav items list
   const navItems = [
@@ -491,14 +507,4 @@ export default function Header({
       </nav>
     </header>
   );
-}
-
-function handleNotificationClick() {
-  if (!('Notification' in window)) { alert('Notifications not supported'); return; }
-  if (Notification.permission === 'granted') {
-    new Notification('KhabarON 🔔', { body: 'You are already subscribed!' }); return;
-  }
-  Notification.requestPermission().then(p => {
-    if (p === 'granted') new Notification('Subscribed ✅', { body: 'You will receive breaking news alerts!' });
-  });
 }

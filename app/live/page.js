@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import Image from 'next/image';
@@ -13,6 +13,7 @@ import LiveCard from '@/components/home/LiveCard';
 import HorizontalArticleCard from '@/components/home/HorizontalArticleCard';
 import ArticleCard from '@/components/home/ArticleCard';
 import LatestNews from '@/components/home/LatestNews';
+import BreakingTicker from '@/components/home/BreakingTicker';
 import CategoryShowcase from '@/components/home/CategoryShowcase';
 import SiteFooter from '@/components/home/SiteFooter';
 // import ArticleModal from '@/components/home/ArticleModal';
@@ -22,6 +23,7 @@ import MobileSearch from '@/components/home/MobileSearch';
 import { PersonalizedFeed } from '@/components/personalization';
 import useNewsletterSubscribe from '@/hooks/useNewsletterSubscribe';
 import useSiteChrome from '@/hooks/useSiteChrome';
+import useBookmarkedIds from '@/hooks/useBookmarkedIds';
 
 // ─── Shared utilities & contexts ──────────────────────────────────────────────
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
@@ -56,6 +58,7 @@ export default function HomePage() {
     user, authLoading, authDialogOpen, setAuthDialogOpen,
     handleGoogleSignIn, handleAppleSignIn, handleSignOut,
   } = useSiteChrome();
+  const { bookmarkedIds, handleBookmarkChange } = useBookmarkedIds(user);
   const [userId, setUserId] = useState(null);
   const [subscriptionOpen, setSubscriptionOpen] = useState(false);
 
@@ -191,16 +194,6 @@ export default function HomePage() {
   // ─── Shared article card props ─────────────────────────────────────────────
   const sharedCardProps = { formatDate, selectedLanguage, dark, textScale, selectedFont, bdr, T1, T2, T3 };
 
-  const marqueeItems = useMemo(() => {
-    if (!breakingNews || breakingNews.length === 0) return [];
-    const items = [];
-    breakingNews.forEach((item) => items.push({ key: `${item.id}-a`, title: item.title }));
-    breakingNews.forEach((item) => items.push({ key: `${item.id}-b`, title: item.title }));
-    return items;
-  }, [breakingNews]);
-
-  const marqueeDuration = Math.max(20, (breakingNews?.length || 0) * 6);
-
   // ──────────────────────────────────────────────────────────────────────────
   return (
     <DarkCtx.Provider value={dark}>
@@ -240,30 +233,7 @@ export default function HomePage() {
           style={{ backgroundColor: bg, fontFamily: selectedLanguage === 'hi' ? 'var(--font-devanagari), sans-serif' : selectedFont.value, paddingTop: `${HEADER_H}px` }}
         >
           {/* Breaking news ticker */}
-          
-          {breakingNews.length > 0 && (
-            <div className="kn-breaking-ticker" style={{ height: '46px', background: dark ? '#150e0e' : '#FFF5F5', borderTop: `1px solid ${dark ? '#3a1f1f' : '#FED7D7'}`, borderBottom: `1px solid ${dark ? '#3a1f1f' : '#FED7D7'}` }}>
-              <div style={{ maxWidth: '1300px', margin: '0 auto', height: '100%', display: 'flex', alignItems: 'center' }}>
-                {/* Breaking Label */}
-                <div className="kn-breaking-label" style={{ minWidth: '105px', height: '24px', background: '#D72638', color: '#fff', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, letterSpacing: '1px' }}>
-                  ● BREAKING
-                </div>
-                {/* News Scroll */}
-                <div className="kn-marquee-wrap" style={{ flex: 1, overflow: 'hidden', marginLeft: '20px', marginRight: '10px' }}>
-                  <div className="animate-marquee" style={{ animationDuration: `${marqueeDuration}s` }}>
-                    <div className="kn-breaking-track">
-                      {marqueeItems.map((item) => (
-                        <span key={item.key} className="kn-breaking-item">
-                          {item.title}
-                          <span className="kn-breaking-separator">◆</span>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          <BreakingTicker breakingNews={breakingNews} dark={dark} onArticleClick={goToArticle} />
 
           {/* Trending bar (desktop) */}
           {!isMobileView && (
@@ -387,7 +357,7 @@ export default function HomePage() {
                       </div>
                       <div className="kn-article-grid">
                         {news.slice(3).map(item => (
-                          <ArticleCard key={item.id} item={item} onClick={goToArticle} formatDate={formatDate} showShareMenu={showShareMenu} setShowShareMenu={setShowShareMenu} selectedLanguage={selectedLanguage} onShareWhatsApp={shareOnWhatsApp} onShareTwitter={shareOnTwitter} onShareFacebook={shareOnFacebook} onCopyLink={copyArticleLink} user={user} onRequireLogin={() => setAuthDialogOpen(true)} />
+                          <ArticleCard key={item.id} item={item} onClick={goToArticle} formatDate={formatDate} showShareMenu={showShareMenu} setShowShareMenu={setShowShareMenu} selectedLanguage={selectedLanguage} onShareWhatsApp={shareOnWhatsApp} onShareTwitter={shareOnTwitter} onShareFacebook={shareOnFacebook} onCopyLink={copyArticleLink} user={user} onRequireLogin={() => setAuthDialogOpen(true)} bookmarked={bookmarkedIds.has(item.id)} onBookmarkChange={handleBookmarkChange} />
                         ))}
                       </div>
                     </>

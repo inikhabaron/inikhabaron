@@ -2,6 +2,7 @@ import { getCollection } from '@/lib/mongodb';
 import { json, preflight } from '@/lib/api/cors';
 import { getUserFromToken } from '@/lib/auth/admin/token';
 import { canApproveTrending } from '@/lib/auth/permissions';
+import { notifyTrendingNews } from '@/lib/services/notifications/articleNotifications';
 
 export const OPTIONS = preflight;
 
@@ -30,6 +31,11 @@ export async function POST(request, { params }) {
         },
       }
     );
+
+    if (result.modifiedCount > 0) {
+      const article = await newsCollection.findOne({ id: params.id });
+      if (article) await notifyTrendingNews(article, user.id);
+    }
 
     return json({ success: result.modifiedCount > 0 });
   } catch (error) {

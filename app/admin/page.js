@@ -452,12 +452,12 @@ function AdminPageContent() {
     window.location.href = '/admin/login';
   };
 
-  const handleWorkflowAction = async (id, action, comment = '') => {
+  const handleWorkflowAction = async (id, action, comment = '', extra = {}) => {
     try {
       const endpoint = `/api/admin/news/${id}/${action}`;
       const payload = comment
-        ? { comment, userId: currentUser?.id, userName: currentUser?.name }
-        : { userId: currentUser?.id, userName: currentUser?.name };
+        ? { comment, userId: currentUser?.id, userName: currentUser?.name, ...extra }
+        : { userId: currentUser?.id, userName: currentUser?.name, ...extra };
       const res = await authFetch(endpoint, { method: 'POST', body: JSON.stringify(payload) });
       if (!res.ok) throw new Error('Failed to perform action');
       toast.success(`Article ${action.replace('_', ' ')}d successfully`);

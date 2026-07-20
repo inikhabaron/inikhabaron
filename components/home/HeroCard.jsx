@@ -1,9 +1,10 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { Share2 } from 'lucide-react';
 import { getCatAccent, getCatLabel, EDITORIAL_RED } from '@/lib/news-utils';
 
-export default function HeroCard({ item, onClick, formatDate, selectedLanguage, textScale, selectedFont, dark, onShareWhatsApp, onShareTwitter, onShareFacebook, toast }) {
+function HeroCard({ item, onClick, formatDate, selectedLanguage, textScale, selectedFont, dark, onShareWhatsApp, onShareTwitter, onShareFacebook, toast }) {
   const catColor = getCatAccent(item.category);
   const catLabel = getCatLabel(item.category, selectedLanguage);
   const [showShareMenu, setShowShareMenu] = useState(false);
@@ -75,17 +76,15 @@ export default function HeroCard({ item, onClick, formatDate, selectedLanguage, 
       ─────────────────────────────────────────────────────────────────────── */}
 
       {/* Background image */}
-      <img
+      <Image
         src={item.featuredImage || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=900'}
         alt={item.title}
+        fill
+        priority
+        sizes="(max-width: 768px) 100vw, 60vw"
         style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
           objectFit: 'cover',
           objectPosition: 'center top',
-          display: 'block',
         }}
       />
 
@@ -233,3 +232,5 @@ export default function HeroCard({ item, onClick, formatDate, selectedLanguage, 
     </div>
   );
 }
+
+export default React.memo(HeroCard);

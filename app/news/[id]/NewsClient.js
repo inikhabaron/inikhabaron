@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Newspaper } from 'lucide-react';
+import Image from 'next/image';
 
 import Header from '@/components/home/Header';
 import LatestNews from '@/components/home/LatestNews';
@@ -21,6 +22,7 @@ import { PersonalizedFeed } from '@/components/personalization';
 import useReadingProgress from '@/hooks/useReadingProgress';
 import useNewsletterSubscribe from '@/hooks/useNewsletterSubscribe';
 import useSiteChrome from '@/hooks/useSiteChrome';
+import useBookmarkedIds from '@/hooks/useBookmarkedIds';
 
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
 import { ACCENT, FONT_OPTIONS, getCatAccent, getCatLabel, formatDate } from '@/lib/news-utils';
@@ -43,15 +45,15 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
   const [article, setArticle] = useState(initialArticle);
   const [latestNews, setLatestNews] = useState(initialLatest || []);
   const [relatedNews, setRelatedNews] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [breakingNews, setBreakingNews] = useState([]);
   const [loading, setLoading] = useState(!initialArticle);
   const [error, setError] = useState(null);
   const {
     dark, toggleDark, selectedLanguage, setSelectedLanguage, translations, t,
     user, authLoading, authDialogOpen, setAuthDialogOpen,
     handleGoogleSignIn, handleAppleSignIn, handleSignOut,
+    categories, breakingNews,
   } = useSiteChrome();
+  const { bookmarkedIds, handleBookmarkChange } = useBookmarkedIds(user);
   const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]);
   const [textScale] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
@@ -125,23 +127,50 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
   }, [user]);
 
   useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/tags');
+        if (res.ok) {
+          const data = await res.json();
+          setTags((data.tags || []).filter(tag => tag.active && tag.popular));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
     if (!id) {
       return;
     }
 
+    // The server (page.js) already fetched this exact article + latest list
+    // via SSR/RSC — sync state from props instead of re-fetching over the
+    // network. This is also true on a client-side navigation between two
+    // articles (Next re-runs the Server Component for the new id), not just
+    // the very first mount; the id comparison covers both cases and falls
+    // back to a client fetch only if the props genuinely don't match yet.
+    if (id === initialArticle?.id) {
+      setArticle(initialArticle);
+      setLoading(false);
+      setError(null);
+      if (initialLatest?.length) {
+        setLatestNews(initialLatest);
+      } else {
+        fetch('/api/news?page=1&limit=8', { cache: 'no-store' })
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => { if (data) setLatestNews(data.news || []); })
+          .catch((err) => console.error(err));
+      }
+      return;
+    }
+
     const load = async () => {
-      // Don't flip back to the loader if the server already gave us the article.
-      if (!initialArticle) setLoading(true);
+      setLoading(true);
       setError(null);
       try {
-        const [articleRes, categoryRes, breakingRes, latestRes, tagsRes] = await Promise.all([
-          // fetch(`/api/news/${id}?t=${Date.now()}`,{ cache: 'no-store', }), // For testing the word Wrapping
-          fetch(`/api/news/${id}`,{ cache: 'no-store', }),
-          fetch('/api/categories'),
-          fetch('/api/news/breaking', { cache: 'no-store', }),
-          fetch('/api/news?page=1&limit=8', { cache: 'no-store', }),
-          fetch('/api/tags'),
-        ]);
+        const articleRes = await fetch(`/api/news/${id}`, { cache: 'no-store' });
 
         if (articleRes.status === 404) {
           setError('not-found');
@@ -152,33 +181,16 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
           const articleData = await articleRes.json();
           setArticle(articleData.news || null);
         }
-
-        if (categoryRes.ok) {
-          const data = await categoryRes.json();
-          setCategories(data.categories || []);
-        }
-        if (breakingRes.ok) {
-          const data = await breakingRes.json();
-          setBreakingNews(data.news || []);
-        }
-        if (latestRes.ok) {
-          const data = await latestRes.json();
-          setLatestNews(data.news || []);
-        }
-        if (tagsRes.ok) {
-          const data = await tagsRes.json();
-          setTags((data.tags || []).filter(tag => tag.active && tag.popular));
-        }
       } catch (err) {
         console.error(err);
-        if (!error) setError('failed');
+        setError('failed');
       } finally {
         setLoading(false);
       }
     };
 
     load();
-  }, [id]);
+  }, [id, initialArticle, initialLatest]);
 
   useEffect(() => {
     if (!article?.category) {
@@ -406,7 +418,14 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                     <main style={{ display: 'grid', gap: '24px' }}>
                       <div className={styles.articleHero} style={{ backgroundColor: surface, border: `1px solid ${bdr}` }}>
                         <div className={styles.heroImage}>
-                          <img src={article.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200'} alt={article.title} />
+                          <Image
+                            src={article.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200'}
+                            alt={article.title}
+                            width={1200}
+                            height={675}
+                            priority
+                            sizes="(max-width: 768px) 100vw, 90vw"
+                          />
                         </div>
                         <div className={styles.articleBody}>
                           <span className={styles.badge} style={{ backgroundColor: getCatAccent(article.category), color: '#fff' }}>
@@ -439,9 +458,11 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                             <p style={{ color: T2, fontSize: '15px', lineHeight: 1.8, marginTop: '16px' }}>{article.excerpt}</p>
                           )}
                           <div className={styles.shareRow}>
-                            <BookmarkButton 
+                            <BookmarkButton
                                 articleId={article.id}
                                 user={user}
+                                bookmarked={bookmarkedIds.has(article.id)}
+                                onChange={handleBookmarkChange}
                                 onRequireLogin={() => setAuthDialogOpen(true)}
                             />
                             <LikeButton
@@ -504,10 +525,13 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                               }}
                             >
                               {article.images.map((img, index) => (
-                                <img
+                                <Image
                                   key={index}
                                   src={typeof img === 'string' ? img : img?.url}
                                   alt={`Gallery ${index + 1}`}
+                                  width={400}
+                                  height={220}
+                                  sizes="(max-width: 768px) 100vw, 400px"
                                   style={{
                                     width: '100%',
                                     height: '220px',
@@ -565,7 +589,13 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                                     style={{ backgroundColor: dark ? '#161B27' : '#fff', borderColor: dark ? '#252E40' : '#E8EAED' }}
                                     onClick={() => navigateToArticle(item)}
                                   >
-                                    <img src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=900'} alt={item.title} />
+                                    <Image
+                                      src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=900'}
+                                      alt={item.title}
+                                      width={400}
+                                      height={180}
+                                      sizes="(max-width: 768px) 100vw, 400px"
+                                    />
                                     <div className={styles.relatedCardBody}>
                                       <p className={styles.relatedCardTitle} style={{ color: T1, fontFamily: selectedLanguage === 'hi' ? 'var(--font-devanagari), sans-serif' : selectedFont.value }}>
                                         {item.title}

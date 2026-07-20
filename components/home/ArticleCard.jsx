@@ -1,13 +1,14 @@
 'use client';
 import React, { useState, useRef, useContext, useEffect } from 'react';
+import Image from 'next/image';
 import { Bookmark, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
 import { getCatAccent, getCatLabel, EDITORIAL_RED } from '@/lib/news-utils';
 import BookmarkButton from '@/components/bookmarks/BookmarkButton';
 
-export default function ArticleCard({
-  item, onClick, formatDate, showShareMenu, setShowShareMenu, selectedLanguage, onShareWhatsApp, onShareTwitter, onShareFacebook, onCopyLink, user, onRequireLogin,
+function ArticleCard({
+  item, onClick, formatDate, showShareMenu, setShowShareMenu, selectedLanguage, onShareWhatsApp, onShareTwitter, onShareFacebook, onCopyLink, user, onRequireLogin, bookmarked, onBookmarkChange,
 }) {
   const dark = useContext(DarkCtx);
   const { scale } = useContext(FontCtx);
@@ -47,9 +48,11 @@ export default function ArticleCard({
       style={{ backgroundColor: dark ? '#161B27' : '#FFFFFF', border: dark ? '1px solid #252E40' : 'none' }}
     >
       <div className="kn-card-img-wrap" style={{ backgroundColor: dark ? '#252E40' : '#F0F2F6' }}>
-        <img
+        <Image
           src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600'}
           alt={item.title}
+          fill
+          sizes="(max-width: 768px) 100vw, 33vw"
           className="kn-card-img"
         />
         {item.isBreaking && <span className="kn-card-live">Breaking News</span>}
@@ -73,9 +76,11 @@ export default function ArticleCard({
           </div>
           <div className="kn-card-actions">
             <button onClick={(e) => e.stopPropagation()} className="kn-card-action-btn">
-              <BookmarkButton 
+              <BookmarkButton
                   articleId={item.id}
                   user={user}
+                  bookmarked={bookmarked}
+                  onChange={onBookmarkChange}
                   size="sm"
                   onRequireLogin={onRequireLogin}
               />
@@ -112,3 +117,5 @@ export default function ArticleCard({
     </div>
   );
 }
+
+export default React.memo(ArticleCard);

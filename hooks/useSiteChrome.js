@@ -32,10 +32,16 @@ export default function useSiteChrome() {
   }, []);
 
   useEffect(() => {
-    (async () => {
-      try { const d = await fetch('/api/categories').then(r => r.json()); setCategories(d.categories || []); } catch (e) { console.error(e); }
-      try { const d = await fetch('/api/news/breaking').then(r => r.json()); setBreakingNews(d.news || []); } catch (e) { console.error(e); }
-    })();
+    // Fetched in parallel and applied in the same tick (rather than two
+    // sequential awaits) so the category bar and breaking-news marquee
+    // appear together instead of shifting the layout twice.
+    Promise.all([
+      fetch('/api/categories').then(r => r.json()).catch((e) => { console.error(e); return null; }),
+      fetch('/api/news/breaking').then(r => r.json()).catch((e) => { console.error(e); return null; }),
+    ]).then(([categoriesData, breakingData]) => {
+      if (categoriesData) setCategories(categoriesData.categories || []);
+      if (breakingData) setBreakingNews(breakingData.news || []);
+    });
   }, []);
 
   const handleSearch = (e) => {

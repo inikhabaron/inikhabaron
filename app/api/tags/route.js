@@ -23,7 +23,7 @@ export async function GET() {
       .sort({ createdAt: -1 })
       .toArray();
 
-    return json({ tags });
+    return json({ tags }, { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } });
   } catch (error) {
     console.error('GET /api/tags error:', error);
     return json({ error: error.message }, { status: 500 });

@@ -7,6 +7,18 @@ export const revalidate = 0;
 
 export const OPTIONS = preflight;
 
+// List views only ever render title/excerpt/image/category/date (+ content,
+// which ArticleCard also needs for its reading-time word count) — these
+// editorial/admin-only fields are never rendered here, so drop them from
+// every list response instead of shipping full approval/version metadata
+// for 20+ articles per page.
+const LIST_EXCLUDE_PROJECTION = {
+  approvalHistory: 0,
+  headlineVariants: 0,
+  versionHistory: 0,
+  corrections: 0,
+};
+
 export async function GET(request) {
   try {
     await autoPublishScheduledArticles();
@@ -25,16 +37,22 @@ export async function GET(request) {
       query.category = category;
     }
 
+    let cursor;
     if (search) {
-      query.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { content: { $regex: search, $options: 'i' } },
-        { tags: { $regex: search, $options: 'i' } },
-      ];
+      // $text uses the news_text_search index (lib/db/ensureIndexes.js)
+      // instead of an unindexed $regex scan across every published article.
+      query.$text = { $search: search };
+      cursor = newsCollection
+        .find(query, { projection: { ...LIST_EXCLUDE_PROJECTION, score: { $meta: 'textScore' } } })
+        .sort({ score: { $meta: 'textScore' } });
+    } else {
+      cursor = newsCollection
+        .find(query, { projection: LIST_EXCLUDE_PROJECTION })
+        .sort({ publishedAt: -1, createdAt: -1, _id: -1 });
     }
 
     const [news, total] = await Promise.all([
-      newsCollection.find(query).sort({ publishedAt: -1, createdAt: -1, _id: -1 }).skip(skip).limit(limit).toArray(),
+      cursor.skip(skip).limit(limit).toArray(),
       newsCollection.countDocuments(query),
     ]);
 

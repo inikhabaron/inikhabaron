@@ -1,8 +1,9 @@
 'use client';
 import React from 'react';
+import Image from 'next/image';
 import { getCatAccent, getCatLabel } from '@/lib/news-utils';
 
-export default function HorizontalArticleCard({
+function HorizontalArticleCard({
   item, onClick, formatDate, selectedLanguage,
   dark, textScale, selectedFont, bdr, T1, T2, T3,
 }) {
@@ -30,11 +31,16 @@ export default function HorizontalArticleCard({
         <span style={{ color: T3, fontSize: `${11 * textScale}px` }}>{formatDate(item.publishedAt)}</span>
       </div>
       <div className="kn-horiz-thumb">
-        <img
+        <Image
           src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=300'}
           alt={item.title}
+          width={100}
+          height={90}
+          sizes="100px"
         />
       </div>
     </div>
   );
 }
+
+export default React.memo(HorizontalArticleCard);

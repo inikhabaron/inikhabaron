@@ -3,7 +3,6 @@ import {
   Poppins,
   Roboto,
   DM_Sans,
-  Nunito_Sans,
   Plus_Jakarta_Sans,
   Noto_Sans_Devanagari,
 } from 'next/font/google';
@@ -23,7 +22,6 @@ const inter         = Inter         ({ subsets: ['latin'],      weight: ['300','
 const poppins       = Poppins       ({ subsets: ['latin'],      weight: ['300','400','500','600','700','800'], variable: '--font-poppins',       display: 'swap' });
 const roboto        = Roboto        ({ subsets: ['latin'],      weight: ['300','400','500','700','900'],       variable: '--font-roboto',        display: 'swap' });
 const dmSans        = DM_Sans       ({ subsets: ['latin'],      weight: ['300','400','500','600','700'],       variable: '--font-dm-sans',       display: 'swap' });
-// const nunitoSans    = Nunito_Sans   ({ subsets: ['latin'],      weight: ['300','400','600','700','800'],       variable: '--font-nunito-sans',   display: 'swap' });
 const plusJakarta   = Plus_Jakarta_Sans({ subsets: ['latin'],   weight: ['300','400','500','600','700'],       variable: '--font-plus-jakarta',  display: 'swap' });
 
 // Pre-load Hindi script — used when selectedLanguage === 'hi'

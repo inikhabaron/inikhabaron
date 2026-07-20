@@ -1,11 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { auth, signInWithGoogle, signInWithApple, logOut } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { toast } from 'sonner';
 import { translations } from '@/lib/news-utils';
 import { SiteChromeContext } from '@/lib/news-contexts';
+import { registerServiceWorkerAndToken, listenForegroundMessages } from '@/lib/notifications/registerPush';
+import LocationDetectPrompt from '@/components/location/LocationDetectPrompt';
 
 // Single source of truth for dark mode, language, and logged-in user state
 // across the public site, so navigating between pages never re-reads
@@ -17,6 +20,8 @@ export default function SiteChromeProvider({ children }) {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const router = useRouter();
+  const registeredUidRef = useRef(null);
 
   const t = translations[selectedLanguage];
 
@@ -40,6 +45,30 @@ export default function SiteChromeProvider({ children }) {
     const unsub = onAuthStateChanged(auth, setUser);
     return unsub;
   }, []);
+
+  // Register the push token once per signed-in user (not on every render/tab
+  // focus) — guarded by a ref rather than state so it never re-triggers a
+  // permission prompt for the same uid across re-renders.
+  useEffect(() => {
+    if (!user || registeredUidRef.current === user.uid) return;
+    registeredUidRef.current = user.uid;
+    registerServiceWorkerAndToken();
+  }, [user]);
+
+  // Foreground pushes (tab open + focused) never reach the service worker's
+  // background handler, so surface them as a toast with the same deep-link
+  // behavior as a background notification click.
+  useEffect(() => {
+    const unsubscribe = listenForegroundMessages((payload) => {
+      const notification = payload.notification || {};
+      const deepLink = payload.data?.deepLink || '/';
+      toast(notification.title || 'KhabarON', {
+        description: notification.body,
+        action: { label: 'Open', onClick: () => router.push(deepLink) },
+      });
+    });
+    return unsubscribe;
+  }, [router]);
 
   const toggleDark = () => setDark(p => {
     localStorage.setItem('newsdesk_dark', String(!p));
@@ -98,6 +127,7 @@ export default function SiteChromeProvider({ children }) {
       handleGoogleSignIn, handleAppleSignIn, handleSignOut,
     }}>
       {children}
+      <LocationDetectPrompt isSignedIn={!!user} dark={dark} isHindi={selectedLanguage === 'hi'} />
     </SiteChromeContext.Provider>
   );
 }
