@@ -83,6 +83,7 @@ export default function PersonalizedNewsCard({
           src={article.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600'}
           alt={article.title}
           fill
+          sizes="(max-width: 480px) 90vw, 300px"
           className="kn-card-img"
         />
 

@@ -124,7 +124,7 @@ export default function SubscriptionPlans({ open, onClose, user, userId }) {
                   <p style={{ fontWeight: 700, fontSize: '14px', color: dark ? '#e5e7eb' : '#333', marginBottom: '8px' }}>{plan.name}</p>
                   <p style={{ fontSize: '24px', fontWeight: 800, color: ACCENT, marginBottom: '4px' }}>
                     {plan.price === 0 ? 'Free' : `₹${plan.price}`}
-                    {plan.price > 0 && <span style={{ fontSize: '13px', color: '#8A8F98', fontWeight: 400 }}>/{plan.period}</span>}
+                    {plan.price > 0 && <span style={{ fontSize: '13px', color: dark ? '#9BA5B4' : '#6B7280', fontWeight: 400 }}>/{plan.period}</span>}
                   </p>
                   <ul style={{ listStyle: 'none', margin: '12px 0', padding: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {plan.features.map((f, i) => (

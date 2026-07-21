@@ -193,12 +193,32 @@ export default function Header({
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '14px' }}>
-            <Search onClick={() => { setShowMobileSearch(true); setIsSearchActive(true); }} style={{ width: '20px', height: '20px', color: T2, cursor: 'pointer' }} />
-            <button onClick={toggleDark} style={{ padding: '6px', border: 'none', background: 'none', cursor: 'pointer', color: T2, display: 'flex', alignItems: 'center' }}>
+            <button
+              type="button"
+              onClick={() => { setShowMobileSearch(true); setIsSearchActive(true); }}
+              aria-label={selectedLanguage === 'hi' ? 'खोजें' : 'Search'}
+              style={{ padding: '6px', border: 'none', background: 'none', cursor: 'pointer', color: T2, display: 'flex', alignItems: 'center' }}
+            >
+              <Search size={20} />
+            </button>
+            <button
+              type="button"
+              onClick={toggleDark}
+              aria-label={dark ? (selectedLanguage === 'hi' ? 'लाइट मोड चालू करें' : 'Switch to light mode') : (selectedLanguage === 'hi' ? 'डार्क मोड चालू करें' : 'Switch to dark mode')}
+              style={{ padding: '6px', border: 'none', background: 'none', cursor: 'pointer', color: T2, display: 'flex', alignItems: 'center' }}
+            >
               {dark ? <Moon size={18} /> : <Sun size={18} />}
             </button>
             <div style={{ position: 'relative' }}>
-              <User onClick={() => setShowProfileMenu(p => !p)} style={{ width: '20px', height: '20px', color: T2, cursor: 'pointer' }} />
+              <button
+                type="button"
+                onClick={() => setShowProfileMenu(p => !p)}
+                aria-label={selectedLanguage === 'hi' ? 'खाता' : 'Account'}
+                aria-expanded={showProfileMenu}
+                style={{ padding: '6px', border: 'none', background: 'none', cursor: 'pointer', color: T2, display: 'flex', alignItems: 'center' }}
+              >
+                <User size={20} />
+              </button>
               {showProfileMenu && <ProfileDropdown />}
             </div>
           </div>
@@ -245,6 +265,7 @@ export default function Header({
             </span> */}
             {/* <button style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.75)', cursor: 'pointer', fontSize: '11px', padding: 0, whiteSpace: 'nowrap' }}>ई-पेपर</button> */}
             <select value={selectedLanguage} onChange={e => setSelectedLanguage(e.target.value)}
+              aria-label={selectedLanguage === 'hi' ? 'भाषा चुनें' : 'Select language'}
               style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '16px', fontWeight: 600, outline: 'none' }}>
               <option value="hi" style={{ color: '#000' }}>हिंदी</option>
               <option value="en" style={{ color: '#000' }}>English</option>
@@ -263,19 +284,19 @@ export default function Header({
               <button key={link} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '16px', fontWeight: 600, padding: 0, whiteSpace: 'nowrap' }}>{link}</button>
             ))}
             <div className="kn-footer-social-row" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '4px', color: 'white' }}>
-              <button className="kn-footer-social-btn">
+              <button className="kn-footer-social-btn" aria-label="Facebook">
                 <FaFacebook size={18} />
               </button>
 
-              <button className="kn-footer-social-btn">
+              <button className="kn-footer-social-btn" aria-label="Twitter">
                 <FaXTwitter size={18} />
               </button>
 
-              <button className="kn-footer-social-btn">
+              <button className="kn-footer-social-btn" aria-label="YouTube">
                 <FaYoutube size={18} />
               </button>
 
-              <button className="kn-footer-social-btn">
+              <button className="kn-footer-social-btn" aria-label="Instagram">
                 <FaInstagram size={18} />
               </button>
             </div>
@@ -441,7 +462,8 @@ export default function Header({
             {/* LEFT SCROLL */}
 
             <button className={`${styles.navArrow} ${ clicked === "left" ? styles.clicked : "" }`}
-              onClick={() => scrollCategories("left")} >
+              onClick={() => scrollCategories("left")}
+              aria-label={selectedLanguage === 'hi' ? 'श्रेणियाँ बाईं ओर स्क्रॉल करें' : 'Scroll categories left'} >
               <ChevronLeft size={18} />
             </button>
 
@@ -471,7 +493,8 @@ export default function Header({
             {/* RIGHT SCROLL */}
 
             <button className={styles.navArrow}
-              onClick={() => scrollCategories("right")} >
+              onClick={() => scrollCategories("right")}
+              aria-label={selectedLanguage === 'hi' ? 'श्रेणियाँ दाईं ओर स्क्रॉल करें' : 'Scroll categories right'} >
               <ChevronRight size={18} />
             </button>
 

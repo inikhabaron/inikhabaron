@@ -13,7 +13,7 @@ export default function AuthDialog({ open, onClose, onGoogleSignIn, onAppleSignI
         <DialogDescription style={SR_ONLY}>Choose a provider to sign in.</DialogDescription>
 
         <div style={{ padding: '28px', background: 'linear-gradient(135deg, #3BAFDA, #6C63FF)', color: 'white', textAlign: 'center', position: 'relative' }}>
-          <button onClick={onClose} style={{ position: 'absolute', right: '10px', top: '10px', background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: '50%', width: '28px', height: '28px', cursor: 'pointer', color: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', right: '10px', top: '10px', background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: '50%', width: '28px', height: '28px', cursor: 'pointer', color: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <X size={14} />
           </button>
           <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 6px' }}>Welcome Back 👋</h2>

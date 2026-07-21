@@ -1,6 +1,6 @@
 'use client';
 
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useLayoutEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SiteChromeContext } from '@/lib/news-contexts';
 import useNewsletterSubscribe from './useNewsletterSubscribe';
@@ -23,12 +23,14 @@ export default function useSiteChrome() {
   const [searchQuery, setSearchQuery] = useState('');
   const { newsletterEmail, setNewsletterEmail, newsletterLoading, handleNewsletterSubscribe } = useNewsletterSubscribe(shared.selectedLanguage);
 
-  useEffect(() => {
+  // useLayoutEffect so mobile/desktop chrome is settled before first paint
+  // instead of swapping layouts after mount (avoids a large layout shift).
+  useLayoutEffect(() => {
     let timeout;
+    setIsMobileView(window.innerWidth <= 1159);
     const onResize = () => { clearTimeout(timeout); timeout = setTimeout(() => setIsMobileView(window.innerWidth <= 1159), 150); };
-    onResize();
     window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    return () => { clearTimeout(timeout); window.removeEventListener('resize', onResize); };
   }, []);
 
   useEffect(() => {
@@ -55,7 +57,7 @@ export default function useSiteChrome() {
   const bdr = shared.dark ? '#252E40' : '#E8EAED';
   const T1 = shared.dark ? '#E8ECF0' : '#111827';
   const T2 = shared.dark ? '#9BA5B4' : '#4B5563';
-  const T3 = '#8A8F98';
+  const T3 = shared.dark ? '#9BA5B4' : '#6B7280';
   const HEADER_H = isMobileView ? 105 : 204;
 
   return {

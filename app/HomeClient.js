@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { Newspaper, Crown, ChevronDown } from 'lucide-react';
@@ -17,9 +18,12 @@ import BreakingTicker from '@/components/home/BreakingTicker';
 import CategoryShowcase from '@/components/home/CategoryShowcase';
 import SiteFooter from '@/components/home/SiteFooter';
 // import ArticleModal from '@/components/home/ArticleModal';
-import AuthDialog from '@/components/home/AuthDialog';
-import SubscriptionPlans from '@/components/home/SubscriptionPlans';
-import MobileSearch from '@/components/home/MobileSearch';
+// Modals/overlays are off the critical path (rendered only after a user
+// action), so they're code-split out of the initial bundle instead of
+// loading eagerly on every homepage visit.
+const AuthDialog = dynamic(() => import('@/components/home/AuthDialog'), { ssr: false });
+const SubscriptionPlans = dynamic(() => import('@/components/home/SubscriptionPlans'), { ssr: false });
+const MobileSearch = dynamic(() => import('@/components/home/MobileSearch'), { ssr: false });
 import FollowButton from '@/components/follow/FollowButton';
 import { applyFollowChange } from '@/lib/follow/applyFollowChange';
 import { PersonalizedFeed } from '@/components/personalization';
@@ -88,12 +92,18 @@ export default function HomePage({ initialCategory = 'all' }) {
   const handleRequireLogin = useCallback(() => setAuthDialogOpen(true), [setAuthDialogOpen]);
 
   // ── Effects ───────────────────────────────────────────────────────────────
-  useEffect(() => {
+  // useLayoutEffect (not useEffect) so the mobile/desktop layout is settled
+  // before the browser paints — these two views render entirely different
+  // DOM trees (see Header + the mobile-list/desktop-grid split below), so
+  // deciding this after paint caused a full-page layout swap (and a large
+  // Cumulative Layout Shift) on every load. Only actual resize events are
+  // debounced; the initial read is synchronous.
+  useLayoutEffect(() => {
     let timeout;
+    setIsMobileView(window.innerWidth <= 1159);
     const onResize = () => { clearTimeout(timeout); timeout = setTimeout(() => setIsMobileView(window.innerWidth <= 1159), 150); };
-    onResize();
     window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    return () => { clearTimeout(timeout); window.removeEventListener('resize', onResize); };
   }, []);
 
   useEffect(() => {
@@ -226,7 +236,7 @@ export default function HomePage({ initialCategory = 'all' }) {
   const bdr = dark ? '#252E40' : '#E8EAED';
   const T1 = dark ? '#E8ECF0' : '#111827';
   const T2 = dark ? '#9BA5B4' : '#4B5563';
-  const T3 = '#8A8F98';
+  const T3 = dark ? '#9BA5B4' : '#6B7280';
 
   const HEADER_H = isMobileView ? 105 : 0;
   const contentPad = isMobileView ? '12px' : '24px 5px';
@@ -281,7 +291,10 @@ export default function HomePage({ initialCategory = 'all' }) {
           )}
 
           {/* Main content */}
-          <div className="kn-content-wrap" style={{ padding: contentPad }}>
+          <main className="kn-content-wrap" style={{ padding: contentPad }}>
+            <h1 className="sr-only">
+              {selectedLanguage === 'hi' ? 'खबरON - ताज़ा हिंदी और अंग्रेज़ी समाचार' : 'KhabarON - Latest Hindi & English News'}
+            </h1>
 
             {/* Category banner */}
             {selectedCategory && selectedCategory !== 'all' && (
@@ -489,7 +502,7 @@ export default function HomePage({ initialCategory = 'all' }) {
             {!isMobileView && categories.length > 0 && !loading && (
               <CategoryShowcase categories={categories} onCategoryClick={setSelectedCategory} dark={dark} selectedLanguage={selectedLanguage} />
             )}
-          </div>
+          </main>
 
           {/* Footer */}
           <SiteFooter dark={dark} categories={categories} selectedLanguage={selectedLanguage} onCategoryClick={setSelectedCategory} newsletterEmail={newsletterEmail} setNewsletterEmail={setNewsletterEmail} onNewsletterSubscribe={handleNewsletterSubscribe} newsletterLoading={newsletterLoading} />

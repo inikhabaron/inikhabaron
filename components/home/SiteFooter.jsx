@@ -13,7 +13,7 @@ import {
 export default function SiteFooter({ dark, categories, selectedLanguage, onCategoryClick, newsletterEmail, setNewsletterEmail, onNewsletterSubscribe, newsletterLoading }) {
   const T1 = dark ? '#E8ECF0' : '#111827';
   const T2 = dark ? '#9BA5B4' : '#4B5563';
-  const T3 = '#8A8F98';
+  const T3 = dark ? '#9BA5B4' : '#6B7280';
 
   const [nlLanguage, setNlLanguage] = useState(selectedLanguage === 'hi' ? 'hi' : 'en');
   const [nlCategories, setNlCategories] = useState([]);
@@ -80,6 +80,7 @@ export default function SiteFooter({ dark, categories, selectedLanguage, onCateg
                         value={nlLanguage}
                         onChange={e => setNlLanguage(e.target.value)}
                         className="kn-footer-nl-settings-select"
+                        aria-label={selectedLanguage === 'hi' ? 'न्यूज़लेटर भाषा' : 'Newsletter language'}
                       >
                         <option value="en">English</option>
                         <option value="hi">हिन्दी</option>
@@ -135,19 +136,19 @@ export default function SiteFooter({ dark, categories, selectedLanguage, onCateg
             </ul>
             
             <div className="kn-footer-social-row" style={{ color: dark ? 'rgb(255, 255, 255)' : 'rgb(1, 1, 1)' }}>
-              <button className="kn-footer-social-btn">
+              <button className="kn-footer-social-btn" aria-label="Facebook">
                 <FaFacebookF size={18} />
               </button>
 
-              <button className="kn-footer-social-btn">
+              <button className="kn-footer-social-btn" aria-label="Twitter">
                 <FaXTwitter size={18} />
               </button>
 
-              <button className="kn-footer-social-btn">
+              <button className="kn-footer-social-btn" aria-label="YouTube">
                 <FaYoutube size={18} />
               </button>
 
-              <button className="kn-footer-social-btn">
+              <button className="kn-footer-social-btn" aria-label="Instagram">
                 <FaInstagram size={18} />
               </button>
             </div>

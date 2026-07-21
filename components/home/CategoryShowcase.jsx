@@ -50,7 +50,7 @@ export default function CategoryShowcase({ categories, onCategoryClick, dark, se
             >
               <div className="kn-cat-overlay" />
               <div className="kn-cat-content">
-                <h4 className="kn-cat-name">{label}</h4>
+                <h3 className="kn-cat-name">{label}</h3>
                 {desc && <p className="kn-cat-desc">{desc}</p>}
                 <span className="kn-cat-link">{selectedLanguage === 'hi' ? 'सभी देखें' : 'View All'} &rsaquo;</span>
               </div>

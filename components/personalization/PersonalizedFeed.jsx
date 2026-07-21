@@ -140,6 +140,7 @@ export default function PersonalizedFeed({selectedLanguage = 'en',}) {
         <button
           className={styles.arrowLeft}
           onClick={() => scroll("left")}
+          aria-label={selectedLanguage === 'hi' ? 'बाईं ओर स्क्रॉल करें' : 'Scroll left'}
           style={{
             background: dark ? '#161B27' : '#fff',
             border: dark ? '1px solid #252E40' : 'none',
@@ -151,7 +152,7 @@ export default function PersonalizedFeed({selectedLanguage = 'en',}) {
 
         <div ref={scrollRef} className={styles.carousel}>
           {articles.map(article => (
-            <div key={article._id} className={styles.item}>
+            <div key={article.id} className={styles.item}>
               <PersonalizedNewsCard
                 article={article}
                 selectedLanguage={selectedLanguage}
@@ -163,6 +164,7 @@ export default function PersonalizedFeed({selectedLanguage = 'en',}) {
         <button
           className={styles.arrowRight}
           onClick={() => scroll("right")}
+          aria-label={selectedLanguage === 'hi' ? 'दाईं ओर स्क्रॉल करें' : 'Scroll right'}
           style={{
             background: dark ? '#161B27' : '#fff',
             border: dark ? '1px solid #252E40' : 'none',

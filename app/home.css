@@ -147,7 +147,7 @@
 .kn-latest-text    { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .kn-latest-cat     { font-size: 10px; font-weight: 700; color: #3BAFDA; text-transform: uppercase; letter-spacing: .05em; }
 .kn-latest-item-title { font-size: 13px; font-weight: 500; line-height: 1.35; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.kn-latest-date    { font-size: 11px; color: #8A8F98; }
+.kn-latest-date    { font-size: 11px; color: #6B7280; }
 .kn-latest-thumb   { width: 64px; height: 64px; border-radius: 8px; overflow: hidden; flex-shrink: 0; }
 .kn-latest-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .kn-latest-view-all{ display: block; width: 100%; margin-top: 14px; padding: 10px; border-radius: 8px; border: 1px solid #D72638; background: transparent; color: #D72638; font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; transition: all .15s; }

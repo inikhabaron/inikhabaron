@@ -71,11 +71,14 @@ function ArticleCard({
 
         <div className="kn-card-meta">
           <div className="kn-card-meta-left">
-            <span style={{ fontSize: `${11 * scale}px`, color: '#8A8F98', whiteSpace: 'nowrap' }}>{formatDate(item.publishedAt)}</span>
-            <span style={{ fontSize: `${10 * scale}px`, color: '#8A8F98', whiteSpace: 'nowrap' }}>· {readTime} min</span>
+            <span style={{ fontSize: `${11 * scale}px`, color: dark ? '#9BA5B4' : '#6B7280', whiteSpace: 'nowrap' }}>{formatDate(item.publishedAt)}</span>
+            <span style={{ fontSize: `${10 * scale}px`, color: dark ? '#9BA5B4' : '#6B7280', whiteSpace: 'nowrap' }}>· {readTime} min</span>
           </div>
           <div className="kn-card-actions">
-            <button onClick={(e) => e.stopPropagation()} className="kn-card-action-btn">
+            {/* stopPropagation wrapper must be a div, not a button — BookmarkButton
+                renders its own <button>, and a <button> can't nest inside another
+                <button> (invalid HTML; React logs a hydration error for it). */}
+            <div onClick={(e) => e.stopPropagation()} className="kn-card-action-btn">
               <BookmarkButton
                   articleId={item.id}
                   user={user}
@@ -84,12 +87,13 @@ function ArticleCard({
                   size="sm"
                   onRequireLogin={onRequireLogin}
               />
-            </button>
+            </div>
             <div style={{ position: 'relative' }}>
-              
+
               <button
                 onClick={(e) => { e.stopPropagation(); setShowShareMenu(p => p === item.id ? null : item.id); }}
                 className="kn-card-action-btn"
+                aria-label={selectedLanguage === 'hi' ? 'लेख साझा करें' : 'Share article'}
               >
                 <Share2 style={{ width: '13px', height: '13px' }} />
               </button>
