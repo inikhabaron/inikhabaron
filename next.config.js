@@ -16,7 +16,11 @@ const nextConfig = {
     ],
     minimumCacheTTL: 60,
     deviceSizes: [360, 640, 750, 828, 1080, 1200, 1920],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    // 432 added to tightly match the 3-column desktop article grid
+    // (kn-card-img renders at ~33vw ≈ 420-450px there) — without it, the
+    // nearest bucket was 384 below and the next deviceSize (640) above, so
+    // grid thumbnails were served ~50% larger than their display size.
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 432],
   },
   experimental: {
     serverComponentsExternalPackages: ['mongodb'],
