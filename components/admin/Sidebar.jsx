@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart3, FileText, Video, Tag, LayoutGrid, Users, Pencil, MessageSquare, Mail, Award, CalendarDays, } from 'lucide-react';
+import { BarChart3, FileText, Video, Film, Tag, LayoutGrid, Users, Pencil, MessageSquare, Mail, Award, CalendarDays, Megaphone, } from 'lucide-react';
 import { DS } from './design-system';
 import { SIDEBAR_W } from './constants';
 
@@ -10,7 +10,9 @@ export function Sidebar({ activeTab, onTabChange, currentUser, isOpen, onClose, 
     { id: 'news', icon: FileText, label: 'Posts', roles: null },
     { id: 'livestream', icon: Video, label: 'Live Stream', roles: null },
     { id: 'categories', icon: LayoutGrid, label: 'Categories', roles: ['admin', 'editor'] },
+    { id: 'reels', icon: Film, label: 'Reels', roles: ['admin', 'editor', 'reporter'] },
     { id: 'tags', icon: Tag, label: 'Tags', roles: ['admin', 'editor'] },
+    { id: 'promotions', icon: Megaphone, label: 'Promotions', roles: ['admin', 'editor'] },
     { id: 'comments', icon: MessageSquare, label: 'Comments', roles: null },
     { id: 'newsletter', icon: Mail, label: 'Newsletter', roles: ['admin', 'editor'] },
     { id: 'reporter-metrics', icon: Award, label: 'Reporter Metrics', roles: ['admin', 'editor'] },

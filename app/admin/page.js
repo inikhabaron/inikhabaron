@@ -20,6 +20,10 @@ import { VersionHistoryDialog } from '@/components/admin/VersionHistoryDialog';
 import { CommentsView, CommentDetailsDialog } from '@/components/admin/comments';
 import { NewsletterView } from '@/components/admin/newsletter';
 import { ReporterMetricsView, ReporterDetailDialog } from '@/components/admin/reporterMetrics';
+import { PromotionsView } from '@/components/admin/PromotionsView';
+import { PromotionFormDialog } from '@/components/admin/PromotionForm/PromotionFormDialog';
+import { ReelsView } from '@/components/admin/ReelsView';
+import { ReelFormDialog } from '@/components/admin/ReelFormDialog';
 
 const EMPTY_LOCATION_FORM = {
   enabled: false, scope: 'national', country: 'India', stateId: null, stateSlug: null, stateName: null, districtId: null, districtSlug: null, districtName: null,
@@ -39,6 +43,18 @@ const EMPTY_CATEGORY_FORM = {
 
 const EMPTY_TAG_FORM = {
   name: '', slug: '', description: '', color: '#8b5cf6', isActive: true,
+};
+
+const EMPTY_PROMOTION_FORM = {
+  title: '', description: '', bannerImage: '', eventDate: '', startDate: '', endDate: '',
+  status: 'active', priority: 0, buttonText: 'Read More', linkType: 'none', linkValue: '',
+  category: '', isFeatured: false, showCountdown: false,
+};
+
+const EMPTY_REEL_FORM = {
+  title: '', description: '', video: null, thumbnailUrl: '', category: '', tags: '',
+  language: 'en', location: EMPTY_LOCATION_FORM, linkedArticleId: null, linkedArticleTitle: '',
+  reporterId: '', status: 'draft', scheduledAt: '', isFeatured: false, isSensitive: false,
 };
 
 const EMPTY_USER_FORM = {
@@ -86,6 +102,11 @@ function AdminPageContent() {
   const [newsletterLastSendResult, setNewsletterLastSendResult] = useState(null);
   const [newsletterForceResend, setNewsletterForceResend] = useState(false);
   const [newsletterCampaigns, setNewsletterCampaigns] = useState([]);
+  const [promotions, setPromotions] = useState([]);
+  const [promotionArticleOptions, setPromotionArticleOptions] = useState([]);
+  const [reels, setReels] = useState([]);
+  const [reelsStatusFilter, setReelsStatusFilter] = useState('all');
+  const [reelsCategoryFilter, setReelsCategoryFilter] = useState('all');
   const [reporterMetrics, setReporterMetrics] = useState([]);
   const [reporterDetailOpen, setReporterDetailOpen] = useState(false);
   const [reporterDetail, setReporterDetail] = useState(null);
@@ -98,10 +119,14 @@ function AdminPageContent() {
   const [editingNews, setEditingNews] = useState(null);
   const [editingCategory, setEditingCategory] = useState(null);
   const [editingTag, setEditingTag] = useState(null);
+  const [editingPromotion, setEditingPromotion] = useState(null);
+  const [editingReel, setEditingReel] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [isNewsDialogOpen, setIsNewsDialogOpen] = useState(false);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [isTagDialogOpen, setIsTagDialogOpen] = useState(false);
+  const [isPromotionDialogOpen, setIsPromotionDialogOpen] = useState(false);
+  const [isReelDialogOpen, setIsReelDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [versionHistory, setVersionHistory] = useState([]);
@@ -118,6 +143,8 @@ function AdminPageContent() {
     isActive: true,
   });
   const [tagForm, setTagForm] = useState(EMPTY_TAG_FORM);
+  const [promotionForm, setPromotionForm] = useState(EMPTY_PROMOTION_FORM);
+  const [reelForm, setReelForm] = useState(EMPTY_REEL_FORM);
   const [userForm, setUserForm] = useState(EMPTY_USER_FORM);
   const [ytForm, setYtForm] = useState({ videoId: '', channelId: '', title: '', isLive: false });
   const [ytSaving, setYtSaving] = useState(false);
@@ -205,6 +232,45 @@ function AdminPageContent() {
       setTags(data.tags || []);
     } catch (error) {
       console.error('Error fetching tags:', error);
+    }
+  }, []);
+
+  const fetchPromotions = useCallback(async () => {
+    try {
+      const res = await authFetch('/api/admin/promotions', { method: 'GET' });
+      const data = await res.json();
+      setPromotions(data.promotions || []);
+    } catch (error) {
+      console.error('Error fetching promotions:', error);
+      toast.error('Failed to fetch promotions');
+    }
+  }, []);
+
+  const fetchReels = useCallback(async () => {
+    try {
+      let url = '/api/admin/reels?limit=100';
+      if (reelsStatusFilter !== 'all') url += `&status=${reelsStatusFilter}`;
+      if (reelsCategoryFilter !== 'all') url += `&category=${reelsCategoryFilter}`;
+      const res = await authFetch(url, { method: 'GET' });
+      const data = await res.json();
+      setReels(data.reels || []);
+    } catch (error) {
+      console.error('Error fetching reels:', error);
+      toast.error('Failed to fetch reels');
+    }
+  }, [reelsStatusFilter, reelsCategoryFilter]);
+
+  // Backs the article search-picker in PromotionFormDialog — reuses the
+  // existing news list endpoint rather than adding a dedicated search API,
+  // same "fetch a batch, filter client-side" approach NewsListView's own
+  // search box already uses.
+  const fetchPromotionArticleOptions = useCallback(async () => {
+    try {
+      const res = await authFetch('/api/admin/news?status=published&limit=100', { method: 'GET' });
+      const data = await res.json();
+      setPromotionArticleOptions((data.news || []).map((n) => ({ id: n.id, title: n.title })));
+    } catch (error) {
+      console.error('Error fetching article options:', error);
     }
   }, []);
 
@@ -335,10 +401,16 @@ function AdminPageContent() {
       else if (activeTab === 'comments') { await Promise.all([fetchComments(), fetchModerationSettings()]); }
       else if (activeTab === 'newsletter') { await Promise.all([fetchNewsletter(), fetchNewsletterCampaigns()]); }
       else if (activeTab === 'reporter-metrics') await fetchReporterMetrics();
+      else if (activeTab === 'promotions') await Promise.all([fetchPromotions(), fetchPromotionArticleOptions()]);
+      else if (activeTab === 'reels') { await Promise.all([fetchReels(), fetchUsers()]); }
       setLoading(false);
     };
     load();
-  }, [activeTab, fetchCategories, fetchAnalytics, fetchNews, fetchUsers, fetchComments, fetchYtConfig, fetchNewsletter, fetchNewsletterCampaigns, fetchReporterMetrics, currentUser]);
+  }, [activeTab, fetchCategories, fetchAnalytics, fetchNews, fetchUsers, fetchComments, fetchYtConfig, fetchNewsletter, fetchNewsletterCampaigns, fetchReporterMetrics, fetchPromotions, fetchPromotionArticleOptions, fetchReels, currentUser]);
+
+  useEffect(() => {
+    if (activeTab === 'reels') fetchReels();
+  }, [reelsStatusFilter, reelsCategoryFilter, activeTab, fetchReels]);
 
   useEffect(() => {
     const articleId = searchParams.get('openEdit');
@@ -578,6 +650,109 @@ function AdminPageContent() {
       toast.success('Tag deleted');
       fetchTags();
     } catch (error) { toast.error('Failed to delete'); }
+  };
+
+  const handleSavePromotion = async () => {
+    try {
+      const method = editingPromotion ? 'PUT' : 'POST';
+      const url = editingPromotion ? `/api/admin/promotions/${editingPromotion.id}` : '/api/admin/promotions';
+      const res = await authFetch(url, { method, body: JSON.stringify(promotionForm) });
+      if (!res.ok) throw new Error('Failed to save');
+      toast.success(editingPromotion ? 'Promotion updated' : 'Promotion created');
+      setIsPromotionDialogOpen(false);
+      setPromotionForm(EMPTY_PROMOTION_FORM);
+      setEditingPromotion(null);
+      fetchPromotions();
+    } catch (error) { toast.error('Failed to save promotion'); }
+  };
+
+  const handleDeletePromotion = async (id) => {
+    if (!confirm('Are you sure you want to delete this promotion?')) return;
+    try {
+      await authFetch(`/api/admin/promotions/${id}`, { method: 'DELETE' });
+      toast.success('Promotion deleted');
+      fetchPromotions();
+    } catch (error) { toast.error('Failed to delete promotion'); }
+  };
+
+  const handleTogglePromotionStatus = async (promotion) => {
+    try {
+      const nextStatus = promotion.status === 'active' ? 'inactive' : 'active';
+      const res = await authFetch(`/api/admin/promotions/${promotion.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ ...promotion, status: nextStatus }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(nextStatus === 'active' ? 'Promotion enabled' : 'Promotion disabled');
+      fetchPromotions();
+    } catch (error) { toast.error('Failed to update promotion'); }
+  };
+
+  const handleSaveReel = async () => {
+    try {
+      const method = editingReel ? 'PUT' : 'POST';
+      const url = editingReel ? `/api/admin/reels/${editingReel.id}` : '/api/admin/reels';
+      const payload = {
+        title: reelForm.title,
+        description: reelForm.description,
+        video: reelForm.video,
+        thumbnail: reelForm.thumbnailUrl ? { url: reelForm.thumbnailUrl } : null,
+        category: reelForm.category,
+        tags: reelForm.tags.split(',').map((t) => t.trim()).filter(Boolean),
+        language: reelForm.language,
+        location: reelForm.location,
+        linkedArticleId: reelForm.linkedArticleId || null,
+        reporterId: reelForm.reporterId || currentUser?.id,
+        status: reelForm.status,
+        scheduledAt: reelForm.scheduledAt || null,
+        isFeatured: reelForm.isFeatured,
+        isSensitive: reelForm.isSensitive,
+      };
+      const res = await authFetch(url, { method, body: JSON.stringify(payload) });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to save');
+      }
+      toast.success(editingReel ? 'Reel updated' : 'Reel created');
+      setIsReelDialogOpen(false);
+      setReelForm(EMPTY_REEL_FORM);
+      setEditingReel(null);
+      fetchReels();
+    } catch (error) { toast.error(error?.message || 'Failed to save reel'); }
+  };
+
+  const handleDeleteReel = async (id) => {
+    if (!confirm('Are you sure you want to delete this reel?')) return;
+    try {
+      await authFetch(`/api/admin/reels/${id}`, { method: 'DELETE' });
+      toast.success('Reel deleted');
+      fetchReels();
+    } catch (error) { toast.error('Failed to delete reel'); }
+  };
+
+  const handleToggleReelStatus = async (reel) => {
+    try {
+      const nextStatus = reel.status === 'published' ? 'unpublished' : 'published';
+      const res = await authFetch(`/api/admin/reels/${reel.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(nextStatus === 'published' ? 'Reel published' : 'Reel unpublished');
+      fetchReels();
+    } catch (error) { toast.error('Failed to update reel status'); }
+  };
+
+  const handleResolveReelReport = async (reel) => {
+    try {
+      const res = await authFetch(`/api/admin/reels/${reel.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ reportStatus: 'reviewed' }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success('Report marked as reviewed');
+      fetchReels();
+    } catch (error) { toast.error('Failed to resolve report'); }
   };
 
   const handleSaveUser = async () => {
@@ -853,6 +1028,56 @@ function AdminPageContent() {
             campaigns={newsletterCampaigns}
           />
         );
+      case 'promotions':
+        return (
+          <PromotionsView
+            promotions={promotions} loading={loading}
+            onAdd={() => { setEditingPromotion(null); setPromotionForm(EMPTY_PROMOTION_FORM); setIsPromotionDialogOpen(true); }}
+            onEdit={(promo) => {
+              setEditingPromotion(promo);
+              const toLocalInput = (d) => d ? new Date(d).toISOString().slice(0, 16) : '';
+              setPromotionForm({
+                title: promo.title || '', description: promo.description || '', bannerImage: promo.bannerImage || '',
+                eventDate: toLocalInput(promo.eventDate), startDate: toLocalInput(promo.startDate), endDate: toLocalInput(promo.endDate),
+                status: promo.status || 'active', priority: promo.priority || 0, buttonText: promo.buttonText || 'Read More',
+                linkType: promo.linkType || 'none', linkValue: promo.linkValue || '', category: promo.category || '',
+                isFeatured: promo.isFeatured || false, showCountdown: promo.showCountdown || false,
+              });
+              setIsPromotionDialogOpen(true);
+            }}
+            onDelete={handleDeletePromotion}
+            onToggleStatus={handleTogglePromotionStatus}
+          />
+        );
+      case 'reels':
+        return (
+          <ReelsView
+            reels={reels} currentUser={currentUser} loading={loading}
+            statusFilter={reelsStatusFilter} onStatusFilterChange={setReelsStatusFilter}
+            categoryFilter={reelsCategoryFilter} onCategoryFilterChange={setReelsCategoryFilter}
+            categories={categories}
+            searchQuery={searchQuery}
+            onAddNew={() => { setEditingReel(null); setReelForm({ ...EMPTY_REEL_FORM, reporterId: currentUser?.id || '' }); setIsReelDialogOpen(true); }}
+            onEdit={(reel) => {
+              setEditingReel(reel);
+              const toLocalInput = (d) => d ? new Date(d).toISOString().slice(0, 16) : '';
+              setReelForm({
+                title: reel.title || '', description: reel.description || '', video: reel.video || null,
+                thumbnailUrl: reel.thumbnail?.url || '', category: reel.category || '',
+                tags: Array.isArray(reel.tags) ? reel.tags.join(', ') : '',
+                language: reel.language || 'en', location: reel.location || EMPTY_LOCATION_FORM,
+                linkedArticleId: reel.linkedArticleId || null, linkedArticleTitle: reel.linkedArticle?.title || '',
+                reporterId: reel.reporterId || '', status: reel.status || 'draft',
+                scheduledAt: toLocalInput(reel.scheduledAt), isFeatured: reel.isFeatured || false,
+                isSensitive: reel.isSensitive || false,
+              });
+              setIsReelDialogOpen(true);
+            }}
+            onDelete={handleDeleteReel}
+            onToggleStatus={handleToggleReelStatus}
+            onResolveReport={handleResolveReelReport}
+          />
+        );
       case 'reporter-metrics':
         return (
           <ReporterMetricsView
@@ -916,6 +1141,23 @@ function AdminPageContent() {
         editingTag={editingTag}
         tagForm={tagForm} setTagForm={setTagForm}
         onSave={handleSaveTag}
+      />
+
+      <PromotionFormDialog
+        open={isPromotionDialogOpen} onOpenChange={setIsPromotionDialogOpen}
+        editingPromotion={editingPromotion}
+        promotionForm={promotionForm} setPromotionForm={setPromotionForm}
+        categories={categories}
+        articles={promotionArticleOptions}
+        onSave={handleSavePromotion}
+      />
+
+      <ReelFormDialog
+        open={isReelDialogOpen} onOpenChange={setIsReelDialogOpen}
+        editingReel={editingReel}
+        reelForm={reelForm} setReelForm={setReelForm}
+        categories={categories} staffUsers={users} currentUser={currentUser}
+        onSave={handleSaveReel}
       />
 
       <UserFormDialog

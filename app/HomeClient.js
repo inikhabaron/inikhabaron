@@ -15,7 +15,9 @@ import HorizontalArticleCard from '@/components/home/HorizontalArticleCard';
 import ArticleCard from '@/components/home/ArticleCard';
 import LatestNews from '@/components/home/LatestNews';
 import BreakingTicker from '@/components/home/BreakingTicker';
+import MarketTicker from '@/components/market/MarketTicker';
 import CategoryShowcase from '@/components/home/CategoryShowcase';
+import EventPromotions from '@/components/promotions/EventPromotions';
 import SiteFooter from '@/components/home/SiteFooter';
 // import ArticleModal from '@/components/home/ArticleModal';
 // Modals/overlays are off the critical path (rendered only after a user
@@ -282,6 +284,9 @@ export default function HomePage({ initialCategory = 'all' }) {
           className="kn-page-body"
           style={{ backgroundColor: bg, fontFamily: selectedLanguage === 'hi' ? 'var(--font-devanagari), sans-serif' : selectedFont.value, paddingTop: `${HEADER_H}px` }}
         >
+          {/* Market ticker */}
+          <MarketTicker dark={dark} selectedLanguage={selectedLanguage} />
+
           {/* Breaking news ticker */}
           <BreakingTicker breakingNews={breakingNews} dark={dark} onArticleClick={goToArticle} />
 
@@ -497,6 +502,9 @@ export default function HomePage({ initialCategory = 'all' }) {
 
             {/* Personlised News */}
             <PersonalizedFeed selectedLanguage={selectedLanguage} />
+
+            {/* Upcoming events / special coverage */}
+            <EventPromotions dark={dark} selectedLanguage={selectedLanguage} />
 
             {/* Category showcase */}
             {!isMobileView && categories.length > 0 && !loading && (
