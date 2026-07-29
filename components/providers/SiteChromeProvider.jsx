@@ -41,8 +41,32 @@ export default function SiteChromeProvider({ children }) {
     if (d === 'true') setDark(true);
   }, []);
 
+  // Firebase persists sign-in across reloads on its own (independent of this
+  // app's server), but the httpOnly `khabaron_session` cookie that every
+  // authenticated API route actually checks was previously only ever set
+  // once, inside completeSignIn()'s interactive click handler. If that
+  // cookie ever went missing (cleared cookies, its 7-day expiry lapsing,
+  // etc.) while Firebase still remembered the user, the client kept
+  // believing it was signed in and every authenticated request 401ed
+  // forever, with nothing to re-establish the cookie. Re-exchanging the ID
+  // token here, on every auth-state hydration (not just interactive
+  // sign-in), keeps the server session in sync with Firebase automatically.
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, setUser);
+    const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+      setUser(firebaseUser);
+      if (!firebaseUser) return;
+      try {
+        const idToken = await firebaseUser.getIdToken();
+        await fetch('/api/auth/session', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken }),
+        });
+      } catch (err) {
+        // Non-critical — worst case the cookie stays stale until the next
+        // auth-state refresh (e.g. token refresh, next reload).
+      }
+    });
     return unsub;
   }, []);
 

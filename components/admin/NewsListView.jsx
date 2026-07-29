@@ -20,7 +20,7 @@ const STATUS_TABS = [
 
 export function NewsListView({
   news, currentUser, newsStatusFilter, onStatusFilterChange,
-  searchQuery, loading, onEdit, onDelete, onWorkflow, onAddNew,
+  searchQuery, loading, onEdit, onDelete, onWorkflow, onAddNew, onViewVersionHistory,
 }) {
   const [openTagsId, setOpenTagsId] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -226,7 +226,9 @@ export function NewsListView({
                               {(currentUser?.role === 'admin' || currentUser?.role === 'editor') && item.trendingSuggested && !item.isTrending && (
                                 <MenuBtn icon={TrendingUp} label="Approve Trending" color="#7c3aed" onClick={() => { onWorkflow(item.id, 'approve-trending'); }} />
                               )}
-                              {/* <MenuBtn icon={History} label="Version History" color="#374151" onClick={() => { onViewVersionHistory(item.id); }} /> */}
+                              {(currentUser?.role === 'admin' || currentUser?.role === 'editor') && (
+                                <MenuBtn icon={History} label="Version History" color="#374151" onClick={() => { onViewVersionHistory?.(item.id); }} />
+                              )}
                               {currentUser?.role === 'admin' && (
                                 <>
                                   <div style={{ height: 1, background: '#f3f4f6', margin: '4px 0' }} />

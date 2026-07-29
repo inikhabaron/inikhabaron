@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Newspaper } from 'lucide-react';
+import { Newspaper, User } from 'lucide-react';
 import Image from 'next/image';
 
 import Header from '@/components/home/Header';
@@ -434,11 +434,25 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                           <h1 className={styles.articleTitle} style={{ color: T1, fontFamily: selectedLanguage === 'hi' ? 'var(--font-devanagari), sans-serif' : selectedFont.value }}>
                             {article.title}
                           </h1>
+                          {article.excerpt && (
+                            <p style={{ color: T2, fontSize: '17px', fontWeight: 700, lineHeight: 1.8, marginBottom: '16px' }}>{article.excerpt}</p>
+                          )}
                           <div className={styles.articleMeta}>
                             <span>{publishedAt}</span>
                             {(author || article.authorId) && (
                               <span className={styles.articleAuthor} style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                                {author && <>{authorLabel}: {author}</>}
+                                {author && (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                                    {article.authorAvatar ? (
+                                      <img src={article.authorAvatar} alt={author} className={styles.authorAvatar} />
+                                    ) : (
+                                      <span className={styles.authorAvatarFallback} style={{ backgroundColor: ACCENT }}>
+                                        <User style={{ width: '36px', height: '36px', color: '#fff' }} />
+                                      </span>
+                                    )}
+                                    {authorLabel}: {author}
+                                  </span>
+                                )}
                                 {article.authorId && (
                                   <FollowButton
                                     type="author"
@@ -454,9 +468,6 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                               </span>
                             )}
                           </div>
-                          {article.excerpt && (
-                            <p style={{ color: T2, fontSize: '15px', lineHeight: 1.8, marginTop: '16px' }}>{article.excerpt}</p>
-                          )}
                           <div className={styles.shareRow}>
                             <BookmarkButton
                                 articleId={article.id}

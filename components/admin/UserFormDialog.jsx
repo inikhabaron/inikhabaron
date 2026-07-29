@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { ImageUpload } from '@/components/upload/ImageUpload';
 
 export function UserFormDialog({ open, onOpenChange, editingUser, userForm, setUserForm, onSave }) {
   return (
@@ -17,6 +18,10 @@ export function UserFormDialog({ open, onOpenChange, editingUser, userForm, setU
           <DialogTitle>{editingUser ? 'Edit User' : 'Create User'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label>Profile Photo</Label>
+            <ImageUpload value={userForm.avatar} onChange={v => setUserForm({ ...userForm, avatar: v })} folder="avatars" />
+          </div>
           <div className="space-y-2">
             <Label>Name *</Label>
             <Input value={userForm.name} onChange={e => setUserForm({ ...userForm, name: e.target.value })} placeholder="Full name" />

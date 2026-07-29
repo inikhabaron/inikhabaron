@@ -120,9 +120,13 @@ export default function ArticleModal({
 
               <div className="kn-article-meta" style={{ borderBottom: `1px solid ${bdr}`, marginBottom: '18px', paddingBottom: '16px' }}>
                 <div className="kn-author-wrap">
-                  <div className="kn-author-avatar" style={{ backgroundColor: ACCENT }}>
-                    <User style={{ width: '13px', height: '13px', color: 'white' }} />
-                  </div>
+                  {article.authorAvatar ? (
+                    <img src={article.authorAvatar} alt={article.authorName || 'KhabarON'} className="kn-author-avatar" style={{ objectFit: 'cover' }} />
+                  ) : (
+                    <div className="kn-author-avatar" style={{ backgroundColor: ACCENT }}>
+                      <User style={{ width: '13px', height: '13px', color: 'white' }} />
+                    </div>
+                  )}
                   <span style={{ fontSize: `${13 * textScale}px`, fontWeight: 600, color: T2 }}>{article.authorName || 'KhabarON'}</span>
                 </div>
                 <span className="kn-meta-item" style={{ color: T3, fontSize: `${12 * textScale}px` }}>

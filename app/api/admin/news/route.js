@@ -79,6 +79,7 @@ export async function POST(request) {
       authorId: user.id,
       authorLabel: body.authorLabel || 'Author',
       authorName: body.authorName || user.name,
+      authorAvatar: user.avatar || null,
       source: body.source || null,
       sourceUrl: body.sourceUrl || null,
       seoTitle: body.seoTitle || body.title,

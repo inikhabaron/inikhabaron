@@ -58,7 +58,7 @@ const EMPTY_REEL_FORM = {
 };
 
 const EMPTY_USER_FORM = {
-  name: '', email: '', role: 'reporter', isVerified: false, bio: '',
+  name: '', email: '', role: 'reporter', isVerified: false, bio: '', avatar: '',
   canPublishScheduled: false, canPublishBreaking: false,
 };
 
@@ -130,6 +130,9 @@ function AdminPageContent() {
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [versionHistory, setVersionHistory] = useState([]);
+  const [selectedVersion, setSelectedVersion] = useState(null);
+  const [versionHistoryLoading, setVersionHistoryLoading] = useState(false);
+  const [versionHistoryArticleId, setVersionHistoryArticleId] = useState(null);
 
   const [newsForm, setNewsForm] = useState(EMPTY_NEWS_FORM);
   const [categoryForm, setCategoryForm] = useState({
@@ -202,7 +205,7 @@ function AdminPageContent() {
 
   const fetchNews = useCallback(async () => {
     try {
-      let url = '/api/admin/news?limit=100';
+      let url = '/api/admin/news?limit=100000';
       if (newsStatusFilter !== 'all') url += `&status=${newsStatusFilter}`;
       if (currentUser?.role === 'reporter') url += `&authorId=${currentUser.id}`;
       else if (currentUser?.role === 'editor') url += '&workflow=editor';
@@ -510,12 +513,36 @@ function AdminPageContent() {
   };
 
   const handleViewVersionHistory = async (articleId) => {
+    setVersionHistoryLoading(true);
+    setSelectedVersion(null);
+    setVersionHistoryArticleId(articleId);
     try {
       const res = await authFetch(`/api/admin/news/${articleId}/versions`, { method: 'GET' });
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load version history');
       setVersionHistory(data.versions || []);
       setIsVersionHistoryOpen(true);
-    } catch (error) { toast.error('Failed to load version history'); }
+    } catch (error) {
+      toast.error(error?.message || 'Failed to load version history');
+    } finally {
+      setVersionHistoryLoading(false);
+    }
+  };
+
+  const handleSelectVersion = async (version) => {
+    const articleId = version?.articleId || versionHistoryArticleId;
+    if (!version?.id || !articleId) return;
+    setVersionHistoryLoading(true);
+    try {
+      const res = await authFetch(`/api/admin/news/${articleId}/versions/${version.id}`, { method: 'GET' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load version snapshot');
+      setSelectedVersion(data.version || null);
+    } catch (error) {
+      toast.error(error?.message || 'Failed to load version snapshot');
+    } finally {
+      setVersionHistoryLoading(false);
+    }
   };
 
   const handleLogout = () => {
@@ -964,7 +991,7 @@ function AdminPageContent() {
               setEditingUser(user);
               setUserForm({
                 name: user.name, email: user.email || '', role: user.role,
-                isVerified: user.isVerified, bio: user.bio || '',
+                isVerified: user.isVerified, bio: user.bio || '', avatar: user.avatar || '',
                 canPublishScheduled: user.permissions?.canPublishScheduled || false,
                 canPublishBreaking: user.permissions?.canPublishBreaking || false,
               });
@@ -1179,8 +1206,13 @@ function AdminPageContent() {
       />
 
       <VersionHistoryDialog
-        open={isVersionHistoryOpen} onOpenChange={setIsVersionHistoryOpen}
-        versionHistory={versionHistory} formatDate={formatDate}
+        open={isVersionHistoryOpen}
+        onOpenChange={setIsVersionHistoryOpen}
+        versionHistory={versionHistory}
+        formatDate={formatDate}
+        onSelectVersion={handleSelectVersion}
+        selectedVersion={selectedVersion}
+        loading={versionHistoryLoading}
       />
 
       <ReporterDetailDialog

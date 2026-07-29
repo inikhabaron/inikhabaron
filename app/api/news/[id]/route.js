@@ -16,6 +16,19 @@ export async function GET(_request, { params }) {
       return json({ error: 'News not found' }, { status: 404 });
     }
 
+    // authorAvatar stored on the article is a snapshot from when it was
+    // created/backfilled — resolve the author's current avatar live here
+    // (a single extra lookup, cheap for a one-item fetch) so a later profile
+    // photo update shows up immediately instead of only on the next edit.
+    if (news.authorId) {
+      const usersCollection = await getCollection('users');
+      const author = await usersCollection.findOne(
+        { id: news.authorId },
+        { projection: { avatar: 1 } }
+      );
+      news.authorAvatar = author?.avatar || null;
+    }
+
     return json(
       { news },
       {
