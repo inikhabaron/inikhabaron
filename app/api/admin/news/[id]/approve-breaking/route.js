@@ -22,6 +22,9 @@ export async function POST(request, { params }) {
         $set: {
           isBreaking: true,
           breakingApproved: true,
+          // Ordering key for the public ticker (/api/news/breaking) — approving
+          // breaking has to surface the article now, whenever it was published.
+          breakingAt: new Date(),
           updatedAt: new Date(),
         },
         $push: {

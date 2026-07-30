@@ -23,6 +23,10 @@ export async function POST(request, { params }) {
         $set: {
           isBreaking,
           breakingApproved: isBreaking,
+          // Ordering key for the public ticker (/api/news/breaking); cleared on
+          // unmark so a re-marked article gets a fresh position rather than its
+          // original one.
+          breakingAt: isBreaking ? new Date() : null,
           updatedAt: new Date(),
         },
         $push: {

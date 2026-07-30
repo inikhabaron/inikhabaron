@@ -79,6 +79,10 @@ export async function PUT(request, { params }) {
       }
       updateData.isBreaking = body.isBreaking;
       updateData.breakingApproved = body.isBreaking;
+      // Ordering key for the public ticker (/api/news/breaking) — kept in step
+      // with the dedicated breaking/approve-breaking routes so editing an
+      // article's breaking flag from the form behaves the same way.
+      updateData.breakingAt = body.isBreaking ? new Date() : null;
     }
 
     if (body.trendingSuggested !== undefined) {

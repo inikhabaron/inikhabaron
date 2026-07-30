@@ -558,11 +558,24 @@ function AdminPageContent() {
         ? { comment, userId: currentUser?.id, userName: currentUser?.name, ...extra }
         : { userId: currentUser?.id, userName: currentUser?.name, ...extra };
       const res = await authFetch(endpoint, { method: 'POST', body: JSON.stringify(payload) });
-      if (!res.ok) throw new Error('Failed to perform action');
+      // The route reports the reason in the body; discarding it left every
+      // failure looking identical in the toast, so a route-level error
+      // (`{ error }`) was indistinguishable from the platform killing the
+      // function (empty body) or from the id simply not matching
+      // (`{ success: false }`, which used to show a *success* toast).
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || `Request failed with status ${res.status}`);
+      }
+      if (data?.success === false) {
+        throw new Error('No article was updated — it may have been changed or removed');
+      }
       toast.success(`Article ${action.replace('_', ' ')}d successfully`);
       fetchNews();
       fetchAnalytics();
-    } catch (error) { toast.error(`Failed to ${action.replace('_', ' ')} article`); }
+    } catch (error) {
+      toast.error(`Failed to ${action.replace('_', ' ')} article: ${error.message}`);
+    }
   };
 
   const saveModerationSettings = async () => {
