@@ -6,7 +6,6 @@ import {
   Plus_Jakarta_Sans,
   Noto_Sans_Devanagari,
 } from 'next/font/google';
-import Script from 'next/script';
 import './globals.css';
 import './home.css';
 import { Toaster } from '@/components/ui/sonner';
@@ -130,9 +129,21 @@ export default function RootLayout({ children }) {
         <meta name="og:locale" content={SITE.locale} />
         {/* Site-wide structured data: Organization + WebSite (SearchAction) */}
         <JsonLd data={[organizationGraph(), websiteSchema()]} />
-        <Script
+        {/*
+          A plain <script>, deliberately NOT next/script. The Script component
+          stamps a `data-nscript` attribute onto the tag it renders, and the
+          AdSense loader inspects the attributes on its own tag and rejects ones
+          it doesn't recognise ("AdSense head tag doesn't support data-nscript
+          attribute"), so the tag has to carry exactly the attributes in
+          Google's own install snippet and nothing else.
+
+          Using a raw tag also puts the loader in the served HTML <head>, which
+          is where AdSense requires it. The previous strategy="afterInteractive"
+          injected it client-side only after hydration, so it never appeared in
+          the initial markup at all despite sitting inside <head> here.
+        */}
+        <script
           async
-          strategy="afterInteractive"
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1008647598112103"
           crossOrigin="anonymous"
         />

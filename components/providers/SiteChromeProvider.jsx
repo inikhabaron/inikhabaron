@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, signInWithGoogle, signInWithApple, logOut } from '@/lib/firebase';
+import { signInErrorMessage } from '@/lib/auth/signInErrorMessage';
 import { onAuthStateChanged } from 'firebase/auth';
 import { toast } from 'sonner';
 import { translations } from '@/lib/news-utils';
@@ -114,7 +115,14 @@ export default function SiteChromeProvider({ children }) {
   // Returns true/false so callers that need to react only on a successful
   // sign-in (e.g. redirecting back to whatever page required login) can.
   const completeSignIn = async (result) => {
-    if (result.error) { toast.error(result.error); return false; }
+    if (result.error) {
+      // Keep the raw SDK string in the console for diagnosis, but show the
+      // reader the mapped message instead of "Firebase: Error (auth/...)".
+      console.error('Sign-in failed:', result.code, result.error);
+      const message = signInErrorMessage(result.code);
+      if (message) toast.error(message);
+      return false;
+    }
     const idToken = await result.user.getIdToken();
     const response = await fetch('/api/auth/session', {
       method: 'POST', credentials: 'include',
