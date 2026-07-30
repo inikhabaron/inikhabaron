@@ -14,12 +14,6 @@ function computeRemaining(targetDate) {
     seconds: Math.floor((diff % 60000) / 1000),
   };
 }
-
-// Ticks while `targetDate` is truthy — pass null/undefined to opt out
-// entirely (no interval is created). `tickMs` defaults to a full second for
-// promotions actually displaying the numeric countdown, but EventCard
-// passes a slower tick for cards that only need this to detect the
-// Upcoming → Live Now → Ended phase transition, not render digits.
 export default function useCountdown(targetDate, tickMs = 1000) {
   const [remaining, setRemaining] = useState(() => computeRemaining(targetDate));
 
