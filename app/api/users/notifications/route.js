@@ -2,6 +2,12 @@ import { getCollection } from '@/lib/mongodb';
 import { requireUser } from '@/lib/auth/user/requireUser';
 import { json, preflight } from '@/lib/api/cors';
 
+// Reads per-request state (headers/cookies/query), so it can never be
+// prerendered. Declared explicitly: without this Next attempts a static render
+// at build time, the attempt throws DYNAMIC_SERVER_USAGE, and the route's own
+// catch block logs it as an application error — the build-log noise.
+export const dynamic = 'force-dynamic';
+
 export const OPTIONS = preflight;
 
 export async function GET() {

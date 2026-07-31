@@ -4,6 +4,12 @@ import { checkRole, canAccessAdminPanel, canEditReel, canPublishReel, canModerat
 import { getReelsCollection } from '@/lib/db/reels';
 import { getReel, updateReel, deleteReel } from '@/lib/services/reels/reelService';
 
+// Reads per-request state (headers/cookies/query), so it can never be
+// prerendered. Declared explicitly: without this Next attempts a static render
+// at build time, the attempt throws DYNAMIC_SERVER_USAGE, and the route's own
+// catch block logs it as an application error — the build-log noise.
+export const dynamic = 'force-dynamic';
+
 export const OPTIONS = preflight;
 
 // Fields an admin form save is allowed to touch. Counters (views/likeCount/

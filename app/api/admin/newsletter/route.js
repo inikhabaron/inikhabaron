@@ -5,6 +5,12 @@ import { success, failure } from '@/lib/api/response';
 import { logApiError } from '@/lib/api/errors';
 import { getNewsletterSubscribers, getNewsletterStats } from '@/lib/services/newsletter/newsletterService';
 
+// Reads per-request state (headers/cookies/query), so it can never be
+// prerendered. Declared explicitly: without this Next attempts a static render
+// at build time, the attempt throws DYNAMIC_SERVER_USAGE, and the route's own
+// catch block logs it as an application error — the build-log noise.
+export const dynamic = 'force-dynamic';
+
 function toCsv(items) {
   const header = ['email', 'status', 'language', 'categories', 'source', 'subscribedAt', 'unsubscribedAt'];
   const escapeCell = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;

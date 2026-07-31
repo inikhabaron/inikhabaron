@@ -6,6 +6,12 @@ import { logApiError, } from '@/lib/api/errors';
 import { getComments, addComment, } from '@/lib/services/comments/commentService';
 import { autoApprovePendingComments } from '@/lib/services/comments/autoApproveComments';
 
+// Reads per-request state (headers/cookies/query), so it can never be
+// prerendered. Declared explicitly: without this Next attempts a static render
+// at build time, the attempt throws DYNAMIC_SERVER_USAGE, and the route's own
+// catch block logs it as an application error — the build-log noise.
+export const dynamic = 'force-dynamic';
+
 export async function GET(request, { params }) {
   try {
     await autoApprovePendingComments();

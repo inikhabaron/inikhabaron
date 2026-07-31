@@ -6,6 +6,12 @@ import { buildMonthlyContent, buildBreakingContent } from '@/lib/services/newsle
 import { buildMonthlyNewsletter } from '@/lib/services/newsletter/templates/monthlyNewsletter';
 import { buildBreakingNewsletter } from '@/lib/services/newsletter/templates/breakingNewsletter';
 
+// Reads per-request state (headers/cookies/query), so it can never be
+// prerendered. Declared explicitly: without this Next attempts a static render
+// at build time, the attempt throws DYNAMIC_SERVER_USAGE, and the route's own
+// catch block logs it as an application error — the build-log noise.
+export const dynamic = 'force-dynamic';
+
 // A stable placeholder recipient — preview HTML is never sent, but the
 // templates need an email to build the unsubscribe link.
 const PREVIEW_EMAIL = 'preview@inikhabaron.com';
