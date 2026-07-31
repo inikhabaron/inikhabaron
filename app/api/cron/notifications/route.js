@@ -10,6 +10,33 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 /**
+ * How many jobs one invocation drains. Configurable because the right value
+ * depends on how often the worker runs, which is a *hosting* decision, not an
+ * architectural one — the queue works either way.
+ *
+ * DELIVERY SCHEDULING — pick per deployment, do not hardcode assumptions:
+ *
+ *   Vercel Hobby    crons are limited to once per day. `vercel.json` therefore
+ *                   ships the daily schedule, which is the only universally
+ *                   valid option. Breaking-news latency would be up to 24h, so
+ *                   Hobby deployments should ALSO drive this route from an
+ *                   external scheduler (below) and raise DRAIN_LIMIT.
+ *   Vercel Pro      set the vercel.json cron to a 5-minute interval (or
+ *                   tighter). A small DRAIN_LIMIT is fine since passes are
+ *                   frequent.
+ *   External        any scheduler can call this route with
+ *                   `Authorization: Bearer $CRON_SECRET` — GitHub Actions
+ *                   `schedule`, cron-job.org, Better Uptime. This preserves the
+ *                   decoupling exactly: the publish path is untouched either
+ *                   way, and it is the recommended way to get sub-minute
+ *                   delivery without a plan upgrade.
+ *
+ * Override with NOTIFICATION_DRAIN_LIMIT.
+ */
+const DEFAULT_DRAIN_LIMIT = 50;
+const DRAIN_LIMIT = Math.max(1, Number(process.env.NOTIFICATION_DRAIN_LIMIT) || DEFAULT_DRAIN_LIMIT);
+
+/**
  * The notification delivery worker — Layer 2's only entry point.
  *
  * This is the *sole* place push notifications are sent. Editorial routes only
@@ -32,7 +59,7 @@ export async function GET(request) {
   const jobIds = [];
 
   // Bounded so a runaway backlog can't turn this into a timeout.
-  for (let i = 0; i < 50; i += 1) {
+  for (let i = 0; i < DRAIN_LIMIT; i += 1) {
     const result = await runNextPendingJob();
     if (!result) break;
     outcomes[result.outcome] = (outcomes[result.outcome] || 0) + 1;

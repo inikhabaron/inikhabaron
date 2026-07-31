@@ -22,6 +22,7 @@ This README is the entry point for anyone touching the codebase. Read it once en
 12. [Known issues & tech debt](#12-known-issues--tech-debt)
 13. [Deployment](#13-deployment)
 14. [Troubleshooting](#14-troubleshooting)
+15. [Architecture guards (CI)](#15-architecture-guards-ci)
 
 ---
 
@@ -706,3 +707,44 @@ The `dev` script caps Node at 512MB; `build` doesn't. If you hit OOM on a small 
 ## License
 
 Proprietary — internal project.
+
+---
+
+## 15. Architecture guards (CI)
+
+Four npm scripts enforce the architectural boundary documented in
+[ADR-001](docs/architecture/ADR-001-editorial-delivery-separation.md). They are pure static
+analysis over the import graph — no network, no database, no environment variables — so they
+run in seconds and are safe to run at any time.
+
+| Command | Protects |
+| --- | --- |
+| `npm run check:boundary` | Editorial routes (publish, breaking, trending) cannot reach `firebase-admin`, FCM, `jwks-rsa` or `jose` **at module load**. Auto-discovers editorial routes — any route that enqueues a notification is covered automatically. |
+| `npm run check:infra` | No request route reaches a delivery SDK (`resend`, `cloudinary`, `sharp`, AWS, `twilio`, `puppeteer`, …) at module load. Accepted couplings live in `KNOWN_EXCEPTIONS` with an owner and a removal milestone. |
+| `npm run check:queue` | Editorial code may only **enqueue** (`createJob` / `queue*Notification`) and never call a delivery operation (`dispatchJobNow`, `sendToTokens`, `sendEmail`, …). Matches call names, so it survives file renames. |
+| `npm run check:arch` | Runs all three. **Use this one.** |
+
+### When to run them
+
+- **Before pushing** any change to an editorial route (`app/api/admin/news/**`), anything under
+  `lib/services/notifications/**`, or any new route that sends a notification or an email.
+- **After adding a dependency**, particularly an SDK that talks to an external service.
+- **Always in CI** — `.github/workflows/ci.yml` runs all three before the build, so a boundary
+  violation fails a pull request in seconds rather than after a full build.
+
+### If a guard fails
+
+It prints the offending route and the exact import chain. The fix is almost never to weaken the
+guard. Instead:
+
+1. **Move the work behind the queue.** Enqueue a job and let the cron worker deliver it. This is
+   correct for anything asynchronous — pushes, emails, webhooks.
+2. **Or load the SDK lazily** with `await import()` inside the function that needs it, so a broken
+   package fails inside a `try/catch` instead of at module load. See
+   `lib/auth/user/firebase-admin.js` for the pattern.
+3. **Only add a `KNOWN_EXCEPTIONS` entry** when the route genuinely exists to use that SDK (e.g.
+   `/api/cloudinary/signature`). Every entry needs a `reason`, an `owner` and a `removeBy`; the
+   guard fails without them, and fails again once the entry becomes stale.
+
+Dependency upgrades that touch authentication or notification delivery have additional rules —
+see **Dependency update policy** in ADR-001.

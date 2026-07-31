@@ -1,0 +1,118 @@
+name: CI
+
+# Gate for the architectural boundaries established in
+# docs/architecture/ADR-001-editorial-delivery-separation.md
+#
+# Background, so the stages below are not mysterious: in July 2026 a one-line
+# import in an editorial route silently attached firebase-admin (and a
+# transitively ESM-only `jose`) to publishing. It threw during module
+# *evaluation* — before the route's own try/catch existed — so six routes died
+# with an unloggable HTML 500, including login and the cron worker that would
+# have retried the failed work. A pull-request diff cannot show that kind of
+# dependency growth. These jobs measure it instead.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  # A newer push supersedes an in-flight run for the same ref, so CI minutes are
+  # not spent on commits that are already superseded.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  architecture:
+    name: Architecture guards
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Matches package.json `engines` (>=22) and the deployment runtime.
+          # Pinned rather than "latest" so a Node release cannot change build
+          # behaviour without a visible commit.
+          node-version: 22
+          cache: yarn
+
+      # WHY --frozen-lockfile:
+      # yarn.lock was previously missing an entry for a declared dependency, so
+      # every deploy re-resolved packages and printed "success Saved lockfile."
+      # Builds were therefore not reproducible — which is exactly how a
+      # transitive dependency can change underneath you between two deploys of
+      # identical source. This flag turns that drift into a hard failure. If it
+      # fails: run `yarn install` locally and COMMIT the updated yarn.lock.
+      - name: Install (fail on lockfile drift)
+        run: yarn install --frozen-lockfile
+
+      # WHY these run BEFORE the build:
+      # They are pure static analysis over the import graph — no network, no
+      # database, no env vars, no compile step — so they finish in seconds. A
+      # boundary violation fails the PR immediately instead of after a
+      # multi-minute build. Cheapest, highest-signal check first.
+      #
+      # Each guard has been negative-tested (deliberately broken to confirm it
+      # fails). A guard that never triggers is worse than none: it manufactures
+      # confidence. If you change one, re-verify it still fails on a violation.
+
+      # Editorial routes (publish / breaking / trending) must not reach
+      # firebase-admin, FCM, jwks-rsa or jose at module load. This is the exact
+      # regression described above.
+      - name: Notification boundary
+        run: npm run check:boundary
+
+      # Generalizes the same rule to every delivery SDK — resend, cloudinary,
+      # sharp, AWS, twilio, puppeteer and friends — across all request routes.
+      # Known-and-accepted couplings live in KNOWN_EXCEPTIONS with an owner and
+      # a removal milestone; the guard also fails on stale or unannotated
+      # entries so the ledger can only shrink deliberately.
+      - name: Infrastructure boundary
+        run: npm run check:infra
+
+      # Enforces intent rather than file paths: editorial code may only ENQUEUE
+      # (createJob / queue*Notification) and must never call a delivery
+      # operation (dispatchJobNow, sendToTokens, sendEmail, ...). Because it
+      # matches call names, it survives file moves and directory renames that a
+      # path-based rule would not.
+      - name: Queue boundary
+        run: npm run check:queue
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install (fail on lockfile drift)
+        run: yarn install --frozen-lockfile
+
+      # WHY placeholder env values, and why the build must never need real ones:
+      #
+      # A production build only imports modules and renders static output. If it
+      # requires a real credential to succeed, that means something reads and
+      # validates configuration at module scope — the precise pattern that
+      # caused the outage, because such code throws before any handler can catch
+      # it. Keeping only placeholders here means CI fails loudly the moment that
+      # pattern reappears, instead of passing because the secret happened to be
+      # present.
+      #
+      # Corollary: never add a real secret to make this step pass. Fix the module
+      # to initialize lazily (see lib/auth/user/firebase-admin.js for the shape).
+      #
+      # MONGO_URL and JWT_SECRET are listed because lib/mongodb.js and
+      # lib/session/jwt.js still throw at module scope when they are absent —
+      # acceptable for values every request needs, but they must remain the only
+      # such cases.
+      - name: Build
+        run: npm run build
+        env:
+          MONGO_URL: mongodb://localhost:27017
+          JWT_SECRET: ci-placeholder-not-a-real-secret
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
