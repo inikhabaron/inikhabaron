@@ -2,7 +2,7 @@ import { getCollection } from '@/lib/mongodb';
 import { json, preflight } from '@/lib/api/cors';
 import { getUserFromToken } from '@/lib/auth/admin/token';
 import { canMarkBreaking } from '@/lib/auth/permissions';
-import { notifyBreakingNews } from '@/lib/services/notifications/articleNotifications';
+import { queueBreakingNotification } from '@/lib/services/notifications/articleNotificationQueue';
 
 export const OPTIONS = preflight;
 
@@ -42,7 +42,7 @@ export async function POST(request, { params }) {
 
     if (isBreaking && result.modifiedCount > 0) {
       const article = await newsCollection.findOne({ id: params.id });
-      if (article) await notifyBreakingNews(article, user.id);
+      if (article) await queueBreakingNotification(article, user.id);
     }
 
     return json({ success: result.modifiedCount > 0 });

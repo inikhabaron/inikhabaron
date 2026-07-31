@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 // that initialization.
 export async function GET() {
     try {
-        getAdminAuth();
+        await getAdminAuth();
         return NextResponse.json({
             success: true,
             message: 'Firebase Admin initialized successfully',

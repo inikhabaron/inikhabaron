@@ -210,7 +210,7 @@ function AdminPageContent() {
 
   const fetchNews = useCallback(async () => {
     try {
-      let url = '/api/admin/news?limit=100000';
+      let url = '/api/admin/news?limit=100';
       if (newsStatusFilter !== 'all') url += `&status=${newsStatusFilter}`;
       if (currentUser?.role === 'reporter') url += `&authorId=${currentUser.id}`;
       else if (currentUser?.role === 'editor') url += '&workflow=editor';

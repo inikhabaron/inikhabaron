@@ -47,6 +47,34 @@ This is the most important thing to get right when adding a new one — there ar
 
 Follow deliberately uses pattern 2 even though Bookmarks/Likes (its closest sibling features) use pattern 1 — see `lib/services/follow/followService.js`. When adding a new per-user feature, choose based on the query pattern you actually need, not by copying whichever example is closest.
 
+## Notification architecture: editorial and delivery are separate layers
+
+**Publishing an article must never be able to fail because push notifications are broken.** This is enforced structurally, not by convention, and the boundary is load-bearing — do not collapse it for convenience.
+
+The two layers:
+
+- **Layer 1 — editorial.** `lib/services/notifications/articleNotificationQueue.js` (`queueBreakingNotification` / `queueTrendingNotification` / `queuePublishedNotification`). Persists a notification job and returns. Its entire dependency graph is `notificationJobService.js` → MongoDB. **No Firebase Admin, FCM, `jwks-rsa`, `jose`, push sender or dispatcher.**
+- **Layer 2 — delivery.** `lib/services/notifications/delivery/` (`dispatchNotificationJob`, `pushSenderService`, `targetingService`). Initializes Firebase Admin, resolves recipients, sends, retries. **Reachable only from the cron worker** (`app/api/cron/notifications/route.js`). There is deliberately no "send this job now" export, so delivery cannot be pulled onto a request path by accident.
+
+`lib/services/notifications/notificationJobService.js` is the seam. It is Firebase-free so both layers can import it.
+
+Creating a notification job is part of publishing. **Sending it is not.** An editorial route therefore depends on exactly: auth → permissions → MongoDB → `articleNotificationQueue`. Target graph:
+
+```
+approve-breaking → auth, permissions, mongodb, notificationJobService
+```
+
+**Why it's built this way.** These previously shared one module graph: `approve-breaking` → `articleNotifications` → `dispatchNotificationJob` → `pushSenderService` → `firebase-admin`. That made Firebase a *module-load* dependency of publishing, so anything wrong in the push stack took the editorial route down before its own `try/catch` existed — the response was Next's HTML `/500`, uncatchable and unloggable by the app. It happened for real: `firebase-admin@14` → `jwks-rsa@4` → ESM-only `jose@6`, which threw `ERR_REQUIRE_ESM` under the deployed runtime's CommonJS loader. Four editorial actions (`approve-breaking`, `approve-trending`, `breaking`, `publish`) plus `POST /api/auth/session` and the cron itself all died, and the admin UI showed only "failed" with no reason. The regression arrived in `e1c8fd0` (20 Jul 2026), which grew `approve-breaking`'s module-load closure from 7 files to 20 by adding that import — publishing had no Firebase dependency at all before it.
+
+The lesson generalizes past this one bug: an editorial operation is a *product* guarantee, push delivery is *infrastructure*, and infrastructure must not be in the critical path of the guarantee. When Firebase is completely unavailable the article still publishes, the breaking ticker still updates, the site still serves it, and the job simply stays `pending` for a later retry.
+
+Two supporting details:
+
+- **Retries live in the job, not the request.** `notificationJobService` carries `attempts` and `nextAttemptAt`; failures are rescheduled with exponential backoff (5m → 6h cap, `MAX_ATTEMPTS` 5) and only parked as `failed` after that. `claimNextPendingJob` matches `nextAttemptAt: { $not: { $gt: now } }` rather than `$lte`, so jobs written before the field existed (missing/null) stay claimable instead of being skipped forever.
+- **Firebase Admin is loaded lazily even inside Layer 2** (`lib/auth/user/firebase-admin.js` uses `await import()` in async accessors). A broken SDK then fails inside the worker's `try/catch` and the job is retried, instead of crashing the cron route at module load and stopping retries permanently.
+
+When adding a new editorial action that should notify: call the Layer 1 queue, never the dispatcher. If you find yourself importing anything from `delivery/` outside a cron route, that is the mistake.
+
 ## Worked example: the Follow module
 
 - `lib/services/follow/followService.js` — `follow`/`unfollow` do a single `$addToSet`/`$pull` on `users.followedCategories|followedAuthors|followedCities`. `getFollowing(userId)` reads those three arrays and **enriches** them with a join against `categories` (by `slug`) and `users` (by `id`, for author name/avatar) so the API returns display-ready `{ id, name, ... }` objects, not raw ids — this exists so pages don't need N follow-up requests to show names/avatars for a followed list. Each entry carries `exists: true|false` instead of a hardcoded "Unknown author"/slug-as-name fallback — the service reports the raw fact (the followed category/author no longer exists), and leaves how to *display* a stale entry to whichever UI eventually renders a "Following" list.
