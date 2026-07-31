@@ -175,11 +175,16 @@ function AdminPageContent() {
     };
   };
 
+  // The admin token travels in headers only (Authorization / x-admin-token),
+  // which is the sole form the server accepts — see lib/auth/admin/token.js.
+  // This used to also append `?token=<jwt>` to every request. The server had
+  // already dropped the query-string path as insecure, so it authenticated
+  // nothing and only leaked a live 7-day admin credential into browser
+  // history, Referer headers sent to third parties, and every access log the
+  // request passed through.
   const authFetch = async (url, options = {}) => {
-    const token = localStorage.getItem('admin_token')?.toString().trim();
-    const authUrl = token ? `${url}${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}` : url;
     const headers = { ...getAuthHeaders(), ...(options.headers || {}) };
-    return fetch(authUrl, { ...options, headers });
+    return fetch(url, { ...options, headers });
   };
 
   useEffect(() => {
