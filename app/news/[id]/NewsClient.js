@@ -53,7 +53,9 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
     handleGoogleSignIn, handleAppleSignIn, handleSignOut,
     categories, breakingNews,
   } = useSiteChrome();
-  const { bookmarkedIds, handleBookmarkChange } = useBookmarkedIds(user);
+  // Gated on sessionReady — see SiteChromeProvider. Passing bare `user` fires
+  // GET /api/users/bookmarks/ids before the khabaron_session cookie exists.
+  const { bookmarkedIds, handleBookmarkChange } = useBookmarkedIds(sessionReady ? user : null);
   const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]);
   const [textScale] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
