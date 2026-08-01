@@ -49,7 +49,7 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
   const [error, setError] = useState(null);
   const {
     dark, toggleDark, selectedLanguage, setSelectedLanguage, translations, t,
-    user, authLoading, authDialogOpen, setAuthDialogOpen,
+    user, sessionReady, authLoading, authDialogOpen, setAuthDialogOpen,
     handleGoogleSignIn, handleAppleSignIn, handleSignOut,
     categories, breakingNews,
   } = useSiteChrome();
@@ -107,7 +107,7 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
   }, []);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !sessionReady) {
       setFollowing({ categories: [], authors: [], cities: [] });
       return;
     }

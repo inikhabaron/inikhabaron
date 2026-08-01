@@ -55,10 +55,11 @@ export default function HomePage() {
   // ── Auth state ───────────────────────────────────────────────────────────
   const {
     dark, toggleDark, selectedLanguage, setSelectedLanguage, translations, t,
-    user, authLoading, authDialogOpen, setAuthDialogOpen,
+    user, sessionReady, authLoading, authDialogOpen, setAuthDialogOpen,
     handleGoogleSignIn, handleAppleSignIn, handleSignOut,
   } = useSiteChrome();
-  const { bookmarkedIds, handleBookmarkChange } = useBookmarkedIds(user);
+  // Gated on sessionReady — see SiteChromeProvider.
+  const { bookmarkedIds, handleBookmarkChange } = useBookmarkedIds(sessionReady ? user : null);
   const [userId, setUserId] = useState(null);
   const [subscriptionOpen, setSubscriptionOpen] = useState(false);
 

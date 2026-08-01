@@ -4,6 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, signInWithGoogle, signInWithApple, logOut } from '@/lib/firebase';
 import { signInErrorMessage } from '@/lib/auth/signInErrorMessage';
+import {
+  markFirebaseAuthResolved,
+  markSessionRequestStart,
+  markSessionRequestEnd,
+  markSessionReady,
+} from '@/lib/auth/sessionTiming';
 import { onAuthStateChanged } from 'firebase/auth';
 import { toast } from 'sonner';
 import { translations } from '@/lib/news-utils';
@@ -20,6 +26,8 @@ export default function SiteChromeProvider({ children }) {
   const [languageLoaded, setLanguageLoaded] = useState(false);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
+  // See the onAuthStateChanged comment: gates authenticated fetches, not the UI.
+  const [sessionReady, setSessionReady] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const router = useRouter();
   const registeredUidRef = useRef(null);
@@ -52,20 +60,62 @@ export default function SiteChromeProvider({ children }) {
   // forever, with nothing to re-establish the cookie. Re-exchanging the ID
   // token here, on every auth-state hydration (not just interactive
   // sign-in), keeps the server session in sync with Firebase automatically.
+  /**
+   * `user` and `sessionReady` answer two different questions, and conflating
+   * them is what caused the post-login 401s:
+   *
+   *   user         — Firebase says someone is signed in. Drives UI (avatar,
+   *                  menus). Published immediately so the UI is not laggy.
+   *   sessionReady — the httpOnly `khabaron_session` cookie now exists, so
+   *                  authenticated API calls will actually be authorised.
+   *
+   * Every data fetch keyed only on `user` fired the instant Firebase resolved,
+   * which on a first sign-in (or after cleared cookies / a lapsed 7-day
+   * expiry) was *before* the cookie existed — producing a burst of 401s on
+   * /api/users/bookmarks/ids, /api/users/following and /api/users/location
+   * while authentication itself was perfectly healthy. Those fetches now gate
+   * on `sessionReady` instead.
+   */
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+      markFirebaseAuthResolved(firebaseUser?.uid);
+
+      // Publish the user immediately: the UI should reflect sign-in at once.
       setUser(firebaseUser);
-      if (!firebaseUser) return;
+
+      if (!firebaseUser) {
+        setSessionReady(false);
+        return;
+      }
+
+      // A new auth event means the cookie for the *previous* identity must not
+      // be treated as valid for this one.
+      setSessionReady(false);
+
       try {
         const idToken = await firebaseUser.getIdToken();
-        await fetch('/api/auth/session', {
+        markSessionRequestStart();
+        const res = await fetch('/api/auth/session', {
           method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ idToken }),
         });
+        markSessionRequestEnd(res.status);
+
+        // Only open the gate when the server actually issued a session. A
+        // non-2xx here means the cookie was not set, so unblocking would just
+        // reproduce the 401s this gate exists to prevent.
+        if (res.ok) {
+          setSessionReady(true);
+          markSessionReady();
+        } else {
+          console.error('Session establishment failed with status', res.status);
+        }
       } catch (err) {
-        // Non-critical — worst case the cookie stays stale until the next
-        // auth-state refresh (e.g. token refresh, next reload).
+        // Non-critical — the cookie stays stale until the next auth-state
+        // refresh (token refresh, next reload). The gate stays shut, so
+        // dependent fetches simply don't run rather than 401ing.
+        console.error('Session refresh failed on auth-state change:', err);
       }
     });
     return unsub;
@@ -105,6 +155,7 @@ export default function SiteChromeProvider({ children }) {
       await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
       const r = await logOut();
       if (r.error) { toast.error(r.error); return; }
+      setSessionReady(false);
       setUser(null);
       toast.success('Signed out');
     } catch (err) {
@@ -131,6 +182,8 @@ export default function SiteChromeProvider({ children }) {
     });
     const session = await response.json();
     if (!session.success) { toast.error(session.message || 'Unable to create session'); return false; }
+    setSessionReady(true);
+    markSessionReady();
     setUser(result.user);
     setAuthDialogOpen(false);
     toast.success('Signed in!');
@@ -155,7 +208,7 @@ export default function SiteChromeProvider({ children }) {
     <SiteChromeContext.Provider value={{
       dark, toggleDark,
       selectedLanguage, setSelectedLanguage, translations, t,
-      user, authLoading, authDialogOpen, setAuthDialogOpen,
+      user, sessionReady, authLoading, authDialogOpen, setAuthDialogOpen,
       handleGoogleSignIn, handleAppleSignIn, handleSignOut,
     }}>
       {children}

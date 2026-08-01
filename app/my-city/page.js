@@ -36,7 +36,7 @@ export default function MyCityPage() {
   const router = useRouter();
   const chrome = useSiteChrome();
   const {
-    dark, selectedLanguage, user, setAuthDialogOpen,
+    dark, selectedLanguage, user, sessionReady, setAuthDialogOpen,
     isMobileView, surface, bdr, T1, T2, T3,
   } = chrome;
 
@@ -47,7 +47,7 @@ export default function MyCityPage() {
   const [following, setFollowing] = useState({ categories: [], authors: [], cities: [] });
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !sessionReady) {
       setFollowing({ categories: [], authors: [], cities: [] });
       return;
     }
