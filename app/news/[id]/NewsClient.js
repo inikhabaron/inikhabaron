@@ -329,7 +329,11 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
 
   useReadingProgress({
     articleId: article?.id,
-    enabled: !!user,
+    // sessionReady, not just `user`: the hook's restore effect issues
+    // GET /api/users/reading-progress/{id} as soon as this turns true, which on
+    // a cold login is before the khabaron_session cookie exists. `ready` below
+    // is a different condition — it means the article itself has loaded.
+    enabled: !!user && sessionReady,
     ready: !!article && !loading,
   });
 
