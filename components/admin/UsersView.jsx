@@ -2,10 +2,18 @@
 
 import { Plus, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { DS } from './design-system';
+import { isStaffRole } from './constants';
 import { LoadingSpinner } from './LoadingSpinner';
 
 export function UsersView({ users, loading, onAdd, onEdit, onDelete, formatDate }) {
   if (loading) return <LoadingSpinner />;
+
+  // Staff-only view — see STAFF_ROLES in ./constants. Filtered here rather
+  // than at the fetch in app/admin/page.js because that same `users` array is
+  // also passed to NewsFormDialog as `staffUsers`, and this is purely about
+  // what this one table shows.
+  const staff = users.filter((user) => isStaffRole(user.role));
+
   return (
     <div style={{ padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
@@ -22,7 +30,7 @@ export function UsersView({ users, loading, onAdd, onEdit, onDelete, formatDate 
             </tr>
           </thead>
           <tbody>
-            {users.map(user => (
+            {staff.map(user => (
               <tr key={user.id} style={{ borderBottom: '1px solid #f9fafb' }}
                 onMouseEnter={e => e.currentTarget.style.background = '#fafafa'}
                 onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
@@ -50,7 +58,7 @@ export function UsersView({ users, loading, onAdd, onEdit, onDelete, formatDate 
                 </td>
               </tr>
             ))}
-            {users.length === 0 && (
+            {staff.length === 0 && (
               <tr><td colSpan={6} style={{ padding: '48px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No users found</td></tr>
             )}
           </tbody>

@@ -4,13 +4,30 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowUp, ArrowDown, Minus, TrendingUp } from 'lucide-react';
 
-const REFRESH_MS = 30000;
+import {
+  isMarketOpen,
+  marketStatusLabel,
+  resolveMarketState,
+  refreshIntervalFor,
+} from '@/lib/market/marketStatus';
+
+// One status pill for the whole strip rather than one per index — the two
+// exchanges keep the same hours, so repeating it would just be noise. If a
+// future instrument with different hours (crude, crypto) is enabled and the
+// states disagree, show nothing instead of picking one and being wrong.
+function sharedMarketState(quotes) {
+  const states = quotes.map((q) => resolveMarketState(q)).filter(Boolean);
+  if (!states.length) return null;
+  return states.every((s) => s === states[0]) ? states[0] : null;
+}
 
 // Reusable live ticker for Sensex/Nifty (and future instruments — see
 // lib/services/market/marketService.js). Self-fetching and self-polling so
 // it can be dropped onto any page (homepage strip today, a sidebar widget
 // or the /market page later) without prop-drilling data from a parent.
-export default function MarketTicker({ dark, selectedLanguage, ids, refreshIntervalMs = REFRESH_MS }) {
+// `refreshIntervalMs` overrides the adaptive rate when a caller needs a fixed
+// cadence; leaving it unset is the norm.
+export default function MarketTicker({ dark, selectedLanguage, ids, refreshIntervalMs }) {
   const router = useRouter();
   const [quotes, setQuotes] = useState(null); // null = not loaded yet
   const [failed, setFailed] = useState(false);
@@ -31,12 +48,23 @@ export default function MarketTicker({ dark, selectedLanguage, ids, refreshInter
     }
   }, [ids]);
 
+  const marketState = quotes ? sharedMarketState(quotes) : null;
+  const pollMs = refreshIntervalMs ?? refreshIntervalFor(marketState);
+
   useEffect(() => {
     mountedRef.current = true;
-    fetchQuotes();
-    const interval = setInterval(fetchQuotes, refreshIntervalMs);
-    return () => { mountedRef.current = false; clearInterval(interval); };
-  }, [fetchQuotes, refreshIntervalMs]);
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  // Initial load kept separate from the polling timer: when the market opens
+  // or closes, `pollMs` changes and the timer below is rebuilt — if that
+  // effect also fetched, every tier change would fire an extra request.
+  useEffect(() => { fetchQuotes(); }, [fetchQuotes]);
+
+  useEffect(() => {
+    const interval = setInterval(fetchQuotes, pollMs);
+    return () => clearInterval(interval);
+  }, [fetchQuotes, pollMs]);
 
   const isHindi = selectedLanguage === 'hi';
   const bg = dark ? '#161B27' : '#F8FAFC';
@@ -74,6 +102,14 @@ export default function MarketTicker({ dark, selectedLanguage, ids, refreshInter
           <TrendingUp size={13} aria-hidden="true" />
           {isHindi ? 'बाज़ार' : 'Markets'}
         </span>
+        {marketState && (
+          <span
+            className={`kn-market-status ${isMarketOpen(marketState) ? 'kn-market-status-open' : 'kn-market-status-closed'}`}
+            style={!isMarketOpen(marketState) && dark ? { background: 'rgba(255,255,255,0.06)', color: '#9BA5B4' } : undefined}
+          >
+            {marketStatusLabel(marketState, isHindi)}
+          </span>
+        )}
         {quotes.map((q) => {
           const directionWord = q.direction === 'up' ? (isHindi ? 'ऊपर' : 'up') : q.direction === 'down' ? (isHindi ? 'नीचे' : 'down') : (isHindi ? 'अपरिवर्तित' : 'unchanged');
           const ariaLabel = q.available

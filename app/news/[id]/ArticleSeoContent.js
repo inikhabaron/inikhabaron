@@ -10,6 +10,7 @@
  * guarantee machine-readable, entity-rich content.
  */
 import { SITE, articleUrl, authorUrl, categoryUrl } from '@/lib/seo/config';
+import { getArticleAuthors } from '@/lib/news/authors';
 import { stripHtml, truncate } from '@/lib/seo/utils';
 
 // Accessible visually-hidden style: stays in the DOM & readable by crawlers and
@@ -42,7 +43,7 @@ export default function ArticleSeoContent({ article, categoryLabel, faqs = [] })
 
   const published = article.publishedAt || article.createdAt;
   const modified = article.updatedAt || published;
-  const authorName = article.authorName || article.author || 'Editorial Team';
+  const articleAuthors = getArticleAuthors(article);
   const summary = truncate(
     stripHtml(article.seoDescription || article.excerpt || article.content || ''),
     320,
@@ -67,11 +68,19 @@ export default function ArticleSeoContent({ article, categoryLabel, faqs = [] })
         </p>
         <address>
           By{' '}
-          {article.authorId ? (
-            <a href={authorUrl(article.authorId)} itemProp="author">{authorName}</a>
-          ) : (
-            <span itemProp="author">{authorName}</span>
-          )}
+          {/* One itemProp="author" per byline author. Only the first links to
+              the author page — authorId identifies the account that created
+              the article, not every person credited on it. */}
+          {articleAuthors.length ? articleAuthors.map((author, index) => (
+            <span key={`${author.name}-${index}`}>
+              {index > 0 && ', '}
+              {index === 0 && article.authorId ? (
+                <a href={authorUrl(article.authorId)} itemProp="author">{author.name}</a>
+              ) : (
+                <span itemProp="author">{author.name}</span>
+              )}
+            </span>
+          )) : <span itemProp="author">Editorial Team</span>}
           {', '}
           <span>{SITE.name}</span>
         </address>

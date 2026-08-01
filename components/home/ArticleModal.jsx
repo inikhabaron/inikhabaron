@@ -1,9 +1,10 @@
 'use client';
 import React, { useState, useRef, useContext } from 'react';
 import Image from 'next/image';
-import { X, ChevronRight, Share2, Clock, Eye, User } from 'lucide-react';
+import { X, ChevronRight, Share2, Clock, Eye } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ProgrammaticAd, NativeAd } from '@/components/home/AdSlot';
+import ArticleAuthors from '@/components/news/ArticleAuthors';
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
 import { ACCENT, getCatAccent, getCatLabel } from '@/lib/news-utils';
 
@@ -120,14 +121,7 @@ export default function ArticleModal({
 
               <div className="kn-article-meta" style={{ borderBottom: `1px solid ${bdr}`, marginBottom: '18px', paddingBottom: '16px' }}>
                 <div className="kn-author-wrap">
-                  {article.authorAvatar ? (
-                    <img src={article.authorAvatar} alt={article.authorName || 'KhabarON'} className="kn-author-avatar" style={{ objectFit: 'cover' }} />
-                  ) : (
-                    <div className="kn-author-avatar" style={{ backgroundColor: ACCENT }}>
-                      <User style={{ width: '13px', height: '13px', color: 'white' }} />
-                    </div>
-                  )}
-                  <span style={{ fontSize: `${13 * textScale}px`, fontWeight: 600, color: T2 }}>{article.authorName || 'KhabarON'}</span>
+                  <ArticleAuthors article={article} textColor={T2} accent={ACCENT} size="sm" fallbackName="KhabarON" />
                 </div>
                 <span className="kn-meta-item" style={{ color: T3, fontSize: `${12 * textScale}px` }}>
                   <Clock style={{ width: '12px', height: '12px' }} />{formatDate?.(article.publishedAt)}

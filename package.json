@@ -20,6 +20,7 @@
         "backfill:news-locations": "node --env-file=.env scripts/backfillNewsLocations.mjs",
         "backfill:user-location-slugs": "node --env-file=.env scripts/backfillUserLocationSlugs.mjs",
         "backfill:newsletter-subscribers": "node --env-file=.env scripts/backfillNewsletterSubscribers.mjs",
+        "backfill:article-authors": "node --env-file=.env scripts/backfillArticleAuthors.mjs",
         "send:monthly-newsletter": "tsx --tsconfig ./jsconfig.json --env-file=.env scripts/sendMonthlyNewsletter.mjs",
         "seed:all-locations": "npm run transform:locations && npm run seed:locations && npm run backfill:news-locations && npm run backfill:user-location-slugs"
     },

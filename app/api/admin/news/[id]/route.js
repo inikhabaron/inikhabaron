@@ -12,6 +12,8 @@ import {
   canPublishArticle,
   normalizeStatus,
 } from '@/lib/auth/permissions';
+import { normalizeAuthorsInput, primaryAuthorName } from '@/lib/news/authors';
+import { cleanupImages, authorImageUrls } from '@/lib/services/media/imageCleanupService';
 
 export const OPTIONS = preflight;
 
@@ -51,6 +53,22 @@ export async function PUT(request, { params }) {
     };
 
     const updateData = { ...body, updatedAt: new Date() };
+
+    // The body is spread in wholesale, so `authors` would otherwise land in
+    // the document exactly as posted. Normalize it (trim, drop blank blocks,
+    // cap the count) and keep the legacy `authorName` mirror in step.
+    if (body.authors !== undefined) {
+      const authors = normalizeAuthorsInput(body.authors);
+      if (authors) {
+        updateData.authors = authors;
+        updateData.authorName = primaryAuthorName(authors);
+      } else {
+        // Nothing usable posted — leave the stored byline alone rather than
+        // blanking an article's authors on a malformed edit.
+        delete updateData.authors;
+        delete updateData.authorName;
+      }
+    }
 
     if (body.scheduledAt !== undefined) {
       updateData.scheduledAt = body.scheduledAt
@@ -138,6 +156,17 @@ export async function PUT(request, { params }) {
     }
 
     const updatedNews = await newsCollection.findOne({ id: newsId });
+
+    // Author photos that this edit dropped or swapped out. Only reclaimed if
+    // nothing else references them; the article is already saved, so a
+    // cleanup failure costs storage, never the edit.
+    if (updateData.authors) {
+      const removed = authorImageUrls(article).filter(
+        (url) => !authorImageUrls(updatedNews).includes(url),
+      );
+      await cleanupImages(removed, { excludeArticleId: newsId });
+    }
+
     return json({ success: true, news: updatedNews });
   } catch (error) {
     console.error('PUT /api/admin/news/[id] error:', error);
@@ -156,6 +185,12 @@ export async function DELETE(_request, { params }) {
     }
 
     await newsCollection.deleteOne({ id: newsId });
+
+    // Reclaim this article's author photos, but only the ones no other
+    // article or user profile still points at — the same reporter's photo is
+    // routinely reused across their whole body of work.
+    await cleanupImages(authorImageUrls(article), { excludeArticleId: newsId });
+
     return json({ success: true });
   } catch (error) {
     console.error('DELETE /api/admin/news/[id] error:', error);

@@ -21,6 +21,7 @@ import {
   faqSchema,
 } from '@/lib/seo/jsonld';
 import { getCatLabel } from '@/lib/news-utils';
+import { getArticleAuthors, joinAuthorNames } from '@/lib/news/authors';
 
 // ISR: article HTML is cached and revalidated in the background so TTFB is low
 // while content stays fresh. On-demand updates still show within 60s.
@@ -64,13 +65,18 @@ export async function generateMetadata({ params }) {
   const lang = article.language === 'hi' ? 'hi_IN' : 'en_IN';
   const publishedTime = article.publishedAt || article.createdAt;
   const modifiedTime = article.updatedAt || publishedTime;
-  const authorName = article.authorName || article.author || SITE.name;
+  // Every byline author, so a co-written story credits all of them rather
+  // than only the first. Falls back to the site name for author-less pieces.
+  const articleAuthors = getArticleAuthors(article);
+  const authorNames = articleAuthors.length ? articleAuthors.map((a) => a.name) : [SITE.name];
+  // "John Doe • Jane Smith" for the Twitter card's byline row.
+  const socialByline = joinAuthorNames(articleAuthors) || SITE.name;
 
   return {
     title,
     description,
     keywords,
-    authors: [{ name: authorName }],
+    authors: authorNames.map((name) => ({ name })),
     category: article.category,
     alternates: { canonical },
     openGraph: {
@@ -82,7 +88,7 @@ export async function generateMetadata({ params }) {
       locale: lang,
       publishedTime: publishedTime ? new Date(publishedTime).toISOString() : undefined,
       modifiedTime: modifiedTime ? new Date(modifiedTime).toISOString() : undefined,
-      authors: [authorName],
+      authors: authorNames,
       section: article.category,
       tags: Array.isArray(article.tags) ? article.tags : [],
       images: [{ url: image, width: 1200, height: 630, alt: article.title }],
@@ -110,7 +116,15 @@ export async function generateMetadata({ params }) {
       'article:published_time': publishedTime ? new Date(publishedTime).toISOString() : '',
       'article:modified_time': modifiedTime ? new Date(modifiedTime).toISOString() : '',
       'article:section': article.category || 'News',
-      'article:author': authorName,
+      // `article:author` is intentionally absent here: openGraph.authors above
+      // already emits one such tag per author. Setting it again would append a
+      // duplicate carrying only a flattened string, so a scraper reading the
+      // last one would see a different byline than one reading the first.
+      //
+      // Twitter has no author field in the card spec — a label/data pair is
+      // the only way the byline renders there, so it mirrors the OG list.
+      'twitter:label1': 'Written by',
+      'twitter:data1': socialByline,
       'geo.region': SITE.geo.region,
       'geo.placename': SITE.geo.placename,
     },

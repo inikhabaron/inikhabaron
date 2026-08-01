@@ -16,18 +16,17 @@ export async function GET(_request, { params }) {
       return json({ error: 'News not found' }, { status: 404 });
     }
 
-    // authorAvatar stored on the article is a snapshot from when it was
-    // created/backfilled — resolve the author's current avatar live here
-    // (a single extra lookup, cheap for a one-item fetch) so a later profile
-    // photo update shows up immediately instead of only on the next edit.
-    if (news.authorId) {
-      const usersCollection = await getCollection('users');
-      const author = await usersCollection.findOne(
-        { id: news.authorId },
-        { projection: { avatar: 1 } }
-      );
-      news.authorAvatar = author?.avatar || null;
-    }
+    // The author photo is deliberately NOT re-resolved from the user profile
+    // here any more. It used to be: this route overwrote `authorAvatar` with
+    // the author's current users.avatar on every read, so updating a
+    // journalist's profile photo retroactively changed the byline on every
+    // article they had ever written. Bylines are part of the published
+    // record — an article keeps the photo it went out with.
+    //
+    // Articles now carry their byline in `authors: [{ name, image }]`
+    // (scripts/backfillArticleAuthors.mjs migrated the legacy ones), and
+    // lib/news/authors.js resolves it. Removing the lookup also drops a
+    // per-request users query from this route.
 
     return json(
       { news },

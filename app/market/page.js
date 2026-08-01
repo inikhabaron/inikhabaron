@@ -1,12 +1,18 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowUp, ArrowDown, Minus, LineChart } from 'lucide-react';
 
 import PublicPageLayout from '@/components/layout/PublicPageLayout';
 import useSiteChrome from '@/hooks/useSiteChrome';
 import { ACCENT } from '@/lib/news-utils';
+import {
+  isMarketOpen,
+  marketStatusLabel,
+  resolveMarketState,
+  refreshIntervalFor,
+} from '@/lib/market/marketStatus';
 
 // Dedicated Market page — reachable by clicking any index in MarketTicker
 // (?index=<id> highlights that card). The same /api/market/quotes route
@@ -20,13 +26,6 @@ function formatIst(epochMs, isHindi) {
   });
 }
 
-// Indian exchanges only report "REGULAR" during trading hours — PRE/POST/
-// CLOSED all mean "can't trade right now", so they're collapsed into one
-// Closed badge rather than surfacing Yahoo's raw session-state vocabulary.
-function isMarketOpen(marketState) {
-  return marketState === 'REGULAR';
-}
-
 function MarketPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -37,25 +36,37 @@ function MarketPageContent() {
 
   const [quotes, setQuotes] = useState(null);
   const [error, setError] = useState(false);
+  const activeRef = useRef(true);
+
+  // Same adaptive cadence as the ticker: fast while trading, slow once the
+  // market closes. Both read it from refreshIntervalFor so the two surfaces
+  // can't drift apart.
+  const pollMs = refreshIntervalFor(quotes ? resolveMarketState(quotes[0]) : null);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch('/api/market/quotes', { cache: 'no-store' });
+      const data = await res.json();
+      if (!activeRef.current) return;
+      if (!res.ok || !Array.isArray(data.quotes)) throw new Error('bad response');
+      setQuotes(data.quotes);
+      setError(false);
+    } catch (err) {
+      if (activeRef.current) setError(true);
+    }
+  }, []);
 
   useEffect(() => {
-    let active = true;
-    async function load() {
-      try {
-        const res = await fetch('/api/market/quotes', { cache: 'no-store' });
-        const data = await res.json();
-        if (!active) return;
-        if (!res.ok || !Array.isArray(data.quotes)) throw new Error('bad response');
-        setQuotes(data.quotes);
-        setError(false);
-      } catch (err) {
-        if (active) setError(true);
-      }
-    }
-    load();
-    const interval = setInterval(load, 30000);
-    return () => { active = false; clearInterval(interval); };
+    activeRef.current = true;
+    return () => { activeRef.current = false; };
   }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    const interval = setInterval(load, pollMs);
+    return () => clearInterval(interval);
+  }, [load, pollMs]);
 
   return (
     <PublicPageLayout chrome={chrome}>
@@ -85,6 +96,7 @@ function MarketPageContent() {
               const isSelected = q.id === highlighted;
               const color = q.direction === 'up' ? '#15803D' : q.direction === 'down' ? '#DC2626' : T2;
               const Arrow = q.direction === 'up' ? ArrowUp : q.direction === 'down' ? ArrowDown : Minus;
+              const marketState = resolveMarketState(q);
               return (
                 <div
                   key={q.id}
@@ -100,14 +112,14 @@ function MarketPageContent() {
                     <span style={{ fontSize: 13, fontWeight: 700, color: T3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       {q.name}
                     </span>
-                    {q.available && q.marketState && (
+                    {marketState && (
                       <span style={{
                         fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
                         padding: '2px 8px', borderRadius: 20,
-                        color: isMarketOpen(q.marketState) ? '#065f46' : '#6b7280',
-                        background: isMarketOpen(q.marketState) ? '#d1fae5' : (dark ? 'rgba(255,255,255,0.06)' : '#f3f4f6'),
+                        color: isMarketOpen(marketState) ? '#065f46' : '#6b7280',
+                        background: isMarketOpen(marketState) ? '#d1fae5' : (dark ? 'rgba(255,255,255,0.06)' : '#f3f4f6'),
                       }}>
-                        {isMarketOpen(q.marketState) ? (isHindi ? 'खुला' : 'Open') : (isHindi ? 'बंद' : 'Closed')}
+                        {marketStatusLabel(marketState, isHindi)}
                       </span>
                     )}
                   </div>

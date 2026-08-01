@@ -3,7 +3,7 @@ import React from 'react';
 
 export default function TrendingBar({ tags, selectedLanguage, onTagClick, dark }) {
   const fallback = selectedLanguage === 'hi'
-    ? ['लोकसभा चुनाव', 'महंगाई', 'शेयर बाजार', 'मौसम अपडेट', 'पेट्रोल डीजल दाम']
+    ? ['चुनाव', 'महंगाई', 'शेयर बाजार', 'मौसम अपडेट', 'पेट्रोल डीजल दाम']
     : ['Elections', 'Inflation', 'Stock Market', 'Weather', 'Fuel Prices'];
 
   const displayTags = tags.length > 0 ? tags.slice(0, 5) : fallback;

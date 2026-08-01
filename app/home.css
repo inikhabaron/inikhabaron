@@ -185,6 +185,9 @@
 .kn-market-flat         { color: #6B7280; }
 .kn-market-unavailable  { font-size: 12px; font-style: italic; white-space: nowrap; }
 .kn-market-stale-dot    { width: 6px; height: 6px; border-radius: 50%; background: #F59E0B; flex-shrink: 0; }
+.kn-market-status       { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; }
+.kn-market-status-open  { color: #065F46; background: #D1FAE5; }
+.kn-market-status-closed { color: #6B7280; background: #F3F4F6; }
 .kn-market-ticker-fallback { padding: 10px 24px; font-size: 12px; text-align: center; }
 .kn-market-skeleton     { gap: 10px; }
 .kn-market-skel-line    { display: inline-block; height: 12px; border-radius: 4px; animation: kn-market-pulse 1.2s ease-in-out infinite; }

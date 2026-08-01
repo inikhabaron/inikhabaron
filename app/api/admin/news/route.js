@@ -4,6 +4,7 @@ import { json, preflight } from '@/lib/api/cors';
 import { getUserFromToken } from '@/lib/auth/admin/token';
 import { canCreateArticle, normalizeStatus } from '@/lib/auth/permissions';
 import { autoPublishScheduledArticles } from '@/lib/services/news';
+import { normalizeAuthorsInput, primaryAuthorName } from '@/lib/news/authors';
 
 // Reads per-request state (headers/cookies/query), so it can never be
 // prerendered. Declared explicitly: without this Next attempts a static render
@@ -54,6 +55,7 @@ export async function POST(request) {
     const body = await request.json();
     const newsCollection = await getCollection('news');
     const status = normalizeStatus(body.status) || 'draft';
+    const authors = normalizeAuthorsInput(body.authors);
 
     const newsItem = {
       id: uuidv4(),
@@ -84,7 +86,13 @@ export async function POST(request) {
       },
       authorId: user.id,
       authorLabel: body.authorLabel || 'Author',
-      authorName: body.authorName || user.name,
+      // Per-article byline. `authorName` stays populated (from the first
+      // author) because the calendar, admin list, RSS and recommendation
+      // scorer all still read it — see lib/news/authors.js.
+      authors: authors || [{ name: user.name, image: null }],
+      authorName: primaryAuthorName(authors) || body.authorName || user.name,
+      // Retained for articles whose byline still comes from the creator's
+      // profile photo. New articles carry their photos in `authors`.
       authorAvatar: user.avatar || null,
       source: body.source || null,
       sourceUrl: body.sourceUrl || null,

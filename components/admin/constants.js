@@ -1,5 +1,18 @@
 export const SIDEBAR_W = 230;
 
+// Newsroom staff. The admin Users page lists only these — ordinary website
+// members (role 'reader', what public signup assigns in
+// app/api/users/sync/route.js) are filtered out of that view only. This is a
+// display filter: those accounts still exist, still authenticate, and are
+// still returned by /api/admin/users. A whitelist rather than a
+// "hide reader" blacklist so any future non-staff role is excluded by
+// default instead of leaking in until someone remembers to add it.
+export const STAFF_ROLES = ['admin', 'editor', 'reporter'];
+
+export function isStaffRole(role) {
+  return STAFF_ROLES.includes((role || '').toString().trim().toLowerCase());
+}
+
 export const statusColors = {
   draft: 'bg-gray-500',
   pending_review: 'bg-yellow-500',

@@ -16,6 +16,7 @@ import { statusOptionsByRole } from './constants';
 import { ImageUpload } from '@/components/upload/ImageUpload';
 import { MultiImageUpload } from '@/components/upload/MultiImageUpload';
 import LocationSelector from '@/components/location/LocationSelector';
+import { AuthorsField } from './AuthorsField';
 
 // const ReactQuill = dynamic(() => import('nereact-quill'), { ssr: false });
 
@@ -141,10 +142,6 @@ export function NewsFormDialog({
                 placeholder="Author, Writer, Creator Name, Reported By..."
               />
             </div>
-            <div className="space-y-2">
-              <Label>Author Name</Label>
-              <Input value={newsForm.authorName} onChange={e => setNewsForm({ ...newsForm, authorName: e.target.value })} />
-            </div>
             {newsForm.status === 'scheduled' && (
               <div className="space-y-2">
                 <Label>Schedule Date</Label>
@@ -152,6 +149,15 @@ export function NewsFormDialog({
               </div>
             )}
           </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+            <div style={DS.sectionNum}>4</div>
+            <span style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Authors</span>
+          </div>
+          <AuthorsField
+            authors={newsForm.authors}
+            onChange={authors => setNewsForm({ ...newsForm, authors })}
+          />
 
           <div className="flex flex-wrap items-center gap-6">
             {/* {currentUser?.role === 'admin' && (

@@ -1,6 +1,7 @@
 import { SITE, SITE_URL } from '@/lib/seo/config';
 import { getLatestArticles } from '@/lib/seo/data';
 import { stripHtml, truncate } from '@/lib/seo/utils';
+import { getArticleAuthors, formatAuthorNames } from '@/lib/news/authors';
 
 export const revalidate = 900; // 15 minutes
 
@@ -37,7 +38,7 @@ export async function GET() {
       <guid isPermaLink="true">${xmlEscape(link)}</guid>
       <pubDate>${pub}</pubDate>
       <category>${xmlEscape(a.category || 'News')}</category>
-      <dc:creator>${xmlEscape(a.authorName || SITE.name)}</dc:creator>
+      <dc:creator>${xmlEscape(formatAuthorNames(getArticleAuthors(a)) || SITE.name)}</dc:creator>
       <description>${xmlEscape(desc)}</description>${
         a.featuredImage
           ? `\n      <enclosure url="${xmlEscape(a.featuredImage)}" type="image/jpeg" />`

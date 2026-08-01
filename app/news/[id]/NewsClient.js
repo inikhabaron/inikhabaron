@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Newspaper, User } from 'lucide-react';
+import { Newspaper } from 'lucide-react';
 import Image from 'next/image';
 
 import Header from '@/components/home/Header';
@@ -14,6 +14,8 @@ import MobileSearch from '@/components/home/MobileSearch';
 import BookmarkButton from '@/components/bookmarks/BookmarkButton';
 import LikeButton from '@/components/likes/LikeButton';
 import FollowButton from '@/components/follow/FollowButton';
+import ArticleAuthors from '@/components/news/ArticleAuthors';
+import { getArticleAuthors } from '@/lib/news/authors';
 import { applyFollowChange } from '@/lib/follow/applyFollowChange';
 import { CommentsSection } from '@/components/comments';
 import { WhySeeingThis } from '@/components/personalization';
@@ -279,7 +281,11 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
     });
   }, [article, selectedLanguage]);
 
-  const author = article?.author || article?.authorName || article?.writer || article?.byline;
+  // The byline itself is rendered by ArticleAuthors (which handles both the
+  // authors[] shape and legacy single-author articles); this only decides
+  // whether the meta row shows an author section at all.
+  const articleAuthors = getArticleAuthors(article);
+  const hasAuthors = articleAuthors.length > 0;
   const authorLabel = article?.authorLabel || 'Author';
   const isHindi = selectedLanguage === 'hi';
 
@@ -302,7 +308,9 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
 
   const handleAuthorFollowChange = (change) => setFollowing((prev) => applyFollowChange(prev, {
     ...change,
-    item: { id: article.authorId, name: author || 'Author', exists: true },
+    // The follow target is the author *account* (authorId); the first byline
+    // name is the best display label available for it.
+    item: { id: article.authorId, name: articleAuthors[0]?.name || 'Author', exists: true },
   }));
 
   const handleCategoryFollowChange = (change) => setFollowing((prev) => applyFollowChange(prev, {
@@ -445,20 +453,15 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                           )}
                           <div className={styles.articleMeta}>
                             <span>{publishedAt}</span>
-                            {(author || article.authorId) && (
+                            {(hasAuthors || article.authorId) && (
                               <span className={styles.articleAuthor} style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                                {author && (
-                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                                    {article.authorAvatar ? (
-                                      <img src={article.authorAvatar} alt={author} className={styles.authorAvatar} />
-                                    ) : (
-                                      <span className={styles.authorAvatarFallback} style={{ backgroundColor: ACCENT }}>
-                                        <User style={{ width: '36px', height: '36px', color: '#fff' }} />
-                                      </span>
-                                    )}
-                                    {authorLabel}: {author}
-                                  </span>
-                                )}
+                                <ArticleAuthors
+                                  article={article}
+                                  label={authorLabel}
+                                  textColor={T1}
+                                  mutedColor={T2}
+                                  accent={ACCENT}
+                                />
                                 {article.authorId && (
                                   <FollowButton
                                     type="author"

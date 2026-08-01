@@ -23,6 +23,7 @@ import { ReporterMetricsView, ReporterDetailDialog } from '@/components/admin/re
 import { PromotionsView } from '@/components/admin/PromotionsView';
 import { PromotionFormDialog } from '@/components/admin/PromotionForm/PromotionFormDialog';
 import { ReelsView } from '@/components/admin/ReelsView';
+import { getArticleAuthors, normalizeAuthorsInput, primaryAuthorName } from '@/lib/news/authors';
 import { ReelFormDialog } from '@/components/admin/ReelFormDialog';
 
 const EMPTY_LOCATION_FORM = {
@@ -32,7 +33,11 @@ const EMPTY_LOCATION_FORM = {
 const EMPTY_NEWS_FORM = {
   title: '', content: '', excerpt: '', category: '', tags: '', featuredImage: '', images: [],
   status: 'draft', isBreaking: false, breakingSuggested: false, isTrending: false,
-  trendingSuggested: false, isFeatured: false, authorLabel: 'Author', authorName: 'Admin',
+  trendingSuggested: false, isFeatured: false, authorLabel: 'Author',
+  // Byline lives here now — one entry per journalist, each with its own photo.
+  // `authorName` is no longer a form field; it's derived from authors[0] on
+  // save so legacy readers of that field keep working (lib/news/authors.js).
+  authors: [{ name: '', image: '' }],
   source: '', sourceUrl: '', seoTitle: '', seoDescription: '', seoKeywords: '', scheduledAt: '',
   location: EMPTY_LOCATION_FORM,
 };
@@ -210,7 +215,7 @@ function AdminPageContent() {
 
   const fetchNews = useCallback(async () => {
     try {
-      let url = '/api/admin/news?limit=100000';
+      let url = '/api/admin/news?limit=1000';
       if (newsStatusFilter !== 'all') url += `&status=${newsStatusFilter}`;
       if (currentUser?.role === 'reporter') url += `&authorId=${currentUser.id}`;
       else if (currentUser?.role === 'editor') url += '&workflow=editor';
@@ -479,6 +484,12 @@ function AdminPageContent() {
 
   const handleSaveNews = async () => {
     try {
+      // Blank author blocks drop out here; if the editor left the byline
+      // empty entirely, fall back to the signed-in user so an article is
+      // never published with no author at all.
+      const authors = normalizeAuthorsInput(newsForm.authors)
+        || (currentUser?.name ? [{ name: currentUser.name, image: null }] : []);
+
       const payload = {
         ...newsForm,
         images: newsForm.images,
@@ -486,7 +497,11 @@ function AdminPageContent() {
         seoKeywords: newsForm.seoKeywords.split(',').map(t => t.trim()).filter(Boolean),
         authorId: currentUser?.id || 'admin',
         authorLabel: newsForm.authorLabel || 'Author',
-        authorName: newsForm.authorName || currentUser?.name,
+        authors,
+        // Mirrored for the consumers that still read a single name: the
+        // editorial calendar filter, the admin list column, RSS and the
+        // recommendation scorer.
+        authorName: primaryAuthorName(authors) || currentUser?.name,
         status: newsForm.status,
       };
       const method = editingNews ? 'PUT' : 'POST';
@@ -618,7 +633,11 @@ function AdminPageContent() {
   };
 
   const resetNewsForm = () => {
-    setNewsForm({ ...EMPTY_NEWS_FORM, authorLabel: 'Author', authorName: currentUser?.name || 'Admin' });
+    setNewsForm({
+      ...EMPTY_NEWS_FORM,
+      authorLabel: 'Author',
+      authors: [{ name: currentUser?.name || '', image: '' }],
+    });
     setEditingNews(null);
   };
 
@@ -631,7 +650,17 @@ function AdminPageContent() {
       images: item.images || [],
       isBreaking: item.isBreaking || false, breakingSuggested: item.breakingSuggested || false,
       isTrending: item.isTrending || false, trendingSuggested: item.trendingSuggested || false,
-      isFeatured: item.isFeatured || false, authorLabel: item.authorLabel || 'Author', authorName: item.authorName || 'Admin',
+      isFeatured: item.isFeatured || false, authorLabel: item.authorLabel || 'Author',
+      // Legacy articles have no `authors` array — getArticleAuthors lifts
+      // their authorName/authorAvatar into one block, so opening an old
+      // article in the editor shows its existing byline rather than a blank
+      // field, and re-saving migrates it to the new shape.
+      authors: (() => {
+        const existing = getArticleAuthors(item);
+        return existing.length
+          ? existing.map(a => ({ name: a.name, image: a.image || '' }))
+          : [{ name: '', image: '' }];
+      })(),
       source: item.source || '', sourceUrl: item.sourceUrl || '',
       seoTitle: item.seoTitle || '', seoDescription: item.seoDescription || '',
       seoKeywords: item.seoKeywords?.join(', ') || '',

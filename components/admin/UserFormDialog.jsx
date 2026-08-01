@@ -8,8 +8,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { ImageUpload } from '@/components/upload/ImageUpload';
 
+// Profile photo is deliberately not editable here. Per-article author photos
+// replaced it (see components/admin/AuthorsField.jsx) — administrators no
+// longer manage user avatars. The `avatar` field still exists on the user
+// document and is still carried through this form's state untouched, so
+// saving a user preserves whatever photo they already have.
 export function UserFormDialog({ open, onOpenChange, editingUser, userForm, setUserForm, onSave }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -18,10 +22,6 @@ export function UserFormDialog({ open, onOpenChange, editingUser, userForm, setU
           <DialogTitle>{editingUser ? 'Edit User' : 'Create User'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label>Profile Photo</Label>
-            <ImageUpload value={userForm.avatar} onChange={v => setUserForm({ ...userForm, avatar: v })} folder="avatars" />
-          </div>
           <div className="space-y-2">
             <Label>Name *</Label>
             <Input value={userForm.name} onChange={e => setUserForm({ ...userForm, name: e.target.value })} placeholder="Full name" />
@@ -35,6 +35,11 @@ export function UserFormDialog({ open, onOpenChange, editingUser, userForm, setU
             <Select value={userForm.role} onValueChange={v => setUserForm({ ...userForm, role: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
+                {/* 'reader' stays available: the Users *table* hides readers,
+                    but the role itself is unchanged and may need to be
+                    assigned (e.g. demoting a staff account). A reader saved
+                    here won't appear in the list — that's the filter working,
+                    not a bug. */}
                 <SelectItem value="reader">Reader</SelectItem>
                 <SelectItem value="reporter">Reporter</SelectItem>
                 <SelectItem value="editor">Editor</SelectItem>
