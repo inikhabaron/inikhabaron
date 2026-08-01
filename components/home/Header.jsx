@@ -65,6 +65,10 @@ export default function Header({
     { label: t.latestNews, slug: 'all' },
     { label: selectedLanguage === 'hi' ? 'वीडियो' : 'Video', slug: 'live-video', isVideo: true, },
     { label: selectedLanguage === 'hi' ? 'मेरा शहर' : 'My City', slug: 'my-city', isMyCity: true, },
+    // /cricket previously had exactly one entry point site-wide: the "View
+    // All Scores" button inside the homepage widget, which is itself hidden
+    // when the module is disabled or has no data — leaving the hub orphaned.
+    { label: selectedLanguage === 'hi' ? 'क्रिकेट' : 'Cricket', slug: 'cricket', isCricket: true, },
     ...categories.map(cat => ({
       label: selectedLanguage === 'hi' ? (cat.nameHi || cat.name) : cat.name, slug: cat.slug,
     })),
@@ -229,7 +233,7 @@ export default function Header({
           {mobileNavItems.map(item => {
             const isActive = selectedCategory === item.slug;
             return (
-              <button key={item.slug} onClick={() => { if (item.isVideo) { router.push('/live'); return; } if (item.isMyCity) { router.push('/my-city'); return; } setSelectedCategory(item.slug); router.push(`/?category=${item.slug}`); }}
+              <button key={item.slug} onClick={() => { if (item.isVideo) { router.push('/live'); return; } if (item.isMyCity) { router.push('/my-city'); return; } if (item.isCricket) { router.push('/cricket'); return; } setSelectedCategory(item.slug); router.push(`/?category=${item.slug}`); }}
                 style={{ whiteSpace: 'nowrap', padding: '5px 14px', borderRadius: '20px', border: 'none', fontSize: '13px', cursor: 'pointer', flexShrink: 0, backgroundColor: isActive ? ACCENT : dark ? '#252838' : '#F1F3F5', color: isActive ? 'white' : T2 }}>
                 {item.label}
               </button>
@@ -498,7 +502,12 @@ export default function Header({
               <ChevronRight size={18} />
             </button>
 
-            {/* LIVE VIDEO FIXED RIGHT */}
+            {/* CRICKET + LIVE VIDEO FIXED RIGHT */}
+
+            <button className={styles.liveVideoBtn}
+              onClick={() => router.push("/cricket")} >
+              {selectedLanguage === 'hi' ? 'क्रिकेट' : 'Cricket'}
+            </button>
 
             <button className={styles.liveVideoBtn}
               onClick={() => router.push("/live")} >

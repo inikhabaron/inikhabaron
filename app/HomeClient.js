@@ -16,6 +16,7 @@ import ArticleCard from '@/components/home/ArticleCard';
 import LatestNews from '@/components/home/LatestNews';
 import BreakingTicker from '@/components/home/BreakingTicker';
 import MarketTicker from '@/components/market/MarketTicker';
+import CricketWidget from '@/components/cricket/CricketWidget';
 import CategoryShowcase from '@/components/home/CategoryShowcase';
 import EventPromotions from '@/components/promotions/EventPromotions';
 import SiteFooter from '@/components/home/SiteFooter';
@@ -288,6 +289,9 @@ export default function HomePage({ initialCategory = 'all' }) {
         >
           {/* Market ticker */}
           <MarketTicker dark={dark} selectedLanguage={selectedLanguage} />
+
+          {/* Live cricket widget — renders nothing when no match is live */}
+          <CricketWidget dark={dark} selectedLanguage={selectedLanguage} />
 
           {/* Breaking news ticker */}
           <BreakingTicker breakingNews={breakingNews} dark={dark} onArticleClick={goToArticle} />

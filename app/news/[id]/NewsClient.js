@@ -15,6 +15,7 @@ import BookmarkButton from '@/components/bookmarks/BookmarkButton';
 import LikeButton from '@/components/likes/LikeButton';
 import FollowButton from '@/components/follow/FollowButton';
 import ArticleAuthors from '@/components/news/ArticleAuthors';
+import RelatedLiveMatchWidget from '@/components/cricket/RelatedLiveMatchWidget';
 import { getArticleAuthors } from '@/lib/news/authors';
 import { applyFollowChange } from '@/lib/follow/applyFollowChange';
 import { CommentsSection } from '@/components/comments';
@@ -527,6 +528,8 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                               Facebook
                             </button>
                           </div>
+
+                          <RelatedLiveMatchWidget article={article} dark={dark} selectedLanguage={selectedLanguage} />
 
                           <WhySeeingThis
                             articleId={article.id}

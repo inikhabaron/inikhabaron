@@ -15,6 +15,7 @@
         "check:arch": "npm run check:boundary && npm run check:infra && npm run check:queue",
         "clean": "rimraf .next",
         "db:indexes": "node --env-file=.env scripts/ensureIndexes.mjs",
+        "cricket:defaults": "node --env-file=.env scripts/applyCricketDefaults.mjs",
         "transform:locations": "node --env-file=.env scripts/transformLocations.mjs",
         "seed:locations": "node --env-file=.env scripts/seedLocations.mjs",
         "backfill:news-locations": "node --env-file=.env scripts/backfillNewsLocations.mjs",
