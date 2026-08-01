@@ -49,11 +49,13 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
   const [error, setError] = useState(null);
   const {
     dark, toggleDark, selectedLanguage, setSelectedLanguage, translations, t,
-    user, authLoading, authDialogOpen, setAuthDialogOpen,
+    user, sessionReady, authLoading, authDialogOpen, setAuthDialogOpen,
     handleGoogleSignIn, handleAppleSignIn, handleSignOut,
     categories, breakingNews,
   } = useSiteChrome();
-  const { bookmarkedIds, handleBookmarkChange } = useBookmarkedIds(user);
+  // Gated on sessionReady — see SiteChromeProvider. Passing bare `user` fires
+  // GET /api/users/bookmarks/ids before the khabaron_session cookie exists.
+  const { bookmarkedIds, handleBookmarkChange } = useBookmarkedIds(sessionReady ? user : null);
   const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]);
   const [textScale] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
@@ -107,7 +109,7 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
   }, []);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !sessionReady) {
       setFollowing({ categories: [], authors: [], cities: [] });
       return;
     }
@@ -124,7 +126,7 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, sessionReady]);
 
   useEffect(() => {
     (async () => {
@@ -327,7 +329,11 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
 
   useReadingProgress({
     articleId: article?.id,
-    enabled: !!user,
+    // sessionReady, not just `user`: the hook's restore effect issues
+    // GET /api/users/reading-progress/{id} as soon as this turns true, which on
+    // a cold login is before the khabaron_session cookie exists. `ready` below
+    // is a different condition — it means the article itself has loaded.
+    enabled: !!user && sessionReady,
     ready: !!article && !loading,
   });
 
@@ -479,6 +485,7 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                             <LikeButton
                                 articleId={article.id}
                                 user={user}
+                                sessionReady={sessionReady}
                                 onRequireLogin={() => setAuthDialogOpen(true)}
                             />
                             {article.category && (

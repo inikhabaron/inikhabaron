@@ -165,7 +165,6 @@ export default function useReadingProgress({
     }
 
     async function saveProgress(force = false) {
-      console.log('saveProgress()', force);
       if (savingRef.current) {
         return;
       }

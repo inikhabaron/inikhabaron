@@ -66,11 +66,13 @@ export default function HomePage({ initialCategory = 'all' }) {
   // ── Auth state ───────────────────────────────────────────────────────────
   const {
     dark, toggleDark, selectedLanguage, setSelectedLanguage, translations, t,
-    user, authLoading, authDialogOpen, setAuthDialogOpen,
+    user, sessionReady, authLoading, authDialogOpen, setAuthDialogOpen,
     handleGoogleSignIn: signInWithGoogleShared, handleAppleSignIn: signInWithAppleShared, handleSignOut,
     categories, breakingNews,
   } = useSiteChrome();
-  const { bookmarkedIds, handleBookmarkChange } = useBookmarkedIds(user);
+  // Gated on sessionReady, not just user: the hook fetches immediately when its
+  // argument is truthy, and before the khabaron_session cookie exists that 401s.
+  const { bookmarkedIds, handleBookmarkChange } = useBookmarkedIds(sessionReady ? user : null);
   const [userId, setUserId] = useState(null);
   const [subscriptionOpen, setSubscriptionOpen] = useState(false);
 
@@ -126,7 +128,7 @@ export default function HomePage({ initialCategory = 'all' }) {
   }, []);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !sessionReady) {
       setFollowing({ categories: [], authors: [], cities: [] });
       return;
     }
@@ -143,7 +145,7 @@ export default function HomePage({ initialCategory = 'all' }) {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, sessionReady]);
 
   // Opens the auth dialog when a page redirected here for a login-gated action
   // (e.g. /settings). Sign-in success handlers below own redirecting back.
