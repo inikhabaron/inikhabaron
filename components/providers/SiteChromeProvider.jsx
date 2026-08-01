@@ -212,7 +212,18 @@ export default function SiteChromeProvider({ children }) {
       handleGoogleSignIn, handleAppleSignIn, handleSignOut,
     }}>
       {children}
-      <LocationDetectPrompt isSignedIn={!!user} dark={dark} isHindi={selectedLanguage === 'hi'} />
+      {/*
+        Gated on sessionReady for the same reason as the bookmark and follow
+        fetches: useLocationAutoDetect calls GET /api/users/location as soon as
+        isSignedIn turns true, which on a cold login is before the
+        khabaron_session cookie exists. Passing `!!user` alone reintroduced the
+        401 this provider's gate exists to prevent.
+      */}
+      <LocationDetectPrompt
+        isSignedIn={!!user && sessionReady}
+        dark={dark}
+        isHindi={selectedLanguage === 'hi'}
+      />
     </SiteChromeContext.Provider>
   );
 }
