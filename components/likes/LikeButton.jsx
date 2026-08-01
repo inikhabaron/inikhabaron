@@ -11,6 +11,14 @@ const ACCENT = '#EF4444';
 export default function LikeButton({
   articleId,
   user,
+  // Whether the khabaron_session cookie exists yet (SiteChromeProvider).
+  // Deliberately separate from `user`, which stays Firebase auth state: `user`
+  // gates the login prompt below, `sessionReady` gates the authenticated
+  // status fetch. Folding them together would prompt "please sign in" during
+  // the sub-second window after login while the cookie is still being issued.
+  // Intentionally has no default — a caller that forgets it gets a like status
+  // that never loads (visible in dev) rather than a silent 401 race.
+  sessionReady,
   onRequireLogin,
   size = 'lg',
 }) {
@@ -26,7 +34,7 @@ export default function LikeButton({
   const iconSize = size === 'sm' ? 14 : 22;
 
   useEffect(() => {
-    if (!user || !articleId) {
+    if (!user || !sessionReady || !articleId) {
       setLiked(false);
       setCount(0);
       return;
@@ -57,7 +65,7 @@ export default function LikeButton({
     return () => {
       cancelled = true;
     };
-  }, [articleId, user]);
+  }, [articleId, user, sessionReady]);
 
   async function toggleLike() {
     if (!user) {

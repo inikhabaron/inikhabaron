@@ -126,7 +126,7 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, sessionReady]);
 
   useEffect(() => {
     (async () => {
@@ -481,6 +481,7 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                             <LikeButton
                                 articleId={article.id}
                                 user={user}
+                                sessionReady={sessionReady}
                                 onRequireLogin={() => setAuthDialogOpen(true)}
                             />
                             {article.category && (

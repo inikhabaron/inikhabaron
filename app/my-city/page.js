@@ -64,7 +64,7 @@ export default function MyCityPage() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, sessionReady]);
 
   useEffect(() => {
     let active = true;

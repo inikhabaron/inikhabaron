@@ -145,7 +145,7 @@ export default function HomePage({ initialCategory = 'all' }) {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, sessionReady]);
 
   // Opens the auth dialog when a page redirected here for a login-gated action
   // (e.g. /settings). Sign-in success handlers below own redirecting back.
