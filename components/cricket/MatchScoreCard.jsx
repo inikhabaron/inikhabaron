@@ -1,8 +1,9 @@
 'use client';
 
-import { MapPin } from 'lucide-react';
-import { matchStateLabel, matchStateColors } from '@/lib/cricket/matchStatus';
+import { MapPin, Clock, Trophy } from 'lucide-react';
+import { matchStateLabel, matchStateColors, formatMatchDateTime, msUntilStart, COUNTDOWN_WINDOW_MS } from '@/lib/cricket/matchStatus';
 import { MATCH_STATES } from '@/lib/services/cricket/cricketConstants';
+import MatchCountdown from './MatchCountdown';
 import styles from './MatchScoreCard.module.css';
 
 function formatScore(score) {
@@ -32,6 +33,10 @@ export default function MatchScoreCard({ match, dark, isHindi, compact = false, 
     ? '—'
     : (isHindi ? 'बल्लेबाजी बाकी' : 'Yet to bat');
 
+  const isUpcoming = match.matchState === MATCH_STATES.UPCOMING;
+  const remaining = isUpcoming ? msUntilStart(match.dateTimeGMT) : null;
+  const showCountdown = remaining != null && remaining <= COUNTDOWN_WINDOW_MS;
+
   return (
     <button
       type="button"
@@ -60,6 +65,11 @@ export default function MatchScoreCard({ match, dark, isHindi, compact = false, 
 
       {teams.map((team, index) => {
         const scoreText = formatScore(team.score);
+        // Only meaningful once the match has actually ended — matchWinner
+        // isn't populated beforehand, so this never fires for a live/
+        // upcoming card.
+        const isWinner = match.matchState === MATCH_STATES.COMPLETED && match.matchWinner && team.name
+          && team.name.trim().toLowerCase() === match.matchWinner.trim().toLowerCase();
         return (
           // Indexed key: CricAPI has been seen returning a nameless side, so
           // team name isn't reliably unique (two blanks would collide).
@@ -71,9 +81,10 @@ export default function MatchScoreCard({ match, dark, isHindi, compact = false, 
                 // in next.config.js just for this.
                 <img src={team.image} alt="" className={styles.teamLogo} />
               )}
-              <span className={styles.teamName} style={{ color: team.name ? T1 : T3 }}>
+              <span className={styles.teamName} style={{ color: team.name ? T1 : T3, fontWeight: isWinner ? 800 : 700 }}>
                 {team.name || (isHindi ? 'टीम घोषित नहीं' : 'Team not announced')}
               </span>
+              {isWinner && <Trophy size={12} color="#d97706" aria-hidden="true" style={{ flexShrink: 0 }} />}
             </span>
             <span className={styles.teamScore} style={{ color: scoreText ? T1 : T3 }}>
               {scoreText || noScoreLabel}
@@ -84,6 +95,19 @@ export default function MatchScoreCard({ match, dark, isHindi, compact = false, 
 
       {match.status && (
         <div className={styles.statusLine} style={{ color: T2 }}>{match.status}</div>
+      )}
+
+      {isUpcoming && (
+        <div className={styles.metaRow} style={{ color: T3 }}>
+          <Clock size={11} aria-hidden="true" />
+          <span>{formatMatchDateTime(match.dateTimeGMT, isHindi) || (isHindi ? 'समय की पुष्टि नहीं' : 'Time to be confirmed')}</span>
+        </div>
+      )}
+
+      {showCountdown && (
+        <div className={styles.metaRow} style={{ color: stateColors.color, fontWeight: 700 }}>
+          <MatchCountdown dateTimeGMT={match.dateTimeGMT} isHindi={isHindi} showIcon />
+        </div>
       )}
 
       {!compact && match.venue && (

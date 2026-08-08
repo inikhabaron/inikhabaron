@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Radio, Flag, Trophy, Globe2, Calendar, CheckCircle2, AlertTriangle } from 'lucide-react';
-import { refreshIntervalForMatches, rateLimitMessage } from '@/lib/cricket/matchStatus';
+import { refreshIntervalForMatches, rateLimitMessage, isWithinUpcomingHubWindow, formatMatchDateTime } from '@/lib/cricket/matchStatus';
 import { MATCH_STATES } from '@/lib/services/cricket/cricketConstants';
 import { CRICKET_TIER } from '@/lib/cricket/matchPriority';
 import { event as trackEvent } from '@/lib/gtag';
@@ -119,6 +119,14 @@ export default function CricketSections({ dark, selectedLanguage }) {
     router.push(`/cricket/${match.id}`);
   };
 
+  // Upcoming fixtures more than a few days out are hidden from the whole hub
+  // (every section, not just "Upcoming Fixtures") — CricAPI's currentMatches
+  // window can include fixtures well ahead, and a card for something a week
+  // away read as clutter next to "what's on right now". Live and completed
+  // matches are never affected (isWithinUpcomingHubWindow only filters the
+  // UPCOMING state).
+  const visibleMatches = matches.filter(isWithinUpcomingHubWindow);
+
   // Each match lands in exactly one section — the first it qualifies for, in
   // the order the sections are rendered below. Previously every filter ran
   // over the full list independently, so any match in a tier that has its own
@@ -131,10 +139,10 @@ export default function CricketSections({ dark, selectedLanguage }) {
   // India match sits under "India Matches" (alongside that team's recent
   // results) rather than under "Upcoming Fixtures". Day-range sub-filtering
   // for those two sections is already a Phase 2 item in docs/cricket-roadmap.md.
-  const unclaimed = new Set(matches);
+  const unclaimed = new Set(visibleMatches);
   const claim = (predicate, limit = SECTION_LIMIT) => {
     const taken = [];
-    for (const match of matches) {
+    for (const match of visibleMatches) {
       if (taken.length >= limit) break;
       if (!unclaimed.has(match) || !predicate(match)) continue;
       unclaimed.delete(match);
@@ -155,6 +163,16 @@ export default function CricketSections({ dark, selectedLanguage }) {
 
   const nothingToShow = ![live, india, ipl, international, upcoming, recent].some((s) => s.length);
 
+  // When the hub has nothing to show, tell the reader whether that's
+  // because there's genuinely no cricket on the calendar, or because the
+  // next fixture is just further out than the hub bothers displaying — in
+  // the latter case, name it rather than leaving a bare "nothing here".
+  const nextMatch = nothingToShow
+    ? matches
+      .filter((m) => m.matchState === MATCH_STATES.UPCOMING && m.dateTimeGMT && !isWithinUpcomingHubWindow(m))
+      .sort((a, b) => new Date(a.dateTimeGMT) - new Date(b.dateTimeGMT))[0] || null
+    : null;
+
   const sectionProps = { dark, isHindi, onOpen: openMatch, T1, T3, bdr };
 
   return (
@@ -169,7 +187,24 @@ export default function CricketSections({ dark, selectedLanguage }) {
         </div>
       )}
 
-      {nothingToShow && emptyBox(isHindi ? 'फिलहाल कोई क्रिकेट डेटा उपलब्ध नहीं है।' : 'No cricket data available right now.')}
+      {nothingToShow && (
+        <div style={{ borderRadius: 16, background: surface, border: `1px solid ${bdr}`, padding: 28, textAlign: 'center', color: T2 }}>
+          <div>{isHindi ? 'फ़िलहाल कोई मैच निर्धारित नहीं है।' : 'No matches are scheduled right now.'}</div>
+          {nextMatch ? (
+            <button
+              type="button"
+              onClick={() => openMatch(nextMatch)}
+              style={{ marginTop: 10, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: T1, textDecoration: 'underline', padding: 0 }}
+            >
+              {isHindi ? 'अगला मैच: ' : 'Next up: '}
+              {(nextMatch.teams || []).map((t) => t.name).filter(Boolean).join(' vs ') || nextMatch.name}
+              {' — '}{formatMatchDateTime(nextMatch.dateTimeGMT, isHindi)}
+            </button>
+          ) : (
+            <div style={{ marginTop: 4, fontSize: 13 }}>{isHindi ? 'जल्द ही वापस देखें।' : 'Check back soon.'}</div>
+          )}
+        </div>
+      )}
 
       <Section icon={Radio} title={isHindi ? 'लाइव मैच' : 'Live Matches'} matches={live} {...sectionProps} />
       <Section icon={Flag} title={isHindi ? 'भारत के मैच' : 'India Matches'} matches={india} {...sectionProps} />

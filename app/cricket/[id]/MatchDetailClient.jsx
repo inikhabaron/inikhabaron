@@ -1,15 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { MapPin, Link2, Check, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { MapPin, Link2, Check, AlertTriangle, ArrowLeft, Clock, Trophy } from 'lucide-react';
 import Link from 'next/link';
 
 import PublicPageLayout from '@/components/layout/PublicPageLayout';
 import useSiteChrome from '@/hooks/useSiteChrome';
 import { event as trackEvent } from '@/lib/gtag';
-import { matchStateLabel, matchStateColors, refreshIntervalForMatch, rateLimitMessage } from '@/lib/cricket/matchStatus';
+import { matchStateLabel, matchStateColors, refreshIntervalForMatch, rateLimitMessage, formatMatchDateTime, formatUpdatedAgo } from '@/lib/cricket/matchStatus';
 import { MATCH_STATES } from '@/lib/services/cricket/cricketConstants';
+import { useTicker } from '@/lib/cricket/useTicker';
 import RelatedCricketNews from '@/components/cricket/RelatedCricketNews';
+import MatchCountdown from '@/components/cricket/MatchCountdown';
 
 function formatScore(score, isHindi) {
   if (!score || score.runs == null) return isHindi ? 'बल्लेबाजी बाकी' : 'Yet to bat';
@@ -215,7 +217,12 @@ export default function MatchDetailClient({ matchId, initialMatch }) {
   const [rateLimited, setRateLimited] = useState(false);
   const [failed, setFailed] = useState(false);
   const [pollMs, setPollMs] = useState(refreshIntervalForMatch(initialMatch));
+  const [lastUpdatedAt, setLastUpdatedAt] = useState(initialMatch ? Date.now() : null);
   const mountedRef = useRef(true);
+
+  // Idle 10s tick — just fast enough that "Updated Xs ago" visibly moves
+  // without re-rendering the whole page needlessly between polls.
+  const now = useTicker(10_000);
 
   const fetchMatch = useCallback(async () => {
     try {
@@ -232,6 +239,7 @@ export default function MatchDetailClient({ matchId, initialMatch }) {
       }
       setMatch(data.match);
       setFailed(false);
+      setLastUpdatedAt(Date.now());
     } catch (error) {
       console.error(error);
       if (mountedRef.current) setFailed(true);
@@ -274,7 +282,9 @@ export default function MatchDetailClient({ matchId, initialMatch }) {
     body = infoBox(isHindi ? 'लोड हो रहा है...' : 'Loading match…');
   } else {
     const isLive = match.matchState === MATCH_STATES.LIVE;
+    const isUpcoming = match.matchState === MATCH_STATES.UPCOMING;
     const stateColors = matchStateColors(match.matchState, dark);
+    const updatedAgoLabel = isLive && lastUpdatedAt != null ? formatUpdatedAgo(now - lastUpdatedAt, isHindi) : null;
     body = (
       <>
         <div style={{ borderRadius: 16, background: surface, border: `1px solid ${isLive ? '#ef4444' : bdr}`, padding: 22, marginBottom: 24 }}>
@@ -294,17 +304,35 @@ export default function MatchDetailClient({ matchId, initialMatch }) {
             )}
           </div>
 
-          {match.teams.map((team) => (
-            <div key={team.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', gap: 12 }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                {team.image && (
-                  <img src={team.image} alt="" width={28} height={28} style={{ borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                )}
-                <span style={{ fontSize: 18, fontWeight: 800, color: T1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{team.name}</span>
+          {match.teams.map((team) => {
+            // Only meaningful once the match has actually ended — never
+            // fires for a live/upcoming card since matchWinner isn't
+            // populated beforehand.
+            const isWinner = match.matchState === MATCH_STATES.COMPLETED && match.matchWinner && team.name
+              && team.name.trim().toLowerCase() === match.matchWinner.trim().toLowerCase();
+            return (
+              <div key={team.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', gap: 12 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                  {team.image && (
+                    <img src={team.image} alt="" width={28} height={28} style={{ borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                  )}
+                  <span style={{ fontSize: 18, fontWeight: isWinner ? 900 : 800, color: T1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{team.name}</span>
+                  {isWinner && <Trophy size={15} color="#d97706" aria-hidden="true" style={{ flexShrink: 0 }} />}
+                </span>
+                <span style={{ fontSize: 18, fontWeight: 800, color: T1, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', flexShrink: 0 }}>{formatScore(team.score, isHindi)}</span>
+              </div>
+            );
+          })}
+
+          {isUpcoming && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 12, padding: '10px 12px', borderRadius: 10, background: dark ? 'rgba(255,255,255,0.04)' : '#F8FAFC' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: T2 }}>
+                <Clock size={13} aria-hidden="true" />
+                {formatMatchDateTime(match.dateTimeGMT, isHindi) || (isHindi ? 'समय की पुष्टि नहीं' : 'Time to be confirmed')}
               </span>
-              <span style={{ fontSize: 18, fontWeight: 800, color: T1, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', flexShrink: 0 }}>{formatScore(team.score, isHindi)}</span>
+              <MatchCountdown dateTimeGMT={match.dateTimeGMT} isHindi={isHindi} style={{ fontSize: 13, fontWeight: 800, color: stateColors.color }} />
             </div>
-          ))}
+          )}
 
           {match.status && <div style={{ marginTop: 10, fontSize: 14, color: T2 }}>{match.status}</div>}
 
@@ -318,6 +346,12 @@ export default function MatchDetailClient({ matchId, initialMatch }) {
             {match.tossWinner && (
               <span>
                 {isHindi ? 'टॉस: ' : 'Toss: '}{match.tossWinner}{match.tossChoice ? ` (${match.tossChoice})` : ''}
+              </span>
+            )}
+            {updatedAgoLabel && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Clock size={12} aria-hidden="true" />
+                {updatedAgoLabel}
               </span>
             )}
           </div>
@@ -339,7 +373,7 @@ export default function MatchDetailClient({ matchId, initialMatch }) {
           <ShareRow match={match} T2={T2} dark={dark} />
         </div>
 
-        {match.innings?.length > 0 && (
+        {match.innings?.length > 0 ? (
           <div style={{ borderRadius: 16, background: surface, border: `1px solid ${bdr}`, padding: 22, marginBottom: 24 }}>
             <h2 style={{ fontSize: 17, fontWeight: 800, color: T1, marginBottom: 16 }}>
               {isHindi ? 'स्कोरकार्ड' : 'Scorecard'}
@@ -348,7 +382,13 @@ export default function MatchDetailClient({ matchId, initialMatch }) {
               <InningsTable key={`${innings.name}-${i}`} innings={innings} dark={dark} isHindi={isHindi} bdr={bdr} T1={T1} T2={T2} T3={T3} />
             ))}
           </div>
-        )}
+        ) : isUpcoming ? (
+          <div style={{ borderRadius: 16, background: surface, border: `1px solid ${bdr}`, padding: 22, marginBottom: 24, textAlign: 'center', color: T2, fontSize: 14 }}>
+            {isHindi
+              ? 'यह मैच अभी शुरू नहीं हुआ है। खेल शुरू होते ही यहां लाइव स्कोर दिखाई देगा।'
+              : "This match hasn't started yet. Live scores will appear here once play begins."}
+          </div>
+        ) : null}
 
         <RelatedCricketNews match={match} dark={dark} selectedLanguage={selectedLanguage} />
       </>
