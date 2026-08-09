@@ -3,10 +3,11 @@
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { ImageUpload } from '@/components/upload/ImageUpload';
-import { MAX_AUTHORS } from '@/lib/news/authors';
+import { MAX_AUTHORS, MAX_BIO_LENGTH } from '@/lib/news/authors';
 
-export const EMPTY_AUTHOR = { name: '', image: '' };
+export const EMPTY_AUTHOR = { name: '', image: '', bio: '' };
 
 // Order is editorial, not cosmetic: the first author is the lead byline and
 // is what `authorName` is derived from on save, so the labels say which slot
@@ -45,7 +46,7 @@ export function AuthorsField({ authors, onChange }) {
     const author = list[index];
     // Only interrupt when there is something to lose — confirming an empty
     // block would just train editors to dismiss the dialog reflexively.
-    const hasContent = Boolean(author?.name?.trim() || author?.image);
+    const hasContent = Boolean(author?.name?.trim() || author?.image || author?.bio?.trim());
     if (hasContent) {
       const who = author.name?.trim() || 'this author';
       if (!window.confirm(`Remove ${who}? Their name and photo will be cleared from this article.`)) return;
@@ -134,6 +135,20 @@ export function AuthorsField({ authors, onChange }) {
                   folder="authors"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2" style={{ marginTop: 12 }}>
+              <Label>About Author</Label>
+              <Textarea
+                value={author.bio || ''}
+                onChange={(e) => updateAuthor(index, { bio: e.target.value.slice(0, MAX_BIO_LENGTH) })}
+                placeholder="A short bio shown under this author's byline at the end of the article — optional"
+                rows={3}
+                maxLength={MAX_BIO_LENGTH}
+              />
+              <p style={{ fontSize: 11, color: (author.bio || '').length >= MAX_BIO_LENGTH ? '#dc2626' : '#9ca3af', textAlign: 'right', margin: 0 }}>
+                {(author.bio || '').length} / {MAX_BIO_LENGTH}
+              </p>
             </div>
           </div>
         );
