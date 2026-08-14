@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { cloudinaryLoader } from '@/lib/media/cloudinaryLoader';
 import React, { useContext } from 'react';
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
 import { getCatAccent, getCatLabel } from '@/lib/news-utils';
@@ -85,6 +86,7 @@ export default function PersonalizedNewsCard({
           fill
           sizes="(max-width: 480px) 90vw, 300px"
           className="kn-card-img"
+          loader={cloudinaryLoader}
         />
 
         <div className={styles.badge}>

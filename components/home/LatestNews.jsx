@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import Image from 'next/image';
+import { cloudinaryLoader } from '@/lib/media/cloudinaryLoader';
 import { getCatLabel } from '@/lib/news-utils';
 
 export default function LatestNews({ items, onArticleClick, dark, selectedLanguage, formatDate }) {
@@ -32,6 +33,7 @@ export default function LatestNews({ items, onArticleClick, dark, selectedLangua
               width={64}
               height={64}
               sizes="64px"
+              loader={cloudinaryLoader}
             />
           </div>
         </div>

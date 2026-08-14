@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import Image from 'next/image';
+import { cloudinaryLoader } from '@/lib/media/cloudinaryLoader';
 import { getCatAccent, getCatLabel } from '@/lib/news-utils';
 
 function HorizontalArticleCard({
@@ -37,6 +38,7 @@ function HorizontalArticleCard({
           width={100}
           height={90}
           sizes="100px"
+          loader={cloudinaryLoader}
         />
       </div>
     </div>

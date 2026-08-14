@@ -9,6 +9,14 @@ const nextConfig = {
     // because story images come from many CDNs (Cloudinary, Firebase, wire
     // services, etc.) — this preserves existing functionality while enabling
     // optimization. Plain <img> tags elsewhere are unaffected.
+    //
+    // Deliberately NOT setting a global `loader`/`loaderFile` here: doing so
+    // disables Next's own /_next/image route for every image in the app
+    // (confirmed locally — it 404s), which would break the static logo
+    // images that have no reason to change. Instead, article-image
+    // components pass `loader={cloudinaryLoader}` (lib/media/cloudinaryLoader.js)
+    // per-<Image> so only Cloudinary-hosted sources bypass Vercel's
+    // optimizer; logo/static images keep using the default Vercel pipeline.
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       { protocol: 'https', hostname: '**' },

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { cloudinaryLoader } from '@/lib/media/cloudinaryLoader';
 import { User, Pencil, Trash2, Loader2, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -255,6 +256,7 @@ export default function CommentItem({
           width={48}
           height={48}
           className={styles.avatar}
+          loader={cloudinaryLoader}
         />
       ) : (
         <div

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
 import Image from 'next/image';
+import { cloudinaryLoader } from '@/lib/media/cloudinaryLoader';
 import { Newspaper, Crown, ChevronDown } from 'lucide-react';
 
 // ─── Layout & UI components ───────────────────────────────────────────────────
@@ -375,6 +376,7 @@ export default function HomePage({ initialCategory = 'all' }) {
                           width={96}
                           height={68}
                           sizes="96px"
+                          loader={cloudinaryLoader}
                         />
                       </div>
                       <div className="kn-mobile-item-text" style={{ marginLeft: '12px' }}>

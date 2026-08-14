@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { cloudinaryLoader } from '@/lib/media/cloudinaryLoader';
 
 import {
   X,
@@ -117,6 +118,7 @@ export function CommentDetailsDialog({
                   alt={user.name}
                   width={70}
                   height={70}
+                  loader={cloudinaryLoader}
                   className={
                     styles.avatar
                   }

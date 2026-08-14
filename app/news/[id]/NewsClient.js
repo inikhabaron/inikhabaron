@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Newspaper } from 'lucide-react';
 import Image from 'next/image';
+import { cloudinaryLoader } from '@/lib/media/cloudinaryLoader';
 
 import Header from '@/components/home/Header';
 import LatestNews from '@/components/home/LatestNews';
@@ -441,6 +442,7 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                             height={675}
                             priority
                             sizes="(max-width: 768px) 100vw, 90vw"
+                            loader={cloudinaryLoader}
                           />
                         </div>
                         <div className={styles.articleBody}>
@@ -557,6 +559,7 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                                   width={400}
                                   height={220}
                                   sizes="(max-width: 768px) 100vw, 400px"
+                                  loader={cloudinaryLoader}
                                   style={{
                                     width: '100%',
                                     height: '220px',
@@ -630,6 +633,7 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                                       width={400}
                                       height={180}
                                       sizes="(max-width: 768px) 100vw, 400px"
+                                      loader={cloudinaryLoader}
                                     />
                                     <div className={styles.relatedCardBody}>
                                       <p className={styles.relatedCardTitle} style={{ color: T1, fontFamily: selectedLanguage === 'hi' ? 'var(--font-devanagari), sans-serif' : selectedFont.value }}>

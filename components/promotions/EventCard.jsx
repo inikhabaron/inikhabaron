@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { cloudinaryLoader } from '@/lib/media/cloudinaryLoader';
 import Link from 'next/link';
 import { Calendar, ArrowRight } from 'lucide-react';
 import useCountdown from '@/hooks/useCountdown';
@@ -50,6 +51,7 @@ export default function EventCard({ promotion, dark, selectedLanguage }) {
             alt={promotion.title}
             fill
             sizes="(max-width: 768px) 100vw, 360px"
+            loader={cloudinaryLoader}
             style={{ objectFit: 'cover' }}
           />
         ) : (

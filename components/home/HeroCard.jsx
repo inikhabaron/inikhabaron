@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
+import { cloudinaryLoader } from '@/lib/media/cloudinaryLoader';
 import { Share2 } from 'lucide-react';
 import { getCatAccent, getCatLabel, EDITORIAL_RED } from '@/lib/news-utils';
 
@@ -82,6 +83,7 @@ function HeroCard({ item, onClick, formatDate, selectedLanguage, textScale, sele
         fill
         priority
         sizes="(max-width: 768px) 100vw, 60vw"
+        loader={cloudinaryLoader}
         style={{
           objectFit: 'cover',
           objectPosition: 'center top',

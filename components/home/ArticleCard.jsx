@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
 import { getCatAccent, getCatLabel, EDITORIAL_RED } from '@/lib/news-utils';
 import BookmarkButton from '@/components/bookmarks/BookmarkButton';
+import { cloudinaryLoader } from '@/lib/media/cloudinaryLoader';
 
 function ArticleCard({
   item, onClick, formatDate, showShareMenu, setShowShareMenu, selectedLanguage, onShareWhatsApp, onShareTwitter, onShareFacebook, onCopyLink, user, onRequireLogin, bookmarked, onBookmarkChange,
@@ -54,6 +55,7 @@ function ArticleCard({
           fill
           sizes="(max-width: 768px) 100vw, 33vw"
           className="kn-card-img"
+          loader={cloudinaryLoader}
         />
         {item.isBreaking && <span className="kn-card-live">Breaking News</span>}
         <div className="kn-card-bar" style={{ backgroundColor: catColor }} />
