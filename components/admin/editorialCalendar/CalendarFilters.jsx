@@ -44,7 +44,7 @@ export function CalendarFilters({ filters, onChange, categories }) {
       if (authorInput !== (filters.authorName || '')) onChange({ ...filters, authorName: authorInput || null });
     }, 400);
     return () => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+ 
   }, [authorInput]);
 
   const toggleType = (value) => {
