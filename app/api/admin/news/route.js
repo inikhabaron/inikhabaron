@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { json, preflight } from '@/lib/api/cors';
 import { getUserFromToken } from '@/lib/auth/admin/token';
 import { canCreateArticle, normalizeStatus } from '@/lib/auth/permissions';
-import { autoPublishScheduledArticles } from '@/lib/services/news';
 import { normalizeAuthorsInput, primaryAuthorName } from '@/lib/news/authors';
 
 // Reads per-request state (headers/cookies/query), so it can never be
@@ -16,7 +15,6 @@ export const OPTIONS = preflight;
 
 export async function GET(request) {
   try {
-    await autoPublishScheduledArticles();
     const url = new URL(request.url);
     const searchParams = url.searchParams;
     const newsCollection = await getCollection('news');

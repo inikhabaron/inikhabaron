@@ -1,6 +1,6 @@
 import { getCollection } from '@/lib/mongodb';
 import { json, preflight } from '@/lib/api/cors';
-import { autoPublishScheduledArticles } from '@/lib/services/news';
+import { timeAsync } from '@/lib/perf/perfLog';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -38,16 +38,19 @@ function feedPipeline(since) {
 
 export async function GET() {
   try {
-    await autoPublishScheduledArticles();
     const newsCollection = await getCollection('news');
 
     const cutoff = new Date(Date.now() - FRESHNESS_MS);
-    let news = await newsCollection.aggregate(feedPipeline(cutoff)).toArray();
+    let news = await timeAsync('news.aggregate() (breaking, windowed)', () =>
+      newsCollection.aggregate(feedPipeline(cutoff)).toArray()
+    );
 
     // A quiet week shouldn't blank the ticker out entirely — fall back to the
     // most recently flagged articles regardless of age.
     if (news.length === 0) {
-      news = await newsCollection.aggregate(feedPipeline(null)).toArray();
+      news = await timeAsync('news.aggregate() (breaking, fallback)', () =>
+        newsCollection.aggregate(feedPipeline(null)).toArray()
+      );
     }
 
     return json({ news },

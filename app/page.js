@@ -3,6 +3,7 @@ import JsonLd from '@/components/seo/JsonLd';
 import { getLatestArticles } from '@/lib/seo/data';
 import { itemListSchema, websiteSchema } from '@/lib/seo/jsonld';
 import { SITE, SITE_URL } from '@/lib/seo/config';
+import { timeAsync } from '@/lib/perf/perfLog';
 
 // Homepage revalidates frequently so top stories stay fresh for crawlers.
 export const revalidate = 120;
@@ -14,17 +15,19 @@ export const metadata = {
 };
 
 export default async function Page({ searchParams }) {
-  // Fetch top stories on the server purely to emit an ItemList of the current
-  // headlines (great for Google + AI "top stories" understanding). The rich
-  // interactive homepage UI is rendered by the existing client component.
-  const latest = await getLatestArticles({ limit: 10 });
-  const params = await searchParams;
-  const initialCategory = params?.category || 'all';
+  return timeAsync('Homepage SSR (app/page.js Page())', async () => {
+    // Fetch top stories on the server purely to emit an ItemList of the current
+    // headlines (great for Google + AI "top stories" understanding). The rich
+    // interactive homepage UI is rendered by the existing client component.
+    const latest = await getLatestArticles({ limit: 10 });
+    const params = await searchParams;
+    const initialCategory = params?.category || 'all';
 
-  return (
-    <>
-      <JsonLd data={[websiteSchema(), itemListSchema(latest, { name: `${SITE.name} — Top Stories` })]} />
-      <HomeClient initialCategory={initialCategory} />
-    </>
-  );
+    return (
+      <>
+        <JsonLd data={[websiteSchema(), itemListSchema(latest, { name: `${SITE.name} — Top Stories` })]} />
+        <HomeClient initialCategory={initialCategory} />
+      </>
+    );
+  });
 }

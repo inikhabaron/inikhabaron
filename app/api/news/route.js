@@ -1,6 +1,6 @@
 import { getCollection } from '@/lib/mongodb';
 import { json, preflight } from '@/lib/api/cors';
-import { autoPublishScheduledArticles } from '@/lib/services/news';
+import { timeAsync } from '@/lib/perf/perfLog';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -21,7 +21,6 @@ const LIST_EXCLUDE_PROJECTION = {
 
 export async function GET(request) {
   try {
-    await autoPublishScheduledArticles();
     const url = new URL(request.url);
     const searchParams = url.searchParams;
     const newsCollection = await getCollection('news');
@@ -52,8 +51,8 @@ export async function GET(request) {
     }
 
     const [news, total] = await Promise.all([
-      cursor.skip(skip).limit(limit).toArray(),
-      newsCollection.countDocuments(query),
+      timeAsync('news.find()', () => cursor.skip(skip).limit(limit).toArray()),
+      timeAsync('news.countDocuments()', () => newsCollection.countDocuments(query)),
     ]);
 
     return json(
