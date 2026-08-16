@@ -2768,6 +2768,19 @@ const options = {
           },
         },
       },
+      '/cron/auto-publish': {
+        get: {
+          summary: 'Publish scheduled articles whose scheduledAt has passed (Vercel Cron only)',
+          tags: ['Cron'],
+          description: 'Moved here off the /news, /news/breaking and /admin/news request paths — those previously ran this as a write (`news.updateMany`) before every read, on nearly every homepage/breaking-news view. Runs `news.updateMany({status:"scheduled", scheduledAt:{$lte:now}}, {$set:{status:"published", publishedAt:now, updatedAt:now}})`. Authenticated the same way as /cron/notifications: an `Authorization: Bearer <CRON_SECRET>` header that Vercel signs on scheduled invocations — a shared secret, not a user JWT, and not the bearerAuth or adminTokenHeader schemes used elsewhere in this spec. Runs once/day per vercel.json on the current plan; tighten that schedule (or call this route from an external scheduler with the same header) for lower publish latency.',
+          parameters: [{ name: 'Authorization', in: 'header', required: true, schema: { type: 'string', example: 'Bearer <CRON_SECRET>' }, description: 'Vercel Cron shared secret.' }],
+          responses: {
+            '200': { description: 'Sweep completed', content: { 'application/json': { example: { success: true, modifiedCount: 2 } } } },
+            '401': { description: 'Missing/incorrect Authorization header', content: { 'application/json': { example: { error: 'Unauthorized' } } } },
+            '500': { description: 'CRON_SECRET not configured on the server', content: { 'application/json': { example: { error: 'CRON_SECRET not configured' } } } },
+          },
+        },
+      },
       '/cron/notifications': {
         get: {
           summary: 'Safety-net sweep to recover stuck/undispatched notification jobs (Vercel Cron only)',
