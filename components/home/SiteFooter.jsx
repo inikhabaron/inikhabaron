@@ -9,6 +9,7 @@ import {
   FaYoutube,
   FaInstagram
 } from 'react-icons/fa6';
+import { SOCIAL_LINKS } from '@/lib/constants/social-links';
 
 export default function SiteFooter({ dark, categories, selectedLanguage, onCategoryClick, newsletterEmail, setNewsletterEmail, onNewsletterSubscribe, newsletterLoading }) {
   const T1 = dark ? '#E8ECF0' : '#111827';
@@ -136,21 +137,21 @@ export default function SiteFooter({ dark, categories, selectedLanguage, onCateg
             </ul>
             
             <div className="kn-footer-social-row" style={{ color: dark ? 'rgb(255, 255, 255)' : 'rgb(1, 1, 1)' }}>
-              <button className="kn-footer-social-btn" aria-label="Facebook">
+              <a href={SOCIAL_LINKS.facebook} target="_blank" rel="noopener noreferrer" className="kn-footer-social-btn" aria-label="Facebook">
                 <FaFacebookF size={18} />
-              </button>
+              </a>
 
-              <button className="kn-footer-social-btn" aria-label="Twitter">
+              <a href={SOCIAL_LINKS.twitter} target="_blank" rel="noopener noreferrer" className="kn-footer-social-btn" aria-label="Twitter">
                 <FaXTwitter size={18} />
-              </button>
+              </a>
 
-              <button className="kn-footer-social-btn" aria-label="YouTube">
+              <a href={SOCIAL_LINKS.youtube} target="_blank" rel="noopener noreferrer" className="kn-footer-social-btn" aria-label="YouTube">
                 <FaYoutube size={18} />
-              </button>
+              </a>
 
-              <button className="kn-footer-social-btn" aria-label="Instagram">
+              <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noopener noreferrer" className="kn-footer-social-btn" aria-label="Instagram">
                 <FaInstagram size={18} />
-              </button>
+              </a>
             </div>
           </div>
 

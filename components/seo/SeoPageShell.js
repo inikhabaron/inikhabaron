@@ -55,8 +55,8 @@ export default function SeoPageShell({ categories = [], activeSlug, children }) 
           <nav aria-label="Feeds">
             <strong style={{ color: '#fff', display: 'block', marginBottom: '8px' }}>Follow</strong>
             <a href="/rss.xml" style={footLink}>RSS Feed</a>
-            <a href={SITE.social.twitter} style={footLink} rel="noopener">Twitter / X</a>
-            <a href={SITE.social.facebook} style={footLink} rel="noopener">Facebook</a>
+            <a href={SITE.social.twitter} style={footLink} target="_blank" rel="noopener noreferrer">Twitter / X</a>
+            <a href={SITE.social.facebook} style={footLink} target="_blank" rel="noopener noreferrer">Facebook</a>
           </nav>
         </div>
         <div style={{ borderTop: '1px solid #252E40', padding: '14px 16px', fontSize: '12px', textAlign: 'center' }}>

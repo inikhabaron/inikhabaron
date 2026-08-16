@@ -6,6 +6,7 @@ import { FaHouseChimney, FaRegUser, FaFacebookF, FaXTwitter, FaYoutube, FaInstag
 import styles from './Header.module.css';
 import { toast } from 'sonner';
 import useNotificationOptIn from '@/hooks/useNotificationOptIn';
+import { SOCIAL_LINKS } from '@/lib/constants/social-links';
 
 const ACCENT        = '#3BAFDA';
 const EDITORIAL_RED = '#D72638';
@@ -200,21 +201,21 @@ export default function Header({
               <button key={link} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.72)', cursor: 'pointer', fontSize: '11px', padding: 0, whiteSpace: 'nowrap' }}>{link}</button>
             ))}
             <div className="kn-footer-social-row" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', color: 'rgba(255,255,255,0.72)' }}>
-              <button className="kn-footer-social-btn">
+              <a href={SOCIAL_LINKS.facebook} target="_blank" rel="noopener noreferrer" className="kn-footer-social-btn" aria-label="Facebook">
                 <FaFacebookF size={14} />
-              </button>
+              </a>
 
-              <button className="kn-footer-social-btn">
+              <a href={SOCIAL_LINKS.twitter} target="_blank" rel="noopener noreferrer" className="kn-footer-social-btn" aria-label="Twitter">
                 <FaXTwitter size={14} />
-              </button>
+              </a>
 
-              <button className="kn-footer-social-btn">
+              <a href={SOCIAL_LINKS.youtube} target="_blank" rel="noopener noreferrer" className="kn-footer-social-btn" aria-label="YouTube">
                 <FaYoutube size={14} />
-              </button>
+              </a>
 
-              <button className="kn-footer-social-btn">
+              <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noopener noreferrer" className="kn-footer-social-btn" aria-label="Instagram">
                 <FaInstagram size={14} />
-              </button>
+              </a>
             </div>
           </div>
         </div>

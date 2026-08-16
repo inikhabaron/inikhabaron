@@ -9,6 +9,7 @@ import styles from './Header.module.css';
 import { useRouter } from "next/navigation";
 import { toast } from 'sonner';
 import useNotificationOptIn from '@/hooks/useNotificationOptIn';
+import { SOCIAL_LINKS } from '@/lib/constants/social-links';
 
 const ACCENT        = '#3BAFDA';
 const EDITORIAL_RED = '#D72638';
@@ -288,21 +289,21 @@ export default function Header({
               <button key={link} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '16px', fontWeight: 600, padding: 0, whiteSpace: 'nowrap' }}>{link}</button>
             ))}
             <div className="kn-footer-social-row" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '4px', color: 'white' }}>
-              <button className="kn-footer-social-btn" aria-label="Facebook">
+              <a href={SOCIAL_LINKS.facebook} target="_blank" rel="noopener noreferrer" className="kn-footer-social-btn" aria-label="Facebook">
                 <FaFacebook size={18} />
-              </button>
+              </a>
 
-              <button className="kn-footer-social-btn" aria-label="Twitter">
+              <a href={SOCIAL_LINKS.twitter} target="_blank" rel="noopener noreferrer" className="kn-footer-social-btn" aria-label="Twitter">
                 <FaXTwitter size={18} />
-              </button>
+              </a>
 
-              <button className="kn-footer-social-btn" aria-label="YouTube">
+              <a href={SOCIAL_LINKS.youtube} target="_blank" rel="noopener noreferrer" className="kn-footer-social-btn" aria-label="YouTube">
                 <FaYoutube size={18} />
-              </button>
+              </a>
 
-              <button className="kn-footer-social-btn" aria-label="Instagram">
+              <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noopener noreferrer" className="kn-footer-social-btn" aria-label="Instagram">
                 <FaInstagram size={18} />
-              </button>
+              </a>
             </div>
           </div>
         </div>

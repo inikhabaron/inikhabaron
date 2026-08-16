@@ -27,10 +27,10 @@ export default function ContactPage() {
       </p>
       <h2>Follow Us</h2>
       <p>
-        <a href={SITE.social.twitter} rel="noopener">Twitter / X</a> ·{' '}
-        <a href={SITE.social.facebook} rel="noopener">Facebook</a> ·{' '}
-        <a href={SITE.social.instagram} rel="noopener">Instagram</a> ·{' '}
-        <a href={SITE.social.youtube} rel="noopener">YouTube</a>
+        <a href={SITE.social.twitter} target="_blank" rel="noopener noreferrer">Twitter / X</a> ·{' '}
+        <a href={SITE.social.facebook} target="_blank" rel="noopener noreferrer">Facebook</a> ·{' '}
+        <a href={SITE.social.instagram} target="_blank" rel="noopener noreferrer">Instagram</a> ·{' '}
+        <a href={SITE.social.youtube} target="_blank" rel="noopener noreferrer">YouTube</a>
       </p>
     </StaticPage>
   );
