@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import NewsClient from './NewsClient';
 import JsonLd from '@/components/seo/JsonLd';
 import ArticleSeoContent from './ArticleSeoContent';
-import { getArticle, getLatestArticles } from '@/lib/seo/data';
+import { getArticle, getLatestArticles, LATEST_NEWS_CARD_PROJECTION } from '@/lib/seo/data';
 import {
   SITE,
   SITE_URL,
@@ -138,7 +138,15 @@ export default async function Page({ params }) {
   // content is present in the initial HTML (crawlable by Google News + AI bots).
   const [article, latest] = await Promise.all([
     getArticle(id),
-    getLatestArticles({ limit: 8 }),
+    // Sidebar/mobile-search cards only ever render id/title/category/
+    // publishedAt/featuredImage (see components/home/LatestNews.jsx and
+    // MobileSearch.jsx) — projected so 8 unprojected full articles (each
+    // carrying their entire HTML `content` body) don't get serialized into
+    // NewsClient's initial client props. That was the dominant contributor
+    // to a 4.6MB article page response, which is why Twitter's card
+    // validator rejected it ("response too large") while more tolerant
+    // crawlers (WhatsApp/Facebook) still rendered a preview.
+    getLatestArticles({ limit: 8, projection: LATEST_NEWS_CARD_PROJECTION }),
   ]);
 
   if (!article || article.status !== 'published') {
