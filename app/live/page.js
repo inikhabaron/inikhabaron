@@ -154,7 +154,10 @@ export default function HomePage() {
 
   useEffect(() => {
     const init = async () => {
-      await fetch('/api/seed', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => { });
+      // No /api/seed call here. A public page has no business triggering a
+      // database bootstrap, and this one fired it on every visit; the endpoint
+      // is admin-only now and would just 401. Seeding belongs to setting an
+      // environment up, not to rendering a page.
       await Promise.all([fetchCategories(), fetchTags(), fetchBreaking(), fetchNews()]);
       fetchYoutube();
     };

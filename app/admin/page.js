@@ -26,6 +26,9 @@ import { ReelsView } from '@/components/admin/ReelsView';
 import { getArticleAuthors, normalizeAuthorsInput, primaryAuthorName } from '@/lib/news/authors';
 import { ReelFormDialog } from '@/components/admin/ReelFormDialog';
 
+// Rows per page in the Posts list. The API caps `limit` at 100 regardless.
+const NEWS_PAGE_SIZE = 25;
+
 const EMPTY_LOCATION_FORM = {
   enabled: false, scope: 'national', country: 'India', stateId: null, stateSlug: null, stateName: null, districtId: null, districtSlug: null, districtName: null,
 };
@@ -119,6 +122,11 @@ function AdminPageContent() {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [newsStatusFilter, setNewsStatusFilter] = useState('all');
+  const [newsPage, setNewsPage] = useState(1);
+  const [newsPagination, setNewsPagination] = useState({ page: 1, pages: 1, total: 0 });
+  // Debounced copy of the header search box, so typing issues one query per
+  // pause rather than one per keystroke.
+  const [newsSearch, setNewsSearch] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
 
   const [editingNews, setEditingNews] = useState(null);
@@ -213,20 +221,28 @@ function AdminPageContent() {
     checkAdminAuth();
   }, []);
 
+  // One page at a time. This used to request `limit=1000` and filter/paginate
+  // the whole collection in the browser, which stopped working outright once
+  // the response grew past what the query could return inside its timeout.
   const fetchNews = useCallback(async () => {
     try {
-      let url = '/api/admin/news?limit=1000';
-      if (newsStatusFilter !== 'all') url += `&status=${newsStatusFilter}`;
-      if (currentUser?.role === 'reporter') url += `&authorId=${currentUser.id}`;
-      else if (currentUser?.role === 'editor') url += '&workflow=editor';
-      const res = await authFetch(url, { method: 'GET' });
+      const params = new URLSearchParams({ page: String(newsPage), limit: String(NEWS_PAGE_SIZE) });
+      if (newsStatusFilter !== 'all') params.set('status', newsStatusFilter);
+      if (newsSearch) params.set('search', newsSearch);
+
+      const res = await authFetch(`/api/admin/news?${params}`, { method: 'GET' });
       const data = await res.json();
+      // A failed request still resolves, so without this check an error
+      // response fell through to `data.news || []` and rendered as an empty
+      // table with nothing to say it had failed.
+      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
       setNews(data.news || []);
+      setNewsPagination(data.pagination || { page: 1, pages: 1, total: 0 });
     } catch (error) {
       console.error('Error fetching news:', error);
-      toast.error('Failed to fetch news');
+      toast.error(`Failed to fetch news: ${error.message}`);
     }
-  }, [newsStatusFilter, currentUser]);
+  }, [newsStatusFilter, newsPage, newsSearch]);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -436,6 +452,15 @@ function AdminPageContent() {
   }, [news, activeTab, searchParams]);
 
   useEffect(() => {
+    const timeout = setTimeout(() => setNewsSearch(searchQuery.trim()), 350);
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
+
+  // Whatever page you were on stops being meaningful once the result set
+  // changes underneath it.
+  useEffect(() => { setNewsPage(1); }, [newsStatusFilter, newsSearch]);
+
+  useEffect(() => {
     if (activeTab === 'news') fetchNews();
   }, [newsStatusFilter, activeTab, fetchNews]);
 
@@ -495,7 +520,11 @@ function AdminPageContent() {
         images: newsForm.images,
         tags: newsForm.tags.split(',').map(t => t.trim()).filter(Boolean),
         seoKeywords: newsForm.seoKeywords.split(',').map(t => t.trim()).filter(Boolean),
-        authorId: currentUser?.id || 'admin',
+        // No `authorId` here on purpose. Ownership comes from the session
+        // token on create and is immutable thereafter; sending it meant every
+        // edit reassigned the article to the editor. The old fallback also
+        // wrote the literal string 'admin' whenever currentUser hadn't loaded,
+        // which matches no user document at all.
         authorLabel: newsForm.authorLabel || 'Author',
         authors,
         // Mirrored for the consumers that still read a single name: the
@@ -641,31 +670,48 @@ function AdminPageContent() {
     setEditingNews(null);
   };
 
-  const openEditNews = (item) => {
-    setEditingNews(item);
+  // Rows from the list endpoint carry no `content` (it is projected out so the
+  // list stays a few KB per article instead of tens), so the editor loads the
+  // full document first. On failure the dialog deliberately does not open:
+  // opening it with an empty body would let a save overwrite the real article
+  // with a blank one.
+  const openEditNews = async (item) => {
+    let article;
+    try {
+      const res = await authFetch(`/api/admin/news/${item.id}`, { method: 'GET' });
+      const data = await res.json();
+      if (!res.ok || !data.news) throw new Error(data.error || 'Failed to load article');
+      article = data.news;
+    } catch (error) {
+      console.error('Error loading article for edit:', error);
+      toast.error('Failed to load article');
+      return;
+    }
+
+    setEditingNews(article);
     setNewsForm({
-      title: item.title || '', content: item.content || '', excerpt: item.excerpt || '',
-      category: item.category || '', tags: item.tags?.join(', ') || '',
-      featuredImage: item.featuredImage || '', status: item.status || 'draft',
-      images: item.images || [],
-      isBreaking: item.isBreaking || false, breakingSuggested: item.breakingSuggested || false,
-      isTrending: item.isTrending || false, trendingSuggested: item.trendingSuggested || false,
-      isFeatured: item.isFeatured || false, authorLabel: item.authorLabel || 'Author',
+      title: article.title || '', content: article.content || '', excerpt: article.excerpt || '',
+      category: article.category || '', tags: article.tags?.join(', ') || '',
+      featuredImage: article.featuredImage || '', status: article.status || 'draft',
+      images: article.images || [],
+      isBreaking: article.isBreaking || false, breakingSuggested: article.breakingSuggested || false,
+      isTrending: article.isTrending || false, trendingSuggested: article.trendingSuggested || false,
+      isFeatured: article.isFeatured || false, authorLabel: article.authorLabel || 'Author',
       // Legacy articles have no `authors` array — getArticleAuthors lifts
       // their authorName/authorAvatar into one block, so opening an old
       // article in the editor shows its existing byline rather than a blank
       // field, and re-saving migrates it to the new shape.
       authors: (() => {
-        const existing = getArticleAuthors(item);
+        const existing = getArticleAuthors(article);
         return existing.length
           ? existing.map(a => ({ name: a.name, image: a.image || '' }))
           : [{ name: '', image: '' }];
       })(),
-      source: item.source || '', sourceUrl: item.sourceUrl || '',
-      seoTitle: item.seoTitle || '', seoDescription: item.seoDescription || '',
-      seoKeywords: item.seoKeywords?.join(', ') || '',
-      scheduledAt: item.scheduledAt ? new Date(item.scheduledAt).toISOString().slice(0, 16) : '',
-      location: item.location || EMPTY_LOCATION_FORM,
+      source: article.source || '', sourceUrl: article.sourceUrl || '',
+      seoTitle: article.seoTitle || '', seoDescription: article.seoDescription || '',
+      seoKeywords: article.seoKeywords?.join(', ') || '',
+      scheduledAt: article.scheduledAt ? new Date(article.scheduledAt).toISOString().slice(0, 16) : '',
+      location: article.location || EMPTY_LOCATION_FORM,
     });
     setIsNewsDialogOpen(true);
   };
@@ -993,6 +1039,8 @@ function AdminPageContent() {
             news={news} currentUser={currentUser}
             newsStatusFilter={newsStatusFilter} onStatusFilterChange={setNewsStatusFilter}
             searchQuery={searchQuery} loading={loading}
+            page={newsPagination.page} totalPages={newsPagination.pages}
+            total={newsPagination.total} onPageChange={setNewsPage}
             onEdit={openEditNews} onDelete={handleDeleteNews}
             onWorkflow={handleWorkflowAction}
             onAddNew={() => { resetNewsForm(); setIsNewsDialogOpen(true); }}

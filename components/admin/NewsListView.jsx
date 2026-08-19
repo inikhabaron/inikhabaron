@@ -18,15 +18,18 @@ const STATUS_TABS = [
   { id: 'drafts', label: 'Drafts', filter: 'draft' },
 ];
 
+// `news` is one server-rendered page of results, already filtered by status
+// and search — not the whole collection. Paging, searching and filtering all
+// happen in the query now, so this component never holds more than `page`
+// worth of articles and the parent owns which page is being shown.
 export function NewsListView({
   news, currentUser, newsStatusFilter, onStatusFilterChange,
   searchQuery, loading, onEdit, onDelete, onWorkflow, onAddNew, onViewVersionHistory,
+  page, totalPages, total, onPageChange,
 }) {
   const [openTagsId, setOpenTagsId] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
-  const [page, setPage] = useState(1);
   const tagsRef = useRef(null);
-  const perPage = 6;
 
   useEffect(() => {
     const onMouseDown = (event) => {
@@ -39,19 +42,6 @@ export function NewsListView({
   }, [openTagsId]);
 
   const activeTabId = STATUS_TABS.find(t => t.filter === newsStatusFilter)?.id || 'all';
-
-  const filtered = news.filter(item => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      item.title?.toLowerCase().includes(q) ||
-      item.category?.toLowerCase().includes(q) ||
-      (Array.isArray(item.tags) && item.tags.some(t => t.toLowerCase().includes(q)))
-    );
-  });
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
   const getPageNumbers = () => {
     const pages = [];
@@ -70,10 +60,12 @@ export function NewsListView({
   };
 
   const toggleSelect = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  const allSelected = paginated.length > 0 && paginated.every(p => selectedIds.includes(p.id));
-  const toggleAll = () => setSelectedIds(allSelected ? [] : paginated.map(p => p.id));
+  const allSelected = news.length > 0 && news.every(p => selectedIds.includes(p.id));
+  const toggleAll = () => setSelectedIds(allSelected ? [] : news.map(p => p.id));
 
-  useEffect(() => { setPage(1); }, [newsStatusFilter, searchQuery]);
+  // A selection is only meaningful for rows currently on screen; the parent
+  // swaps `news` wholesale on every page/filter change.
+  useEffect(() => { setSelectedIds([]); }, [page, newsStatusFilter, searchQuery]);
 
   return (
     <div style={{ padding: 24 }}>
@@ -104,7 +96,7 @@ export function NewsListView({
           </select>
           {searchQuery && (
             <span style={{ fontSize: 12, color: '#6b7280' }}>
-              Showing results for "<strong>{searchQuery}</strong>" — {filtered.length} found
+              Showing results for "<strong>{searchQuery}</strong>" — {total} found
             </span>
           )}
         </div>
@@ -130,7 +122,7 @@ export function NewsListView({
                 </tr>
               </thead>
               <tbody>
-                {paginated.map(item => {
+                {news.map(item => {
                   const tagsToShow = [
                     item.category,
                     ...(Array.isArray(item.tags) ? item.tags : []),
@@ -244,7 +236,7 @@ export function NewsListView({
                   </tr>
                   );
                 })}
-                {paginated.length === 0 && (
+                {news.length === 0 && (
                   <tr>
                     <td colSpan={7} style={{ padding: '48px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>
                       {searchQuery ? `No articles matching "${searchQuery}"` : 'No articles found'}
@@ -258,7 +250,7 @@ export function NewsListView({
 
         {totalPages > 1 && (
           <div style={{ padding: '12px 22px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', borderTop: '1px solid #f3f4f6', gap: 4 }}>
-            <PaginationBtn disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+            <PaginationBtn disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
               <ChevronRight size={13} style={{ transform: 'rotate(180deg)' }} />
             </PaginationBtn>
 
@@ -273,14 +265,14 @@ export function NewsListView({
 
               return (
                 <button
-                  key={p} onClick={() => setPage(p)}
+                  key={p} onClick={() => onPageChange(p)}
                   style={{ width: 32, height: 32, border: `1px solid ${page === p ? '#2563eb' : '#e5e7eb'}`, borderRadius: 8, background: page === p ? '#2563eb' : '#fff', color: page === p ? '#fff' : '#374151', fontSize: 13, fontWeight: page === p ? 600 : 400, cursor: 'pointer' }}>
                   {p}
                 </button>
               );
             })}
 
-            <PaginationBtn disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+            <PaginationBtn disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
               <ChevronRight size={13} />
             </PaginationBtn>
           </div>

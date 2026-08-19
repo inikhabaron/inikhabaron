@@ -9,6 +9,12 @@ import { Button } from '@/components/ui/button';
 import { DS } from '@/components/admin/design-system';
 import { STATUS_LABELS } from '@/components/admin/constants';
 
+// Everything except `published` — an already-published article has nothing
+// left to schedule, which is the rule this picker has always applied.
+const SCHEDULABLE_STATUSES = [
+  'draft', 'pending_review', 'needs_revision', 'ready_to_publish', 'scheduled', 'rejected',
+];
+
 export function ScheduleArticleModal({ open, onOpenChange, authFetch, onScheduled, defaultDate }) {
   const [articles, setArticles] = useState([]);
   const [loadingArticles, setLoadingArticles] = useState(false);
@@ -23,9 +29,13 @@ export function ScheduleArticleModal({ open, onOpenChange, authFetch, onSchedule
     setSelectedArticleId(null);
     setScheduledAt(defaultDate ? `${defaultDate}T10:00` : '');
     setLoadingArticles(true);
-    authFetch('/api/admin/news?status=all&limit=100')
+    // Ask for the unpublished statuses directly. Fetching `status=all` and
+    // dropping published ones here only worked while the response held the
+    // whole collection; against a paged endpoint a page can be entirely
+    // published articles and the picker comes back empty.
+    authFetch(`/api/admin/news?status=${SCHEDULABLE_STATUSES.join(',')}&limit=100`)
       .then((res) => res.json())
-      .then((data) => setArticles((data.news || []).filter((item) => item.status !== 'published')))
+      .then((data) => setArticles(data.news || []))
       .catch(() => toast.error('Failed to load articles'))
       .finally(() => setLoadingArticles(false));
   }, [open, authFetch, defaultDate]);

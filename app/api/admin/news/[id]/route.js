@@ -2,7 +2,9 @@ import { getCollection } from '@/lib/mongodb';
 import { v4 as uuidv4 } from 'uuid';
 import { json, preflight } from '@/lib/api/cors';
 import { getUserFromToken } from '@/lib/auth/admin/token';
+import { requireAdmin } from '@/lib/auth/admin/guard';
 import {
+  checkRole,
   canEditArticle,
   canSuggestBreaking,
   canMarkBreaking,
@@ -15,7 +17,43 @@ import {
 import { normalizeAuthorsInput, primaryAuthorName } from '@/lib/news/authors';
 import { cleanupImages, authorImageUrls } from '@/lib/services/media/imageCleanupService';
 
+// Reads the admin token off the request, so it can never be prerendered —
+// same reasoning as the sibling list route.
+export const dynamic = 'force-dynamic';
+
 export const OPTIONS = preflight;
+
+// The list endpoint strips `content` and the editorial history arrays (see
+// ../route.js), so the admin editor fetches the whole document here when
+// opening an article. Write permission stays enforced on PUT — this only
+// requires a valid admin token, exactly the access the list already grants.
+export async function GET(request, { params }) {
+  try {
+    const gate = await requireAdmin(request);
+    if (!gate.ok) return gate.response;
+
+    const newsCollection = await getCollection('news');
+    const article = await newsCollection.findOne({ id: params.id });
+
+    if (!article) {
+      return json({ error: 'Article not found' }, { status: 404 });
+    }
+
+    // Same scoping the list applies, so a reporter cannot reach another
+    // reporter's article by guessing at ids the listing won't show them.
+    // Deliberately not `canEditArticle`: that also requires draft or
+    // needs_revision status, which would stop a reporter opening their own
+    // published article in the editor — something they can do today.
+    if (checkRole(gate.user, ['reporter']) && article.authorId !== gate.user.id) {
+      return json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    return json({ news: article });
+  } catch (error) {
+    console.error('GET /api/admin/news/[id] error:', error);
+    return json({ error: error.message }, { status: 500 });
+  }
+}
 
 export async function PUT(request, { params }) {
   try {
@@ -143,8 +181,23 @@ export async function PUT(request, { params }) {
       }
     }
 
-    delete updateData.id;
-    delete updateData._id;
+    // `updateData` is the request body spread wholesale, so every one of these
+    // is settable by whoever posts the edit unless it is stripped here.
+    //
+    // `authorId` is the one that bites: the admin client sends
+    // `authorId: currentUser.id` on every save, so each edit silently
+    // reassigned the article to whoever edited it last. With reporters scoped
+    // to their own work (see ../route.js), a reporter's article vanished from
+    // their list the moment an editor touched it. Ownership is set once, at
+    // creation, from the creator's token — reassignment is not an edit.
+    //
+    // The rest are the article's provenance: its creation time and its audit
+    // trails. An edit revises the article, never the record of how it got
+    // here, and `versionHistory` in particular is what makes an unwanted
+    // change recoverable.
+    for (const field of ['id', '_id', 'authorId', 'createdAt', 'versionHistory', 'approvalHistory', 'corrections']) {
+      delete updateData[field];
+    }
 
     const result = await newsCollection.updateOne(
       { id: newsId },
@@ -174,8 +227,15 @@ export async function PUT(request, { params }) {
   }
 }
 
-export async function DELETE(_request, { params }) {
+// Admin-only, matching the UI: NewsListView renders the Delete control solely
+// for `role === 'admin'`. This handler took `_request` and never looked at it,
+// so deletion was reachable by anyone who knew an article id — and the public
+// /api/news response hands out every published article's id.
+export async function DELETE(request, { params }) {
   try {
+    const gate = await requireAdmin(request, ['admin']);
+    if (!gate.ok) return gate.response;
+
     const newsId = params.id;
     const newsCollection = await getCollection('news');
     const article = await newsCollection.findOne({ id: newsId });

@@ -66,7 +66,7 @@ const options = {
             id: { type: 'string' },
             email: { type: 'string' },
             name: { type: 'string' },
-            role: { type: 'string', enum: ['admin', 'editor', 'reporter', 'user'] },
+            role: { type: 'string', enum: ['admin', 'editor', 'reporter', 'reader'] },
             isVerified: { type: 'boolean' },
             bio: { type: 'string' },
             createdAt: { type: 'string', format: 'date-time' },
@@ -2634,7 +2634,7 @@ const options = {
           security: [{ bearerAuth: [] }, { adminTokenHeader: [] }],
           description: 'Only an allowlist of fields is writable (name, role, bio, avatar, isActive, isVerified, permissions, email) — prevents mass-assignment/role-escalation via extra body fields. email is lowercased, role is lowercased/trimmed. `password`, if present, is hashed before storage (never plaintext) and is handled separately from the allowlist.',
           parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
-          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { name: { type: 'string' }, role: { type: 'string', enum: ['admin', 'editor', 'reporter', 'user'] }, bio: { type: 'string' }, avatar: { type: 'string' }, isActive: { type: 'boolean' }, isVerified: { type: 'boolean' }, permissions: { type: 'object' }, email: { type: 'string' }, password: { type: 'string', description: 'Hashed server-side before storage.' } } } } } },
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { name: { type: 'string' }, role: { type: 'string', enum: ['admin', 'editor', 'reporter', 'reader'] }, bio: { type: 'string' }, avatar: { type: 'string' }, isActive: { type: 'boolean' }, isVerified: { type: 'boolean' }, permissions: { type: 'object' }, email: { type: 'string' }, password: { type: 'string', description: 'Hashed server-side before storage.' } } } } } },
           responses: {
             '200': { description: 'Updated', content: { 'application/json': { example: { success: true } } } },
             '401': { description: 'Not authenticated', content: { 'application/json': { example: { error: 'Authentication required' } } } },
@@ -2747,7 +2747,7 @@ const options = {
               content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { type: 'object', properties: {
                 user: { allOf: [{ $ref: '#/components/schemas/User' }, { type: 'object', properties: { firebaseUid: { type: 'string' }, phone: { type: 'string', nullable: true }, avatar: { type: 'string' }, provider: { type: 'string', example: 'google.com' }, isActive: { type: 'boolean' }, lastLoginAt: { type: 'string', format: 'date-time' }, updatedAt: { type: 'string', format: 'date-time' } } }] },
                 token: { type: 'string', description: 'The signed session JWT — same value set as the khabaron_session cookie.' },
-              } } } }, example: { success: true, message: 'Login successful', data: { user: { id: 'user-uuid', email: 'reader@example.com', name: 'Reader', role: 'user' }, token: 'eyJhbGciOi...' } } } },
+              } } } }, example: { success: true, message: 'Login successful', data: { user: { id: 'user-uuid', email: 'reader@example.com', name: 'Reader', role: 'reader' }, token: 'eyJhbGciOi...' } } } },
             },
             '400': { description: 'Missing idToken', content: { 'application/json': { example: { success: false, message: 'Firebase ID Token is required' } } } },
             '401': { description: 'Firebase token invalid/expired', content: { 'application/json': { example: { success: false, message: 'Invalid Firebase token' } } } },

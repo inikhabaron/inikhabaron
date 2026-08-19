@@ -1,6 +1,10 @@
 import { getCollection } from '@/lib/mongodb';
 import { v4 as uuidv4 } from 'uuid';
 import { json, preflight } from '@/lib/api/cors';
+import { requireAdmin } from '@/lib/auth/admin/guard';
+
+// Reads the admin token off the request, so it can never be prerendered.
+export const dynamic = 'force-dynamic';
 
 export const OPTIONS = preflight;
 
@@ -107,7 +111,16 @@ function buildSampleNews() {
   ];
 }
 
-export async function POST() {
+export async function POST(request) {
+  // Bootstrapping writes users, categories and articles into whatever database
+  // this deployment points at. It was reachable by anyone: an unauthenticated
+  // POST here rewrote the three accounts below — including their passwords —
+  // and /api/admin/login accepts a plaintext password when the stored one
+  // isn't hashed, so a stranger could reset the admin account and then sign in
+  // as it. The public /live page called this endpoint on every visit.
+  const gate = await requireAdmin(request, ['admin']);
+  if (!gate.ok) return gate.response;
+
   try {
     const categoriesCollection = await getCollection('categories');
     const newsCollection = await getCollection('news');
@@ -116,17 +129,20 @@ export async function POST() {
     const existingCategories = await categoriesCollection.countDocuments({});
     const existingUsers = await usersCollection.countDocuments({});
 
+    // Create-only. Seeding fills in what a fresh database is missing; it has
+    // no business rewriting an account that already exists, and the previous
+    // `updateOne` did exactly that on every call — resetting live passwords
+    // back to the hardcoded literals above and re-asserting the seeded role.
     await Promise.all(DEMO_USERS.map(async (userData) => {
-      const fullUserData = { ...userData, createdAt: new Date(), updatedAt: new Date() };
       const existingUser = await usersCollection.findOne({ email: userData.email });
-      if (existingUser) {
-        await usersCollection.updateOne(
-          { email: userData.email },
-          { $set: { ...fullUserData, id: existingUser.id } }
-        );
-      } else {
-        await usersCollection.insertOne({ ...fullUserData, id: userData.role + '-' + uuidv4() });
-      }
+      if (existingUser) return;
+
+      await usersCollection.insertOne({
+        ...userData,
+        id: userData.role + '-' + uuidv4(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
     }));
 
     if (existingCategories > 0 && existingUsers > 0) {
