@@ -34,9 +34,51 @@ const QUILL_MODULES = {
 
 const QUILL_FORMATS = ['bold', 'italic', 'underline', 'size', 'align', 'list', 'bullet', 'link', 'image', 'clean'];
 
+import { Loader2, Check, AlertTriangle } from 'lucide-react';
+
+function AutoSaveIndicator({ saveStatus, lastSavedAt, conflict }) {
+  if (saveStatus === 'idle') return null;
+
+  const formatTime = (date) => {
+    if (!date) return '';
+    return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, marginTop: 2 }}>
+      {saveStatus === 'saving' && (
+        <>
+          <Loader2 size={13} className="animate-spin" style={{ color: '#6b7280' }} />
+          <span style={{ color: '#6b7280' }}>Saving...</span>
+        </>
+      )}
+      {saveStatus === 'saved' && (
+        <>
+          <Check size={13} style={{ color: '#16a34a' }} />
+          <span style={{ color: '#16a34a' }}>
+            Saved at {formatTime(lastSavedAt)}
+          </span>
+        </>
+      )}
+      {saveStatus === 'error' && (
+        <>
+          <AlertTriangle size={13} style={{ color: '#dc2626' }} />
+          <span style={{ color: '#dc2626' }}>Save failed, retrying...</span>
+        </>
+      )}
+      {conflict && (
+        <span style={{ color: '#d97706', marginLeft: 4 }}>
+          ⚠ Edited in another session
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function NewsFormDialog({
   open, onOpenChange, editingNews, newsForm, setNewsForm,
   categories, currentUser, onSave,
+  saveStatus, lastSavedAt, conflict,
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -46,6 +88,7 @@ export function NewsFormDialog({
            <DialogDescription>
             Create or edit a news article.
           </DialogDescription>
+          <AutoSaveIndicator saveStatus={saveStatus} lastSavedAt={lastSavedAt} conflict={conflict} />
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>

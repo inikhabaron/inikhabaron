@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { v4 as uuidv4 } from 'uuid';
+import useAutoSave from '@/hooks/useAutoSave';
 import { DS } from '@/components/admin/design-system';
 import { Sidebar } from '@/components/admin/Sidebar';
 import { Header } from '@/components/admin/Header';
@@ -165,6 +167,10 @@ function AdminPageContent() {
   const [ytForm, setYtForm] = useState({ videoId: '', channelId: '', title: '', isLive: false });
   const [ytSaving, setYtSaving] = useState(false);
 
+  // ── Auto-save state ──
+  const [autoSaveDraftId, setAutoSaveDraftId] = useState(null);
+  const [autoSaveSessionId, setAutoSaveSessionId] = useState(null);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -199,6 +205,15 @@ function AdminPageContent() {
     const headers = { ...getAuthHeaders(), ...(options.headers || {}) };
     return fetch(url, { ...options, headers });
   };
+
+  const { saveStatus, lastSavedAt, draftVersion, conflict } = useAutoSave({
+    newsForm,
+    editingNews,
+    isDialogOpen: isNewsDialogOpen,
+    getAuthHeaders,
+    draftId: autoSaveDraftId,
+    sessionId: autoSaveSessionId,
+  });
 
   useEffect(() => {
     const checkAdminAuth = () => {
@@ -543,6 +558,16 @@ function AdminPageContent() {
         throw new Error(message);
       }
       toast.success(editingNews ? 'News updated successfully' : 'News created successfully');
+
+      // Clean up the autosave draft after a successful manual save.
+      // Fire-and-forget: TTL will catch it if this fails.
+      if (autoSaveDraftId) {
+        const draftParam = editingNews
+          ? `newsId=${encodeURIComponent(editingNews.id)}`
+          : `draftId=${encodeURIComponent(autoSaveDraftId)}`;
+        authFetch(`/api/news/autosave?${draftParam}`, { method: 'DELETE' }).catch(() => {});
+      }
+
       setIsNewsDialogOpen(false);
       resetNewsForm();
       fetchNews();
@@ -668,7 +693,52 @@ function AdminPageContent() {
       authors: [{ name: currentUser?.name || '', image: '' }],
     });
     setEditingNews(null);
+    setAutoSaveDraftId(null);
+    setAutoSaveSessionId(null);
   };
+
+  // Helper: populate newsForm from a draft document. Drafts store the form
+  // fields directly (tags/seoKeywords as comma-separated strings, images as
+  // arrays), so the mapping is 1:1 with the form shape.
+  const applyDraftToForm = (draft) => ({
+    title: draft.title || '', content: draft.content || '', excerpt: draft.excerpt || '',
+    category: draft.category || '', tags: draft.tags || '',
+    featuredImage: draft.featuredImage || '', status: draft.status || 'draft',
+    images: draft.images || [],
+    isBreaking: draft.isBreaking || false, breakingSuggested: draft.breakingSuggested || false,
+    isTrending: draft.isTrending || false, trendingSuggested: draft.trendingSuggested || false,
+    isFeatured: draft.isFeatured || false, authorLabel: draft.authorLabel || 'Author',
+    authors: draft.authors?.length ? draft.authors : [{ name: '', image: '' }],
+    source: draft.source || '', sourceUrl: draft.sourceUrl || '',
+    seoTitle: draft.seoTitle || '', seoDescription: draft.seoDescription || '',
+    seoKeywords: draft.seoKeywords || '',
+    scheduledAt: draft.scheduledAt || '',
+    location: draft.location || EMPTY_LOCATION_FORM,
+  });
+
+  // Helper: populate newsForm from a full article document (existing logic,
+  // extracted so it can be reused for both the normal path and the "discard
+  // draft" path).
+  const applyArticleToForm = (article) => ({
+    title: article.title || '', content: article.content || '', excerpt: article.excerpt || '',
+    category: article.category || '', tags: article.tags?.join(', ') || '',
+    featuredImage: article.featuredImage || '', status: article.status || 'draft',
+    images: article.images || [],
+    isBreaking: article.isBreaking || false, breakingSuggested: article.breakingSuggested || false,
+    isTrending: article.isTrending || false, trendingSuggested: article.trendingSuggested || false,
+    isFeatured: article.isFeatured || false, authorLabel: article.authorLabel || 'Author',
+    authors: (() => {
+      const existing = getArticleAuthors(article);
+      return existing.length
+        ? existing.map(a => ({ name: a.name, image: a.image || '' }))
+        : [{ name: '', image: '' }];
+    })(),
+    source: article.source || '', sourceUrl: article.sourceUrl || '',
+    seoTitle: article.seoTitle || '', seoDescription: article.seoDescription || '',
+    seoKeywords: article.seoKeywords?.join(', ') || '',
+    scheduledAt: article.scheduledAt ? new Date(article.scheduledAt).toISOString().slice(0, 16) : '',
+    location: article.location || EMPTY_LOCATION_FORM,
+  });
 
   // Rows from the list endpoint carry no `content` (it is projected out so the
   // list stays a few KB per article instead of tens), so the editor loads the
@@ -688,31 +758,78 @@ function AdminPageContent() {
       return;
     }
 
+    // Generate fresh IDs for this editor session
+    const newSessionId = uuidv4();
+    const newDraftId = uuidv4();
+
     setEditingNews(article);
-    setNewsForm({
-      title: article.title || '', content: article.content || '', excerpt: article.excerpt || '',
-      category: article.category || '', tags: article.tags?.join(', ') || '',
-      featuredImage: article.featuredImage || '', status: article.status || 'draft',
-      images: article.images || [],
-      isBreaking: article.isBreaking || false, breakingSuggested: article.breakingSuggested || false,
-      isTrending: article.isTrending || false, trendingSuggested: article.trendingSuggested || false,
-      isFeatured: article.isFeatured || false, authorLabel: article.authorLabel || 'Author',
-      // Legacy articles have no `authors` array — getArticleAuthors lifts
-      // their authorName/authorAvatar into one block, so opening an old
-      // article in the editor shows its existing byline rather than a blank
-      // field, and re-saving migrates it to the new shape.
-      authors: (() => {
-        const existing = getArticleAuthors(article);
-        return existing.length
-          ? existing.map(a => ({ name: a.name, image: a.image || '' }))
-          : [{ name: '', image: '' }];
-      })(),
-      source: article.source || '', sourceUrl: article.sourceUrl || '',
-      seoTitle: article.seoTitle || '', seoDescription: article.seoDescription || '',
-      seoKeywords: article.seoKeywords?.join(', ') || '',
-      scheduledAt: article.scheduledAt ? new Date(article.scheduledAt).toISOString().slice(0, 16) : '',
-      location: article.location || EMPTY_LOCATION_FORM,
-    });
+    setAutoSaveSessionId(newSessionId);
+    setAutoSaveDraftId(newDraftId);
+
+    // Check for an existing autosave draft
+    let restoredDraft = null;
+    try {
+      const draftRes = await authFetch(`/api/news/autosave?newsId=${encodeURIComponent(item.id)}`, { method: 'GET' });
+      const draftData = await draftRes.json();
+      if (draftRes.ok && draftData.success && draftData.data?.draft) {
+        const draft = draftData.data.draft;
+        const draftTime = new Date(draft.autoSavedAt);
+        const articleTime = new Date(article.updatedAt);
+        // Only offer restoration if the draft is newer than the article
+        if (draftTime > articleTime) {
+          const draftTimeStr = draftTime.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+          const wantsRestore = confirm(`An autosaved draft from ${draftTimeStr} was found.\n\nClick OK to restore it, or Cancel to discard and use the saved version.`);
+          if (wantsRestore) {
+            restoredDraft = draft;
+            // Reuse the existing draft's ID so subsequent saves update it
+            setAutoSaveDraftId(draft.draftId);
+          } else {
+            // Discard the stale draft
+            authFetch(`/api/news/autosave?newsId=${encodeURIComponent(item.id)}`, { method: 'DELETE' }).catch(() => {});
+          }
+        }
+      }
+    } catch (err) {
+      // Non-critical — proceed without draft
+      console.error('Draft lookup failed:', err);
+    }
+
+    setNewsForm(restoredDraft ? applyDraftToForm(restoredDraft) : applyArticleToForm(article));
+    setIsNewsDialogOpen(true);
+  };
+
+  // Open the editor for a brand-new article, with autosave IDs ready.
+  // Checks for an abandoned autosave draft from a previous session (e.g. the
+  // browser crashed before the article was ever saved/published) and offers
+  // to restore the most recent one, mirroring the existing-article flow above.
+  const openCreateNews = async () => {
+    resetNewsForm();
+
+    let restoredDraft = null;
+    let newDraftId = uuidv4();
+    try {
+      const draftRes = await authFetch('/api/news/autosave', { method: 'GET' });
+      const draftData = await draftRes.json();
+      const drafts = draftRes.ok && draftData.success ? draftData.data?.drafts : null;
+      if (drafts?.length) {
+        const draft = drafts[0];
+        const draftTimeStr = new Date(draft.autoSavedAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+        const wantsRestore = confirm(`An unsaved draft from ${draftTimeStr} was found.\n\nClick OK to restore it, or Cancel to discard it and start fresh.`);
+        if (wantsRestore) {
+          restoredDraft = draft;
+          newDraftId = draft.draftId;
+        } else {
+          authFetch(`/api/news/autosave?draftId=${encodeURIComponent(draft.draftId)}`, { method: 'DELETE' }).catch(() => {});
+        }
+      }
+    } catch (err) {
+      // Non-critical — proceed without a draft
+      console.error('Draft lookup failed:', err);
+    }
+
+    setAutoSaveDraftId(newDraftId);
+    setAutoSaveSessionId(uuidv4());
+    if (restoredDraft) setNewsForm(applyDraftToForm(restoredDraft));
     setIsNewsDialogOpen(true);
   };
 
@@ -1043,7 +1160,7 @@ function AdminPageContent() {
             total={newsPagination.total} onPageChange={setNewsPage}
             onEdit={openEditNews} onDelete={handleDeleteNews}
             onWorkflow={handleWorkflowAction}
-            onAddNew={() => { resetNewsForm(); setIsNewsDialogOpen(true); }}
+            onAddNew={openCreateNews}
             onViewVersionHistory={handleViewVersionHistory}
           />
         );
@@ -1249,6 +1366,7 @@ function AdminPageContent() {
         newsForm={newsForm} setNewsForm={setNewsForm}
         categories={categories} currentUser={currentUser}
         onSave={handleSaveNews}
+        saveStatus={saveStatus} lastSavedAt={lastSavedAt} conflict={conflict}
       />
 
       <CategoryFormDialog
