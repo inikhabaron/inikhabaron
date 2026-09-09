@@ -57,6 +57,8 @@ export default function EditorialCalendarPage() {
 
   const handleTabChange = (id) => {
     if (id === 'calendar') return;
+    if (id === 'live-blogs') { router.push('/admin/live-blogs'); return; }
+    if (id === 'breaking-news') { router.push('/admin/breaking-news'); return; }
     router.push(`/admin?tab=${id}`);
   };
 

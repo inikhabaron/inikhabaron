@@ -1379,6 +1379,8 @@ function AdminPageContent() {
 
   const handleTabChange = (id) => {
     if (id === 'calendar') { router.push('/admin/editorial-calendar'); return; }
+    if (id === 'live-blogs') { router.push('/admin/live-blogs'); return; }
+    if (id === 'breaking-news') { router.push('/admin/breaking-news'); return; }
     setActiveTab(id);
     router.replace(`/admin?tab=${id}`, { scroll: false });
   };

@@ -53,6 +53,7 @@ export async function GET(request) {
     const newsCollection = await getCollection('news');
     const status = searchParams.get('status');
     const search = searchParams.get('search')?.trim();
+    const breaking = searchParams.get('breaking');
     const limit = Math.min(
       Math.max(parseInt(searchParams.get('limit') || String(DEFAULT_LIMIT), 10) || DEFAULT_LIMIT, 1),
       MAX_LIMIT
@@ -83,6 +84,34 @@ export async function GET(request) {
       else if (statuses.length === 1) query.status = statuses[0];
     }
 
+    // Breaking News Manager's three tabs — reuses this list route's existing
+    // pagination/sort/projection rather than a new endpoint (locked
+    // 2026-09-09, see docs/mvp3-phase1-architecture.md). Note: unmarking
+    // breaking (POST .../breaking with isBreaking:false) resets
+    // breakingApproved to false but does not clear breakingSuggested, so a
+    // once-approved-then-unmarked article can reappear under 'suggested' —
+    // an existing data-model quirk, not something this filter changes.
+    if (breaking === 'suggested') {
+      // isBreaking (not breakingApproved) is the source of truth for "is
+      // this already live" — found live in QA: some articles carry
+      // isBreaking:true with breakingApproved:false (an older/direct edit
+      // path sets isBreaking without always syncing breakingApproved), so
+      // filtering on breakingApproved alone put an already-active article
+      // back in the "needs approval" queue. "Suggested" should mean "not
+      // yet live," full stop.
+      query.breakingSuggested = true;
+      query.isBreaking = { $ne: true };
+    } else if (breaking === 'active') {
+      query.isBreaking = true;
+    } else if (breaking === 'all') {
+      query.$or = [
+        { breakingSuggested: true },
+        { isBreaking: true },
+        { breakingApproved: true },
+        { 'approvalHistory.action': { $in: ['marked_breaking', 'unmarked_breaking', 'breaking_approved'] } },
+      ];
+    }
+
     if (search) {
       // Substring match rather than the news_text_search index: this backs a
       // filter-as-you-type box, and $text matches stemmed whole words, so
@@ -90,7 +119,17 @@ export async function GET(request) {
       // what gets typed in Hindi — would stop matching what the previous
       // client-side `includes` filter found.
       const pattern = new RegExp(escapeRegex(search), 'i');
-      query.$or = [{ title: pattern }, { category: pattern }, { tags: pattern }];
+      const searchOr = [{ title: pattern }, { category: pattern }, { tags: pattern }];
+      // breaking:'all' above already wrote its own top-level $or — combine
+      // both with $and instead of letting this overwrite it, so "search
+      // within the breaking history tab" doesn't silently drop the breaking
+      // condition (Mongo only keeps the last $or assigned to one query).
+      if (query.$or) {
+        query.$and = [{ $or: query.$or }, { $or: searchOr }];
+        delete query.$or;
+      } else {
+        query.$or = searchOr;
+      }
     }
 
     const [news, total] = await Promise.all([
