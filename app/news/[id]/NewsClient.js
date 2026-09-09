@@ -17,6 +17,7 @@ import LikeButton from '@/components/likes/LikeButton';
 import FollowButton from '@/components/follow/FollowButton';
 import ArticleAuthors from '@/components/news/ArticleAuthors';
 import ArticleAuthorBio from '@/components/news/ArticleAuthorBio';
+import ArticleFeedback from '@/components/feedback/ArticleFeedback';
 import RelatedLiveMatchWidget from '@/components/cricket/RelatedLiveMatchWidget';
 import { getArticleAuthors } from '@/lib/news/authors';
 import { applyFollowChange } from '@/lib/follow/applyFollowChange';
@@ -636,6 +637,19 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                           )}
                           <ArticleAuthorBio
                             article={article}
+                            surface={surface}
+                            bdr={bdr}
+                            T1={T1}
+                            T2={T2}
+                            T3={T3}
+                            accent={ACCENT}
+                          />
+
+                          <ArticleFeedback
+                            articleId={article.id}
+                            user={user}
+                            onRequireLogin={() => setAuthDialogOpen(true)}
+                            isHindi={isHindi}
                             surface={surface}
                             bdr={bdr}
                             T1={T1}

@@ -25,6 +25,8 @@ import { ReporterMetricsView, ReporterDetailDialog } from '@/components/admin/re
 import { PromotionsView } from '@/components/admin/PromotionsView';
 import { PromotionFormDialog } from '@/components/admin/PromotionForm/PromotionFormDialog';
 import { ReelsView } from '@/components/admin/ReelsView';
+import { FeedbackView } from '@/components/admin/FeedbackView';
+import { FeedbackDetailDialog } from '@/components/admin/FeedbackDetailDialog';
 import { getArticleAuthors, normalizeAuthorsInput, primaryAuthorName } from '@/lib/news/authors';
 import { ReelFormDialog } from '@/components/admin/ReelFormDialog';
 
@@ -88,6 +90,13 @@ function AdminPageContent() {
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
   const [users, setUsers] = useState([]);
+  const [feedbackItems, setFeedbackItems] = useState([]);
+  const [feedbackPage, setFeedbackPage] = useState(1);
+  const [feedbackTotalPages, setFeedbackTotalPages] = useState(1);
+  const [feedbackDetailOpen, setFeedbackDetailOpen] = useState(false);
+  const [feedbackDetailArticleId, setFeedbackDetailArticleId] = useState(null);
+  const [feedbackDetailItems, setFeedbackDetailItems] = useState([]);
+  const [feedbackDetailLoading, setFeedbackDetailLoading] = useState(false);
   const [comments, setComments] = useState([]);
   const [commentStats, setCommentStats] = useState({
     pending: 0, approved: 0, reported: 0, hidden: 0, rejected: 0,
@@ -279,6 +288,32 @@ function AdminPageContent() {
     }
   }, []);
 
+  const fetchFeedback = useCallback(async () => {
+    try {
+      const res = await authFetch(`/api/admin/feedback?page=${feedbackPage}&limit=20`, { method: 'GET' });
+      const data = await res.json();
+      setFeedbackItems(data.items || []);
+      setFeedbackTotalPages(data.pagination?.pages || 1);
+    } catch (error) {
+      console.error('Error fetching feedback:', error);
+    }
+  }, [feedbackPage]);
+
+  const openFeedbackDetail = async (articleId) => {
+    setFeedbackDetailArticleId(articleId);
+    setFeedbackDetailOpen(true);
+    setFeedbackDetailLoading(true);
+    try {
+      const res = await authFetch(`/api/admin/feedback/${articleId}?limit=50`, { method: 'GET' });
+      const data = await res.json();
+      setFeedbackDetailItems(data.items || []);
+    } catch (error) {
+      console.error('Error fetching feedback detail:', error);
+    } finally {
+      setFeedbackDetailLoading(false);
+    }
+  };
+
   const fetchPromotions = useCallback(async () => {
     try {
       const res = await authFetch('/api/admin/promotions', { method: 'GET' });
@@ -447,10 +482,11 @@ function AdminPageContent() {
       else if (activeTab === 'reporter-metrics') await fetchReporterMetrics();
       else if (activeTab === 'promotions') await Promise.all([fetchPromotions(), fetchPromotionArticleOptions()]);
       else if (activeTab === 'reels') { await Promise.all([fetchReels(), fetchUsers()]); }
+      else if (activeTab === 'feedback') await fetchFeedback();
       setLoading(false);
     };
     load();
-  }, [activeTab, fetchCategories, fetchAnalytics, fetchNews, fetchUsers, fetchComments, fetchYtConfig, fetchNewsletter, fetchNewsletterCampaigns, fetchReporterMetrics, fetchPromotions, fetchPromotionArticleOptions, fetchReels, currentUser]);
+  }, [activeTab, fetchCategories, fetchAnalytics, fetchNews, fetchUsers, fetchComments, fetchYtConfig, fetchNewsletter, fetchNewsletterCampaigns, fetchReporterMetrics, fetchPromotions, fetchPromotionArticleOptions, fetchReels, fetchFeedback, currentUser]);
 
   useEffect(() => {
     if (activeTab === 'reels') fetchReels();
@@ -1327,6 +1363,15 @@ function AdminPageContent() {
         );
       case 'livestream':
         return <LiveStreamView ytForm={ytForm} setYtForm={setYtForm} onSave={saveYtConfig} onClear={clearYtConfig} ytSaving={ytSaving} />;
+      case 'feedback':
+        return (
+          <FeedbackView
+            items={feedbackItems} loading={loading}
+            page={feedbackPage} totalPages={feedbackTotalPages}
+            onPageChange={setFeedbackPage}
+            onViewDetail={openFeedbackDetail}
+          />
+        );
       default:
         return null;
     }
@@ -1381,6 +1426,13 @@ function AdminPageContent() {
         editingTag={editingTag}
         tagForm={tagForm} setTagForm={setTagForm}
         onSave={handleSaveTag}
+      />
+
+      <FeedbackDetailDialog
+        open={feedbackDetailOpen} onOpenChange={setFeedbackDetailOpen}
+        articleTitle={feedbackItems.find(i => i.articleId === feedbackDetailArticleId)?.articleTitle}
+        items={feedbackDetailItems}
+        loading={feedbackDetailLoading}
       />
 
       <PromotionFormDialog
