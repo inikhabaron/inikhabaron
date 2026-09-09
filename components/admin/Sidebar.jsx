@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart3, FileText, Video, Film, Tag, LayoutGrid, Users, Pencil, MessageSquare, Mail, Award, CalendarDays, Megaphone, ThumbsUp, } from 'lucide-react';
+import { BarChart3, FileText, Video, Film, Tag, LayoutGrid, Users, Pencil, MessageSquare, Mail, Award, CalendarDays, Megaphone, ThumbsUp, Radio, } from 'lucide-react';
 import { DS } from './design-system';
 import { SIDEBAR_W } from './constants';
 
@@ -8,6 +8,7 @@ export function Sidebar({ activeTab, onTabChange, currentUser, isOpen, onClose, 
   const NAV = [
     { id: 'dashboard', icon: BarChart3, label: 'Dashboard', roles: null },
     { id: 'news', icon: FileText, label: 'Posts', roles: null },
+    { id: 'live-blogs', icon: Radio, label: 'Live Blogs', roles: ['admin', 'editor'] },
     { id: 'livestream', icon: Video, label: 'Live Stream', roles: null },
     { id: 'categories', icon: LayoutGrid, label: 'Categories', roles: ['admin', 'editor'] },
     { id: 'reels', icon: Film, label: 'Reels', roles: ['admin', 'editor', 'reporter'] },

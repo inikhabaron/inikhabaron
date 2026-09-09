@@ -19,6 +19,7 @@ import ArticleAuthors from '@/components/news/ArticleAuthors';
 import ArticleAuthorBio from '@/components/news/ArticleAuthorBio';
 import ArticleFeedback from '@/components/feedback/ArticleFeedback';
 import RelatedLiveMatchWidget from '@/components/cricket/RelatedLiveMatchWidget';
+import LiveTextUpdatesTicker from '@/components/liveBlogs/LiveTextUpdatesTicker';
 import { getArticleAuthors } from '@/lib/news/authors';
 import { applyFollowChange } from '@/lib/follow/applyFollowChange';
 import { CommentsSection } from '@/components/comments';
@@ -555,6 +556,18 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                           </div>
 
                           <RelatedLiveMatchWidget article={article} dark={dark} selectedLanguage={selectedLanguage} />
+
+                          {article.isLive && article.liveBlogId && (
+                            <LiveTextUpdatesTicker
+                              liveBlogId={article.liveBlogId}
+                              isHindi={isHindi}
+                              surface={surface}
+                              bdr={bdr}
+                              T1={T1}
+                              T2={T2}
+                              T3={T3}
+                            />
+                          )}
 
                           <WhySeeingThis
                             articleId={article.id}
