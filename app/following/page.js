@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, FolderOpen, UserPen, MapPin } from 'lucide-react';
+import { Users, FolderOpen, UserPen, MapPin, Hash } from 'lucide-react';
 
 import FollowButton from '@/components/follow/FollowButton';
 import PublicPageLayout from '@/components/layout/PublicPageLayout';
@@ -22,7 +22,7 @@ export default function FollowingPage() {
 
   const [authRequired, setAuthRequired] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [following, setFollowing] = useState({ categories: [], authors: [], cities: [] });
+  const [following, setFollowing] = useState({ categories: [], authors: [], cities: [], tags: [] });
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function FollowingPage() {
         const data = await response.json();
         if (!response.ok || !data.success) throw new Error(data.message || 'Unable to load your following list.');
         if (!active) return;
-        setFollowing(data.data || { categories: [], authors: [], cities: [] });
+        setFollowing(data.data || { categories: [], authors: [], cities: [], tags: [] });
       } catch (err) {
         if (active) setError(err.message || 'Unable to load your following list.');
       } finally {
@@ -81,7 +81,7 @@ export default function FollowingPage() {
     );
   }
 
-  const isEmpty = !loading && following.categories.length === 0 && following.authors.length === 0 && following.cities.length === 0;
+  const isEmpty = !loading && following.categories.length === 0 && following.authors.length === 0 && following.cities.length === 0 && following.tags.length === 0;
 
   const sections = [
     {
@@ -107,6 +107,13 @@ export default function FollowingPage() {
       title: isHindi ? 'फॉलो किए गए शहर' : 'Followed Cities',
       items: following.cities,
       render: (c) => ({ label: c.name || c.id }),
+    },
+    {
+      key: 'tags',
+      icon: Hash,
+      title: isHindi ? 'फॉलो किए गए विषय' : 'Followed Topics',
+      items: following.tags,
+      render: (t) => ({ label: t.name || t.id, dot: t.color }),
     },
   ];
 
@@ -134,8 +141,8 @@ export default function FollowingPage() {
         </h1>
         <p style={{ color: 'rgba(255,255,255,0.85)', margin: 0, fontSize: 14, maxWidth: 480 }}>
           {isHindi
-            ? 'श्रेणियाँ, लेखक और शहर — यहाँ से अनफॉलो करें।'
-            : 'Categories, authors, and cities — unfollow any of them right from here.'}
+            ? 'श्रेणियाँ, लेखक, शहर और विषय — यहाँ से अनफॉलो करें।'
+            : 'Categories, authors, cities, and topics — unfollow any of them right from here.'}
         </p>
       </section>
 
@@ -163,7 +170,7 @@ export default function FollowingPage() {
             {isHindi ? 'आप अभी किसी को फॉलो नहीं कर रहे' : 'You aren’t following anything yet'}
           </div>
           <p style={{ color: T2, margin: '0 0 20px', fontSize: 14, maxWidth: 400, marginInline: 'auto' }}>
-            {isHindi ? 'श्रेणियों, लेखकों और शहरों को फॉलो करें ताकि यहाँ दिखाई दें।' : 'Follow categories, authors, and cities to see them here.'}
+            {isHindi ? 'श्रेणियों, लेखकों, शहरों और विषयों को फॉलो करें ताकि यहाँ दिखाई दें।' : 'Follow categories, authors, cities, and topics to see them here.'}
           </p>
           <button
             onClick={() => router.push('/')}
@@ -207,7 +214,12 @@ export default function FollowingPage() {
                           )}
                         </div>
                         <FollowButton
-                          type={section.key === 'categories' ? 'category' : section.key === 'authors' ? 'author' : 'city'}
+                          type={
+                            section.key === 'categories' ? 'category'
+                              : section.key === 'authors' ? 'author'
+                              : section.key === 'cities' ? 'city'
+                              : 'tag'
+                          }
                           id={item.id}
                           user={user}
                           following={true}

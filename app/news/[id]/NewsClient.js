@@ -70,7 +70,7 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [tags, setTags] = useState([]);
-  const [following, setFollowing] = useState({ categories: [], authors: [], cities: [] });
+  const [following, setFollowing] = useState({ categories: [], authors: [], cities: [], tags: [] });
   const countedViewRef = useRef(null);
 
   const bg = dark ? '#0D1117' : '#F6F7F9';
@@ -115,7 +115,7 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
 
   useEffect(() => {
     if (!user || !sessionReady) {
-      setFollowing({ categories: [], authors: [], cities: [] });
+      setFollowing({ categories: [], authors: [], cities: [], tags: [] });
       return;
     }
 
@@ -139,7 +139,7 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
         const res = await fetch('/api/tags');
         if (res.ok) {
           const data = await res.json();
-          setTags((data.tags || []).filter(tag => tag.active && tag.popular));
+          setTags((data.tags || []).filter(tag => tag.isActive));
         }
       } catch (err) {
         console.error(err);
@@ -309,6 +309,21 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
     ? following.cities.some((c) => c.id === cityId)
     : false;
 
+  // Topic Follow reuses the tags collection (Topics = Tags — see
+  // docs/mvp3-phase1-architecture.md). article.tags is free text with no
+  // foreign key into that collection, so a follow button only appears next
+  // to a tag chip when its name actually matches a real, active tag doc.
+  const tagsByName = useMemo(() => {
+    const map = new Map();
+    for (const t of tags) map.set(String(t.name).trim().toLowerCase(), t);
+    return map;
+  }, [tags]);
+
+  const followingTagIds = useMemo(
+    () => new Set((following.tags || []).map((t) => t.id)),
+    [following.tags]
+  );
+
   const handleAuthorFollowChange = (change) => setFollowing((prev) => applyFollowChange(prev, {
     ...change,
     // The follow target is the author *account* (authorId); the first byline
@@ -337,6 +352,12 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
   const cityFollowLabels = isHindi
     ? { follow: `${cityId} को फॉलो करें`, following: `${cityId} को फॉलो कर रहे हैं` }
     : { follow: `Follow ${cityId} City`, following: `Following ${cityId}` };
+
+  // Generic (not per-tag) since the tag name is already shown in the
+  // adjacent chip — repeating it in a size="sm" button reads as clutter.
+  const tagFollowLabels = isHindi
+    ? { follow: 'फॉलो करें', following: 'फॉलो कर रहे हैं' }
+    : { follow: 'Follow', following: 'Following' };
 
   useReadingProgress({
     articleId: article?.id,
@@ -572,9 +593,29 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                           )}
                           {articleTags.length > 0 && (
                             <div className={styles.tagsRow}>
-                              {articleTags.map(tag => (
-                                <span key={tag} className={styles.tagItem}>{tag}</span>
-                              ))}
+                              {articleTags.map(tag => {
+                                const tagDoc = tagsByName.get(tag.trim().toLowerCase());
+                                return (
+                                  <span key={tag} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                    <span className={styles.tagItem}>{tag}</span>
+                                    {tagDoc && (
+                                      <FollowButton
+                                        type="tag"
+                                        id={tagDoc.id}
+                                        user={user}
+                                        size="sm"
+                                        following={followingTagIds.has(tagDoc.id)}
+                                        onRequireLogin={() => setAuthDialogOpen(true)}
+                                        onChange={(change) => setFollowing((prev) => applyFollowChange(prev, {
+                                          ...change,
+                                          item: { id: tagDoc.id, name: tagDoc.name, color: tagDoc.color, exists: true },
+                                        }))}
+                                        labels={tagFollowLabels}
+                                      />
+                                    )}
+                                  </span>
+                                );
+                              })}
                             </div>
                           )}
                           {cityId && (

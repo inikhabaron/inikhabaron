@@ -90,7 +90,7 @@ export default function HomePage({ initialCategory = 'all' }) {
   const { newsletterEmail, setNewsletterEmail, newsletterLoading, handleNewsletterSubscribe } = useNewsletterSubscribe(selectedLanguage);
   const [showShareMenu, setShowShareMenu] = useState(null);
   const [topStoriesCount, setTopStoriesCount] = useState(6);
-  const [following, setFollowing] = useState({ categories: [], authors: [], cities: [] });
+  const [following, setFollowing] = useState({ categories: [], authors: [], cities: [], tags: [] });
 
   const shareMenuRef = useRef(null);
   const router = useRouter();
@@ -131,7 +131,7 @@ export default function HomePage({ initialCategory = 'all' }) {
 
   useEffect(() => {
     if (!user || !sessionReady) {
-      setFollowing({ categories: [], authors: [], cities: [] });
+      setFollowing({ categories: [], authors: [], cities: [], tags: [] });
       return;
     }
 
@@ -179,7 +179,7 @@ export default function HomePage({ initialCategory = 'all' }) {
   }, []);
 
   const fetchTags = useCallback(async () => {
-    try { const d = await fetch('/api/tags').then(r => r.json()); setTags((d.tags || []).filter(t => t.active && t.popular)); } catch (e) { console.error(e); }
+    try { const d = await fetch('/api/tags').then(r => r.json()); setTags((d.tags || []).filter(t => t.isActive)); } catch (e) { console.error(e); }
   }, []);
 
   const fetchYoutube = useCallback(async () => {
@@ -299,7 +299,13 @@ export default function HomePage({ initialCategory = 'all' }) {
 
           {/* Trending bar (desktop) */}
           {!isMobileView && (
-            <TrendingBar tags={tags} selectedLanguage={selectedLanguage} onTagClick={(name) => { setSearchQuery(name); fetchNews(selectedCategory, name, 1); }} dark={dark} />
+            <TrendingBar
+              tags={tags} selectedLanguage={selectedLanguage}
+              onTagClick={(name) => { setSearchQuery(name); fetchNews(selectedCategory, name, 1); }}
+              dark={dark} user={user} following={following.tags}
+              onRequireLogin={() => setAuthDialogOpen(true)}
+              onFollowChange={(change) => setFollowing((prev) => applyFollowChange(prev, change))}
+            />
           )}
 
           {/* Main content */}

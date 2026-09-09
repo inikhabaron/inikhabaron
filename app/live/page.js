@@ -24,6 +24,7 @@ import { PersonalizedFeed } from '@/components/personalization';
 import useNewsletterSubscribe from '@/hooks/useNewsletterSubscribe';
 import useSiteChrome from '@/hooks/useSiteChrome';
 import useBookmarkedIds from '@/hooks/useBookmarkedIds';
+import { applyFollowChange } from '@/lib/follow/applyFollowChange';
 
 // ─── Shared utilities & contexts ──────────────────────────────────────────────
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
@@ -62,6 +63,29 @@ export default function HomePage() {
   const { bookmarkedIds, handleBookmarkChange } = useBookmarkedIds(sessionReady ? user : null);
   const [userId, setUserId] = useState(null);
   const [subscriptionOpen, setSubscriptionOpen] = useState(false);
+  const [following, setFollowing] = useState({ categories: [], authors: [], cities: [], tags: [] });
+
+  // Gated on sessionReady per this repo's ADR-002 — see the identical effect
+  // in app/HomeClient.js.
+  useEffect(() => {
+    if (!user || !sessionReady) {
+      setFollowing({ categories: [], authors: [], cities: [], tags: [] });
+      return;
+    }
+
+    let cancelled = false;
+
+    fetch('/api/users/following', { credentials: 'include', cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled && data.success) setFollowing(data.data);
+      })
+      .catch((err) => console.error(err));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, sessionReady]);
 
   // ── Preferences ──────────────────────────────────────────────────────────
   const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]);
@@ -141,7 +165,7 @@ export default function HomePage() {
   }, []);
 
   const fetchTags = useCallback(async () => {
-    try { const d = await fetch('/api/tags').then(r => r.json()); setTags((d.tags || []).filter(t => t.active && t.popular)); } catch (e) { console.error(e); }
+    try { const d = await fetch('/api/tags').then(r => r.json()); setTags((d.tags || []).filter(t => t.isActive)); } catch (e) { console.error(e); }
   }, []);
 
   const fetchBreaking = useCallback(async () => {
@@ -241,7 +265,13 @@ export default function HomePage() {
 
           {/* Trending bar (desktop) */}
           {!isMobileView && (
-            <TrendingBar tags={tags} selectedLanguage={selectedLanguage} onTagClick={(name) => { setSearchQuery(name); fetchNews(selectedCategory, name, 1); }} dark={dark} />
+            <TrendingBar
+              tags={tags} selectedLanguage={selectedLanguage}
+              onTagClick={(name) => { setSearchQuery(name); fetchNews(selectedCategory, name, 1); }}
+              dark={dark} user={user} following={following.tags}
+              onRequireLogin={() => setAuthDialogOpen(true)}
+              onFollowChange={(change) => setFollowing((prev) => applyFollowChange(prev, change))}
+            />
           )}
 
           {/* Main content */}
