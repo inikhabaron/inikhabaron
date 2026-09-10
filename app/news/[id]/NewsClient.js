@@ -52,6 +52,8 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
   const [article, setArticle] = useState(initialArticle);
   const [latestNews, setLatestNews] = useState(initialLatest || []);
   const [relatedNews, setRelatedNews] = useState([]);
+  const [topic, setTopic] = useState(null);
+  const [moreFromTopic, setMoreFromTopic] = useState([]);
   const [loading, setLoading] = useState(!initialArticle);
   const [error, setError] = useState(null);
   const {
@@ -219,6 +221,29 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
     };
 
     loadRelated();
+  }, [article]);
+
+  useEffect(() => {
+    if (!article?.tags?.length) {
+      setTopic(null);
+      setMoreFromTopic([]);
+      return;
+    }
+
+    const loadTopicArticles = async () => {
+      try {
+        const tagsParam = (Array.isArray(article.tags) ? article.tags : []).join(',');
+        const res = await fetch(`/api/news/topic-related?tags=${encodeURIComponent(tagsParam)}&excludeId=${encodeURIComponent(article.id)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setTopic(data.topic || null);
+        setMoreFromTopic(data.articles || []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadTopicArticles();
   }, [article]);
 
   useEffect(() => {
@@ -718,6 +743,54 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                               </div>
                             )}
                           </section>
+
+                          {topic && moreFromTopic.length > 0 && (
+                            <section style={{ marginTop: '36px' }}>
+                              <div className="kn-section-label" style={{ justifyContent: 'space-between', display: 'flex', alignItems: 'center' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <div className="kn-section-label-bar" />
+                                  <span className="kn-section-label-text" style={{ color: T3 }}>
+                                    {selectedLanguage === 'hi' ? `#${topic.name} से और` : `More from #${topic.name}`}
+                                  </span>
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => router.push(`/topics/${topic.slug}`)}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: ACCENT, fontSize: '13px', fontWeight: 600 }}
+                                >
+                                  {selectedLanguage === 'hi' ? 'सभी देखें' : 'View all'} →
+                                </button>
+                              </div>
+                              <div className={styles.relatedGrid}>
+                                {moreFromTopic.map(item => (
+                                  <div
+                                    key={item.id}
+                                    className={styles.relatedCard}
+                                    style={{ backgroundColor: dark ? '#161B27' : '#fff', borderColor: dark ? '#252E40' : '#E8EAED' }}
+                                    onClick={() => navigateToArticle(item)}
+                                  >
+                                    <Image
+                                      src={item.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=900'}
+                                      alt={item.title}
+                                      width={400}
+                                      height={180}
+                                      sizes="(max-width: 768px) 100vw, 400px"
+                                      loader={cloudinaryLoader}
+                                    />
+                                    <div className={styles.relatedCardBody}>
+                                      <p className={styles.relatedCardTitle} style={{ color: T1, fontFamily: selectedLanguage === 'hi' ? 'var(--font-devanagari), sans-serif' : selectedFont.value }}>
+                                        {item.title}
+                                      </p>
+                                      <div className={styles.relatedMeta}>
+                                        <span style={{ color: T2 }}>{getCatLabel(item.category, selectedLanguage)}</span>
+                                        <span style={{ color: T3 }}>{formatDate(item.publishedAt)}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </section>
+                          )}
                         </div>
                       </div>
                     </main>
