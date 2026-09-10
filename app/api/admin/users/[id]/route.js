@@ -7,7 +7,7 @@ export const OPTIONS = preflight;
 
 // Only these fields may be updated via the API (prevents mass-assignment such
 // as a client sneaking in role escalation or arbitrary field writes).
-const UPDATABLE = ['name', 'role', 'bio', 'avatar', 'isActive', 'isVerified', 'permissions', 'email', 'isExpert', 'expertise'];
+const UPDATABLE = ['name', 'role', 'bio', 'avatar', 'isActive', 'isVerified', 'email', 'isExpert', 'expertise'];
 
 export async function PUT(request, { params }) {
   try {
@@ -21,6 +21,18 @@ export async function PUT(request, { params }) {
     const updateData = { updatedAt: new Date() };
     for (const key of UPDATABLE) {
       if (body[key] !== undefined) updateData[key] = body[key];
+    }
+    // UserFormDialog sends these flat (canPublishScheduled/canPublishBreaking),
+    // same as POST /api/admin/users' create path — not nested under
+    // `permissions` the way the document actually stores them. Previously
+    // this route only recognized a `permissions` object nobody ever sent, so
+    // an editor's publish-permission toggles silently never persisted here
+    // (creation worked; only updates were broken).
+    if (body.canPublishScheduled !== undefined || body.canPublishBreaking !== undefined) {
+      updateData.permissions = {
+        canPublishScheduled: body.canPublishScheduled || false,
+        canPublishBreaking: body.canPublishBreaking || false,
+      };
     }
     if (updateData.email) updateData.email = String(updateData.email).toLowerCase();
     if (updateData.role) updateData.role = String(updateData.role).trim().toLowerCase();
