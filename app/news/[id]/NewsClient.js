@@ -18,6 +18,7 @@ import FollowButton from '@/components/follow/FollowButton';
 import ArticleAuthors from '@/components/news/ArticleAuthors';
 import ArticleAuthorBio from '@/components/news/ArticleAuthorBio';
 import ArticleFeedback from '@/components/feedback/ArticleFeedback';
+import ListenToArticle from '@/components/audio/ListenToArticle';
 import RelatedLiveMatchWidget from '@/components/cricket/RelatedLiveMatchWidget';
 import LiveTextUpdatesTicker from '@/components/liveBlogs/LiveTextUpdatesTicker';
 import { getArticleAuthors } from '@/lib/news/authors';
@@ -580,6 +581,16 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                               Facebook
                             </button>
                           </div>
+
+                          <ListenToArticle
+                            articleId={article.id}
+                            isHindi={isHindi}
+                            surface={surface}
+                            bdr={bdr}
+                            T1={T1}
+                            T2={T2}
+                            accent={ACCENT}
+                          />
 
                           <RelatedLiveMatchWidget article={article} dark={dark} selectedLanguage={selectedLanguage} />
 

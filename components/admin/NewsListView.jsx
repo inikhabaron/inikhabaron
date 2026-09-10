@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import {
   Plus, Edit, Trash2, Check, X, Send, AlertCircle,
   Loader2, ChevronRight, CheckCircle, History, TrendingUp, MoreVertical, Bell,
+  Headphones, Loader,
 } from 'lucide-react';
 import { DS } from './design-system';
 import { STATUS_LABELS, statusFilterOptionsByRole } from './constants';
@@ -145,6 +146,21 @@ export function NewsListView({
                         {item.isTrending && <span style={{ background: '#dbeafe', color: '#1d4ed8', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4 }}>TRENDING</span>}
                         {item.breakingSuggested && !item.breakingApproved && <span style={{ background: '#ffedd5', color: '#9a3412', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4 }}>BREAKING?</span>}
                         {item.trendingSuggested && !item.isTrending && <span style={{ background: '#f3e8ff', color: '#6d28d9', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4 }}>TRENDING?</span>}
+                        {item.audio?.status === 'ready' && (
+                          <span title="Audio ready" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, background: '#dcfce7', color: '#166534', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4 }}>
+                            <Headphones size={10} />AUDIO
+                          </span>
+                        )}
+                        {item.audio?.status === 'pending' && (
+                          <span title="Audio generating" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, background: '#fef9c3', color: '#854d0e', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4 }}>
+                            <Loader size={10} />AUDIO
+                          </span>
+                        )}
+                        {item.audio?.status === 'failed' && (
+                          <span title={item.audio?.error || 'Audio generation failed'} style={{ display: 'inline-flex', alignItems: 'center', gap: 2, background: '#fee2e2', color: '#991b1b', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4 }}>
+                            <Headphones size={10} />AUDIO FAILED
+                          </span>
+                        )}
                       </div>
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
                       <div style={{ fontSize: 11, color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.excerpt}</div>
