@@ -21,6 +21,11 @@ import LocationDetectPrompt from '@/components/location/LocationDetectPrompt';
 // across the public site, so navigating between pages never re-reads
 // localStorage or re-subscribes to Firebase auth from scratch.
 export default function SiteChromeProvider({ children }) {
+  // themePreference is the user's actual choice (light/dark/system);
+  // `dark` is the resolved boolean every existing consumer already reads.
+  // Keeping both means the ~20 pages/components that destructure `dark` off
+  // this context don't need to change for System mode to work.
+  const [themePreference, setThemePreferenceState] = useState('light');
   const [dark, setDark] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('hi');
   const [languageLoaded, setLanguageLoaded] = useState(false);
@@ -45,10 +50,43 @@ export default function SiteChromeProvider({ children }) {
     if (languageLoaded) localStorage.setItem('news_language', selectedLanguage);
   }, [selectedLanguage, languageLoaded]);
 
+  // Reads the new 3-way preference key if it exists. Otherwise migrates the
+  // old binary `newsdesk_dark` key: 'true'/'false' means the reader had
+  // explicitly toggled it before, so that explicit choice carries over
+  // as-is; a missing key means the toggle was never touched, which is
+  // indistinguishable from "never expressed a preference" — those readers
+  // start on System rather than being silently locked to light.
   useEffect(() => {
-    const d = localStorage.getItem('newsdesk_dark');
-    if (d === 'true') setDark(true);
+    const saved = localStorage.getItem('newsdesk_theme');
+    if (saved === 'light' || saved === 'dark' || saved === 'system') {
+      setThemePreferenceState(saved);
+      return;
+    }
+    const legacy = localStorage.getItem('newsdesk_dark');
+    const migrated = legacy === 'true' ? 'dark' : legacy === 'false' ? 'light' : 'system';
+    setThemePreferenceState(migrated);
+    localStorage.setItem('newsdesk_theme', migrated);
   }, []);
+
+  // Resolves the preference to the boolean every existing consumer reads,
+  // and keeps it live while on System — a reader who opens the site in the
+  // morning and again after dark should not have to revisit Settings.
+  useEffect(() => {
+    if (themePreference !== 'system') {
+      setDark(themePreference === 'dark');
+      return;
+    }
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    setDark(mq.matches);
+    const onChange = (e) => setDark(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [themePreference]);
+
+  const setThemePreference = (pref) => {
+    setThemePreferenceState(pref);
+    localStorage.setItem('newsdesk_theme', pref);
+  };
 
   // Firebase persists sign-in across reloads on its own (independent of this
   // app's server), but the httpOnly `khabaron_session` cookie that every
@@ -145,10 +183,11 @@ export default function SiteChromeProvider({ children }) {
     return unsubscribe;
   }, [router]);
 
-  const toggleDark = () => setDark(p => {
-    localStorage.setItem('newsdesk_dark', String(!p));
-    return !p;
-  });
+  // The header's quick-toggle icon button: flips the currently-resolved
+  // theme to an explicit choice (exiting System, if that's where the
+  // resolved value came from) rather than cycling through three states —
+  // the full Light/Dark/System control lives on the Settings page.
+  const toggleDark = () => setThemePreference(dark ? 'light' : 'dark');
 
   const handleSignOut = async () => {
     try {
@@ -206,7 +245,7 @@ export default function SiteChromeProvider({ children }) {
 
   return (
     <SiteChromeContext.Provider value={{
-      dark, toggleDark,
+      dark, toggleDark, themePreference, setThemePreference,
       selectedLanguage, setSelectedLanguage, translations, t,
       user, sessionReady, authLoading, authDialogOpen, setAuthDialogOpen,
       handleGoogleSignIn, handleAppleSignIn, handleSignOut,

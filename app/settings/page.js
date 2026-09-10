@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MapPin, CheckCircle2, AlertCircle, Sun, Moon, Globe, Bell } from 'lucide-react';
+import { MapPin, CheckCircle2, AlertCircle, Sun, Moon, Monitor, Globe, Bell } from 'lucide-react';
 
 import LocationSelector from '@/components/location/LocationSelector';
 import PublicPageLayout from '@/components/layout/PublicPageLayout';
@@ -20,7 +20,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const chrome = useSiteChrome();
   const {
-    dark, toggleDark, selectedLanguage, setSelectedLanguage,
+    dark, themePreference, setThemePreference, selectedLanguage, setSelectedLanguage,
     isMobileView, surface, bdr, T1, T2, T3,
   } = chrome;
 
@@ -177,23 +177,38 @@ export default function SettingsPage() {
           <h2 style={{ fontSize: 16, fontWeight: 700, color: T1, margin: '0 0 16px' }}>
             {isHindi ? 'दिखावट' : 'Appearance'}
           </h2>
-          <button
-            onClick={toggleDark}
-            style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
-              borderRadius: 12, border: `1px solid ${bdr}`, background: 'transparent', cursor: 'pointer', textAlign: 'left',
-            }}
-          >
-            {dark ? <Moon size={20} color={T2} /> : <Sun size={20} color={T2} />}
-            <span style={{ flex: 1 }}>
-              <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: T1 }}>
-                {dark ? (isHindi ? 'डार्क मोड' : 'Dark mode') : (isHindi ? 'लाइट मोड' : 'Light mode')}
-              </span>
-              <span style={{ display: 'block', fontSize: 12, color: T3, marginTop: 2 }}>
-                {isHindi ? 'टॉगल करने के लिए क्लिक करें' : 'Click to toggle'}
-              </span>
-            </span>
-          </button>
+          <div style={{ display: 'flex', gap: 10, flexWrap: isMobileView ? 'wrap' : 'nowrap' }}>
+            {[
+              { value: 'light', icon: Sun, label: isHindi ? 'लाइट' : 'Light' },
+              { value: 'dark', icon: Moon, label: isHindi ? 'डार्क' : 'Dark' },
+              { value: 'system', icon: Monitor, label: isHindi ? 'सिस्टम' : 'System' },
+            ].map(({ value, icon: Icon, label }) => {
+              const selected = themePreference === value;
+              return (
+                <button
+                  key={value}
+                  onClick={() => setThemePreference(value)}
+                  aria-pressed={selected}
+                  style={{
+                    flex: '1 1 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                    padding: '16px 12px', borderRadius: 12, cursor: 'pointer',
+                    border: `1px solid ${selected ? ACCENT : bdr}`,
+                    background: selected ? `${ACCENT}14` : 'transparent',
+                  }}
+                >
+                  <Icon size={20} color={selected ? ACCENT : T2} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: selected ? ACCENT : T1 }}>{label}</span>
+                </button>
+              );
+            })}
+          </div>
+          {themePreference === 'system' && (
+            <p style={{ fontSize: 12, color: T3, margin: '10px 0 0' }}>
+              {isHindi
+                ? `आपके डिवाइस की सेटिंग के अनुसार अभी ${dark ? 'डार्क' : 'लाइट'} मोड में है।`
+                : `Currently ${dark ? 'dark' : 'light'}, matching your device setting.`}
+            </p>
+          )}
         </section>
 
         {/* Language card */}
