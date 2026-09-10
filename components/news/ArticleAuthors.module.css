@@ -25,6 +25,15 @@
   white-space: nowrap;
 }
 
+.authorLink {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.authorLink:hover .name {
+  text-decoration: underline;
+}
+
 .avatar,
 .avatarFallback {
   width: 44px;

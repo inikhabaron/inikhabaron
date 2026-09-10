@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { User } from 'lucide-react';
 
 import { getArticleAuthors } from '@/lib/news/authors';
@@ -15,7 +16,13 @@ import styles from './ArticleAuthors.module.css';
 // `fallbackName` covers articles with no byline at all — callers that would
 // rather show a house name ("KhabarON") than nothing pass one; callers that
 // want the byline to disappear entirely leave it unset.
-export default function ArticleAuthors({ article, label, textColor, mutedColor, accent, size = 'md', fallbackName }) {
+//
+// `authorId` links only the first author's name/photo to their /author/[id]
+// page — co-authors in authors[] have no id (just name/image/bio), so they
+// stay plain text. Same index===0 && authorId condition the crawler-only
+// link in ArticleSeoContent.js already uses; this is the human-visible
+// counterpart of that link, which previously didn't exist anywhere.
+export default function ArticleAuthors({ article, label, textColor, mutedColor, accent, size = 'md', fallbackName, authorId }) {
   const resolved = getArticleAuthors(article);
   const authors = resolved.length
     ? resolved
@@ -29,23 +36,30 @@ export default function ArticleAuthors({ article, label, textColor, mutedColor, 
           {label}:
         </span>
       )}
-      {authors.map((author, index) => (
-        <span
-          // Names can repeat and there is no per-author id, so position is
-          // the only stable key available.
-          key={`${author.name}-${index}`}
-          className={styles.author}
-        >
-          {author.image ? (
-            <img src={author.image} alt="" className={styles.avatar} loading="lazy" />
-          ) : (
-            <span className={styles.avatarFallback} style={{ backgroundColor: accent }}>
-              <User className={styles.avatarFallbackIcon} aria-hidden="true" />
-            </span>
-          )}
-          <span className={styles.name} style={{ color: textColor }}>{author.name}</span>
-        </span>
-      ))}
+      {authors.map((author, index) => {
+        const content = (
+          <>
+            {author.image ? (
+              <img src={author.image} alt="" className={styles.avatar} loading="lazy" />
+            ) : (
+              <span className={styles.avatarFallback} style={{ backgroundColor: accent }}>
+                <User className={styles.avatarFallbackIcon} aria-hidden="true" />
+              </span>
+            )}
+            <span className={styles.name} style={{ color: textColor }}>{author.name}</span>
+          </>
+        );
+        // Names can repeat and there is no per-author id, so position is the
+        // only stable key available.
+        const key = `${author.name}-${index}`;
+        return index === 0 && authorId ? (
+          <Link key={key} href={`/author/${authorId}`} className={`${styles.author} ${styles.authorLink}`}>
+            {content}
+          </Link>
+        ) : (
+          <span key={key} className={styles.author}>{content}</span>
+        );
+      })}
     </span>
   );
 }

@@ -1,5 +1,5 @@
-import { SITE_URL } from '@/lib/seo/config';
-import { getArticlesForSitemap, getCategories } from '@/lib/seo/data';
+import { SITE_URL, authorUrl } from '@/lib/seo/config';
+import { getArticlesForSitemap, getCategories, getAuthorsForSitemap } from '@/lib/seo/data';
 
 // Revalidate the sitemap hourly so new stories appear quickly.
 export const revalidate = 3600;
@@ -25,11 +25,13 @@ export default async function sitemap() {
   ].map((p) => ({ ...p, lastModified: now }));
 
   let categoryPages = [];
+  let authorPages = [];
   let articlePages = [];
 
   try {
-    const [categories, articles] = await Promise.all([
+    const [categories, authorIds, articles] = await Promise.all([
       getCategories(),
+      getAuthorsForSitemap(),
       getArticlesForSitemap({ limit: 5000 }),
     ]);
 
@@ -38,6 +40,13 @@ export default async function sitemap() {
       lastModified: now,
       changeFrequency: 'hourly',
       priority: 0.7,
+    }));
+
+    authorPages = authorIds.map((id) => ({
+      url: authorUrl(id),
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.5,
     }));
 
     articlePages = articles.map((a) => {
@@ -57,5 +66,5 @@ export default async function sitemap() {
     console.error('[sitemap] failed to load dynamic entries:', err.message);
   }
 
-  return [...staticPages, ...categoryPages, ...articlePages];
+  return [...staticPages, ...categoryPages, ...authorPages, ...articlePages];
 }

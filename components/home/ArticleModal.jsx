@@ -121,7 +121,7 @@ export default function ArticleModal({
 
               <div className="kn-article-meta" style={{ borderBottom: `1px solid ${bdr}`, marginBottom: '18px', paddingBottom: '16px' }}>
                 <div className="kn-author-wrap">
-                  <ArticleAuthors article={article} textColor={T2} accent={ACCENT} size="sm" fallbackName="KhabarON" />
+                  <ArticleAuthors article={article} textColor={T2} accent={ACCENT} size="sm" fallbackName="KhabarON" authorId={article.authorId} />
                 </div>
                 <span className="kn-meta-item" style={{ color: T3, fontSize: `${12 * textScale}px` }}>
                   <Clock style={{ width: '12px', height: '12px' }} />{formatDate?.(article.publishedAt)}

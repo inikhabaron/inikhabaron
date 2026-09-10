@@ -488,6 +488,7 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                                   textColor={T1}
                                   mutedColor={T2}
                                   accent={ACCENT}
+                                  authorId={article.authorId}
                                 />
                                 {article.authorId && (
                                   <FollowButton
