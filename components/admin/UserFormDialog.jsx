@@ -14,7 +14,14 @@ import { Separator } from '@/components/ui/separator';
 // longer manage user avatars. The `avatar` field still exists on the user
 // document and is still carried through this form's state untouched, so
 // saving a user preserves whatever photo they already have.
-export function UserFormDialog({ open, onOpenChange, editingUser, userForm, setUserForm, onSave }) {
+export function UserFormDialog({ open, onOpenChange, editingUser, userForm, setUserForm, onSave, categories = [] }) {
+  const toggleExpertise = (slug) => {
+    const next = userForm.expertise.includes(slug)
+      ? userForm.expertise.filter((s) => s !== slug)
+      : [...userForm.expertise, slug];
+    setUserForm({ ...userForm, expertise: next });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -55,6 +62,30 @@ export function UserFormDialog({ open, onOpenChange, editingUser, userForm, setU
             <Switch checked={userForm.isVerified} onCheckedChange={v => setUserForm({ ...userForm, isVerified: v })} />
             <Label>Verified Author</Label>
           </div>
+          <div className="flex items-center gap-2">
+            <Switch checked={userForm.isExpert} onCheckedChange={v => setUserForm({ ...userForm, isExpert: v })} />
+            {/* A capability, not a role — any admin/editor/reporter account can
+                also answer Ask the Expert questions without changing their
+                CMS role or permissions. */}
+            <Label>Ask the Expert contributor</Label>
+          </div>
+          {userForm.isExpert && (
+            <div className="space-y-2">
+              <Label>Areas of expertise</Label>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.slug}
+                    type="button"
+                    onClick={() => toggleExpertise(cat.slug)}
+                    className={`text-xs px-2.5 py-1 rounded-full border ${userForm.expertise.includes(cat.slug) ? 'bg-primary text-primary-foreground border-primary' : 'bg-background border-input'}`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {userForm.role === 'editor' && (
             <>
               <Separator />

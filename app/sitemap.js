@@ -1,5 +1,6 @@
-import { SITE_URL, authorUrl } from '@/lib/seo/config';
+import { SITE_URL, authorUrl, expertQuestionUrl } from '@/lib/seo/config';
 import { getArticlesForSitemap, getCategories, getAuthorsForSitemap } from '@/lib/seo/data';
+import { getPublishedQuestionIdsForSitemap } from '@/lib/services/expert/expertQuestionService';
 
 // Revalidate the sitemap hourly so new stories appear quickly.
 export const revalidate = 3600;
@@ -22,18 +23,28 @@ export default async function sitemap() {
     { url: `${SITE_URL}/editorial-policy`, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${SITE_URL}/corrections-policy`, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${SITE_URL}/privacy-policy`, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${SITE_URL}/ask-the-expert`, changeFrequency: 'daily', priority: 0.6 },
   ].map((p) => ({ ...p, lastModified: now }));
 
   let categoryPages = [];
   let authorPages = [];
   let articlePages = [];
+  let expertQuestionPages = [];
 
   try {
-    const [categories, authorIds, articles] = await Promise.all([
+    const [categories, authorIds, articles, expertQuestions] = await Promise.all([
       getCategories(),
       getAuthorsForSitemap(),
       getArticlesForSitemap({ limit: 5000 }),
+      getPublishedQuestionIdsForSitemap(),
     ]);
+
+    expertQuestionPages = expertQuestions.map((q) => ({
+      url: expertQuestionUrl(q.id),
+      lastModified: q.updatedAt ? new Date(q.updatedAt) : now,
+      changeFrequency: 'monthly',
+      priority: 0.4,
+    }));
 
     categoryPages = categories.map((c) => ({
       url: `${SITE_URL}/category/${c.slug}`,
@@ -66,5 +77,5 @@ export default async function sitemap() {
     console.error('[sitemap] failed to load dynamic entries:', err.message);
   }
 
-  return [...staticPages, ...categoryPages, ...authorPages, ...articlePages];
+  return [...staticPages, ...categoryPages, ...authorPages, ...articlePages, ...expertQuestionPages];
 }

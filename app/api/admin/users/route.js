@@ -46,6 +46,8 @@ export async function POST(request) {
       isVerified: body.isVerified || false,
       bio: body.bio || '',
       avatar: body.avatar || null,
+      isExpert: body.isExpert || false,
+      expertise: Array.isArray(body.expertise) ? body.expertise : [],
       permissions: {
         canPublishScheduled: body.canPublishScheduled || false,
         canPublishBreaking: body.canPublishBreaking || false,

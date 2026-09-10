@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart3, FileText, Video, Film, Tag, LayoutGrid, Users, Pencil, MessageSquare, Mail, Award, CalendarDays, Megaphone, ThumbsUp, Radio, AlertCircle, } from 'lucide-react';
+import { BarChart3, FileText, Video, Film, Tag, LayoutGrid, Users, Pencil, MessageSquare, Mail, Award, CalendarDays, Megaphone, ThumbsUp, Radio, AlertCircle, HelpCircle, } from 'lucide-react';
 import { DS } from './design-system';
 import { SIDEBAR_W } from './constants';
 
@@ -17,13 +17,19 @@ export function Sidebar({ activeTab, onTabChange, currentUser, isOpen, onClose, 
     { id: 'promotions', icon: Megaphone, label: 'Promotions', roles: ['admin', 'editor'] },
     { id: 'comments', icon: MessageSquare, label: 'Comments', roles: null },
     { id: 'feedback', icon: ThumbsUp, label: 'Feedback', roles: ['admin', 'editor', 'reporter'] },
+    // Gated on the isExpert capability flag, not role — any admin/editor/
+    // reporter account can also be flagged as an Ask the Expert contributor.
+    { id: 'ask-the-expert', icon: HelpCircle, label: 'Ask the Expert', roles: null, requiresFlag: 'isExpert' },
     { id: 'newsletter', icon: Mail, label: 'Newsletter', roles: ['admin', 'editor'] },
     { id: 'reporter-metrics', icon: Award, label: 'Reporter Metrics', roles: ['admin', 'editor'] },
     { id: 'calendar', icon: CalendarDays, label: 'Editorial Calendar', roles: ['admin', 'editor'] },
     { id: 'users', icon: Users, label: 'Users', roles: ['admin'] },
   ];
 
-  const visible = NAV.filter(n => !n.roles || n.roles.includes(currentUser?.role));
+  const visible = NAV.filter(n =>
+    (!n.roles || n.roles.includes(currentUser?.role)) &&
+    (!n.requiresFlag || currentUser?.[n.requiresFlag])
+  );
 
   const sidebarStyle = {
     ...DS.sidebar,

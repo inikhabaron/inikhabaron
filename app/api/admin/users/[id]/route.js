@@ -7,7 +7,7 @@ export const OPTIONS = preflight;
 
 // Only these fields may be updated via the API (prevents mass-assignment such
 // as a client sneaking in role escalation or arbitrary field writes).
-const UPDATABLE = ['name', 'role', 'bio', 'avatar', 'isActive', 'isVerified', 'permissions', 'email'];
+const UPDATABLE = ['name', 'role', 'bio', 'avatar', 'isActive', 'isVerified', 'permissions', 'email', 'isExpert', 'expertise'];
 
 export async function PUT(request, { params }) {
   try {

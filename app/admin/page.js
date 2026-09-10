@@ -27,6 +27,8 @@ import { PromotionFormDialog } from '@/components/admin/PromotionForm/PromotionF
 import { ReelsView } from '@/components/admin/ReelsView';
 import { FeedbackView } from '@/components/admin/FeedbackView';
 import { FeedbackDetailDialog } from '@/components/admin/FeedbackDetailDialog';
+import { ExpertQuestionsView } from '@/components/admin/ExpertQuestionsView';
+import { AnswerQuestionDialog } from '@/components/admin/AnswerQuestionDialog';
 import { getArticleAuthors, normalizeAuthorsInput, primaryAuthorName } from '@/lib/news/authors';
 import { ReelFormDialog } from '@/components/admin/ReelFormDialog';
 
@@ -72,6 +74,7 @@ const EMPTY_REEL_FORM = {
 const EMPTY_USER_FORM = {
   name: '', email: '', role: 'reporter', isVerified: false, bio: '', avatar: '',
   canPublishScheduled: false, canPublishBreaking: false,
+  isExpert: false, expertise: [],
 };
 
 export default function AdminPage() {
@@ -97,6 +100,13 @@ function AdminPageContent() {
   const [feedbackDetailArticleId, setFeedbackDetailArticleId] = useState(null);
   const [feedbackDetailItems, setFeedbackDetailItems] = useState([]);
   const [feedbackDetailLoading, setFeedbackDetailLoading] = useState(false);
+  const [expertQuestions, setExpertQuestions] = useState([]);
+  const [expertQuestionsPage, setExpertQuestionsPage] = useState(1);
+  const [expertQuestionsTotalPages, setExpertQuestionsTotalPages] = useState(1);
+  const [answerDialogOpen, setAnswerDialogOpen] = useState(false);
+  const [answeringQuestion, setAnsweringQuestion] = useState(null);
+  const [answerText, setAnswerText] = useState('');
+  const [answerSubmitting, setAnswerSubmitting] = useState(false);
   const [comments, setComments] = useState([]);
   const [commentStats, setCommentStats] = useState({
     pending: 0, approved: 0, reported: 0, hidden: 0, rejected: 0,
@@ -314,6 +324,57 @@ function AdminPageContent() {
     }
   };
 
+  const fetchExpertQuestions = useCallback(async () => {
+    try {
+      const res = await authFetch(`/api/admin/expert-questions?page=${expertQuestionsPage}&limit=20`, { method: 'GET' });
+      const data = await res.json();
+      setExpertQuestions(data.items || []);
+      setExpertQuestionsTotalPages(data.pagination?.pages || 1);
+    } catch (error) {
+      console.error('Error fetching expert questions:', error);
+    }
+  }, [expertQuestionsPage]);
+
+  const openAnswerDialog = (question) => {
+    setAnsweringQuestion(question);
+    setAnswerText('');
+    setAnswerDialogOpen(true);
+  };
+
+  const handleSubmitAnswer = async () => {
+    if (!answeringQuestion || !answerText.trim()) return;
+    setAnswerSubmitting(true);
+    try {
+      const res = await authFetch(`/api/admin/expert-questions/${answeringQuestion.id}/answer`, {
+        method: 'POST',
+        body: JSON.stringify({ answer: answerText.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Failed to publish answer');
+      toast.success('Answer published');
+      setAnswerDialogOpen(false);
+      setAnsweringQuestion(null);
+      fetchExpertQuestions();
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setAnswerSubmitting(false);
+    }
+  };
+
+  const handleHideQuestion = async (question) => {
+    if (!confirm('Hide this question? It will be removed from the queue and won\'t be answerable.')) return;
+    try {
+      const res = await authFetch(`/api/admin/expert-questions/${question.id}/hide`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Failed to hide question');
+      toast.success('Question hidden');
+      fetchExpertQuestions();
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
   const fetchPromotions = useCallback(async () => {
     try {
       const res = await authFetch('/api/admin/promotions', { method: 'GET' });
@@ -483,10 +544,11 @@ function AdminPageContent() {
       else if (activeTab === 'promotions') await Promise.all([fetchPromotions(), fetchPromotionArticleOptions()]);
       else if (activeTab === 'reels') { await Promise.all([fetchReels(), fetchUsers()]); }
       else if (activeTab === 'feedback') await fetchFeedback();
+      else if (activeTab === 'ask-the-expert') await fetchExpertQuestions();
       setLoading(false);
     };
     load();
-  }, [activeTab, fetchCategories, fetchAnalytics, fetchNews, fetchUsers, fetchComments, fetchYtConfig, fetchNewsletter, fetchNewsletterCampaigns, fetchReporterMetrics, fetchPromotions, fetchPromotionArticleOptions, fetchReels, fetchFeedback, currentUser]);
+  }, [activeTab, fetchCategories, fetchAnalytics, fetchNews, fetchUsers, fetchComments, fetchYtConfig, fetchNewsletter, fetchNewsletterCampaigns, fetchReporterMetrics, fetchPromotions, fetchPromotionArticleOptions, fetchReels, fetchFeedback, fetchExpertQuestions, currentUser]);
 
   useEffect(() => {
     if (activeTab === 'reels') fetchReels();
@@ -1242,6 +1304,7 @@ function AdminPageContent() {
                 isVerified: user.isVerified, bio: user.bio || '', avatar: user.avatar || '',
                 canPublishScheduled: user.permissions?.canPublishScheduled || false,
                 canPublishBreaking: user.permissions?.canPublishBreaking || false,
+                isExpert: user.isExpert || false, expertise: user.expertise || [],
               });
               setIsUserDialogOpen(true);
             }}
@@ -1372,6 +1435,16 @@ function AdminPageContent() {
             onViewDetail={openFeedbackDetail}
           />
         );
+      case 'ask-the-expert':
+        return (
+          <ExpertQuestionsView
+            items={expertQuestions} loading={loading}
+            page={expertQuestionsPage} totalPages={expertQuestionsTotalPages}
+            onPageChange={setExpertQuestionsPage}
+            onAnswer={openAnswerDialog}
+            onHide={handleHideQuestion}
+          />
+        );
       default:
         return null;
     }
@@ -1437,6 +1510,14 @@ function AdminPageContent() {
         loading={feedbackDetailLoading}
       />
 
+      <AnswerQuestionDialog
+        open={answerDialogOpen} onOpenChange={setAnswerDialogOpen}
+        question={answeringQuestion}
+        answerText={answerText} setAnswerText={setAnswerText}
+        onSubmit={handleSubmitAnswer}
+        submitting={answerSubmitting}
+      />
+
       <PromotionFormDialog
         open={isPromotionDialogOpen} onOpenChange={setIsPromotionDialogOpen}
         editingPromotion={editingPromotion}
@@ -1459,6 +1540,7 @@ function AdminPageContent() {
         editingUser={editingUser}
         userForm={userForm} setUserForm={setUserForm}
         onSave={handleSaveUser}
+        categories={categories}
       />
 
       <CommentDetailsDialog
