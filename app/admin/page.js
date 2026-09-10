@@ -141,6 +141,7 @@ function AdminPageContent() {
   const [reporterDetail, setReporterDetail] = useState(null);
   const [reporterDetailLoading, setReporterDetailLoading] = useState(false);
   const [analytics, setAnalytics] = useState(null);
+  const [jobHealth, setJobHealth] = useState(null);
   const [loading, setLoading] = useState(true);
   const [newsStatusFilter, setNewsStatusFilter] = useState('all');
   const [newsPage, setNewsPage] = useState(1);
@@ -491,6 +492,17 @@ function AdminPageContent() {
     } catch (error) { console.error('Error fetching analytics:', error); }
   }, []);
 
+  // Surfaced on the dashboard specifically because the equivalent
+  // notification-only health metrics already existed and were never shown
+  // anywhere — a 139-job backlog went unnoticed for a month as a result.
+  const fetchJobHealth = useCallback(async () => {
+    try {
+      const res = await authFetch('/api/admin/jobs/status', { method: 'GET' });
+      const data = await res.json();
+      setJobHealth(data.kinds || []);
+    } catch (error) { console.error('Error fetching job queue health:', error); }
+  }, []);
+
   const fetchReporterMetrics = useCallback(async () => {
     try {
       const res = await authFetch('/api/admin/reporter-metrics');
@@ -534,7 +546,7 @@ function AdminPageContent() {
     const load = async () => {
       setLoading(true);
       await Promise.all([fetchCategories(), fetchTags()]);
-      if (activeTab === 'dashboard') await fetchAnalytics();
+      if (activeTab === 'dashboard') await Promise.all([fetchAnalytics(), fetchJobHealth()]);
       else if (activeTab === 'news') await fetchNews();
       else if (activeTab === 'users' && currentUser?.role === 'admin') await fetchUsers();
       else if (activeTab === 'livestream') await fetchYtConfig();
@@ -548,7 +560,7 @@ function AdminPageContent() {
       setLoading(false);
     };
     load();
-  }, [activeTab, fetchCategories, fetchAnalytics, fetchNews, fetchUsers, fetchComments, fetchYtConfig, fetchNewsletter, fetchNewsletterCampaigns, fetchReporterMetrics, fetchPromotions, fetchPromotionArticleOptions, fetchReels, fetchFeedback, fetchExpertQuestions, currentUser]);
+  }, [activeTab, fetchCategories, fetchAnalytics, fetchJobHealth, fetchNews, fetchUsers, fetchComments, fetchYtConfig, fetchNewsletter, fetchNewsletterCampaigns, fetchReporterMetrics, fetchPromotions, fetchPromotionArticleOptions, fetchReels, fetchFeedback, fetchExpertQuestions, currentUser]);
 
   useEffect(() => {
     if (activeTab === 'reels') fetchReels();
@@ -1247,7 +1259,7 @@ function AdminPageContent() {
   const renderView = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardView analytics={analytics} loading={loading} />;
+        return <DashboardView analytics={analytics} jobHealth={jobHealth} loading={loading} />;
       case 'news':
         return (
           <NewsListView

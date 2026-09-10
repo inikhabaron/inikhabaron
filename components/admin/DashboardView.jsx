@@ -1,8 +1,54 @@
 'use client';
 
-import { Loader2, FileText, CheckCircle, Clock, Eye, TrendingUp, Users } from 'lucide-react';
+import { Loader2, FileText, CheckCircle, Clock, Eye, TrendingUp, Users, AlertTriangle, ListChecks } from 'lucide-react';
 import { LineChart, Line, BarChart as RBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { DS } from './design-system';
+
+const KIND_LABELS = {
+  notification: 'Notifications',
+  audio_generation: 'Audio Generation',
+  voice_briefing: 'Voice Briefing',
+};
+
+function formatAge(minutes) {
+  if (minutes === null || minutes === undefined) return '—';
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+}
+
+// Exists because the equivalent notification-only health metrics already
+// existed (notificationMetricsService.getNotificationMetrics) and were
+// never surfaced anywhere — a 139-job backlog went unnoticed for a month.
+// Deliberately small: one row per job kind, on the page every admin sees
+// first, not a separate section nobody opens.
+function JobQueueHealthCard({ jobHealth }) {
+  if (!jobHealth || jobHealth.length === 0) return null;
+  const anyStalled = jobHealth.some((k) => k.stalled);
+
+  return (
+    <div style={{ ...DS.card, padding: '18px 22px', marginBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        {anyStalled ? <AlertTriangle size={16} color="#dc2626" /> : <ListChecks size={16} color="#059669" />}
+        <span style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Job Queue Health</span>
+      </div>
+      <div style={{ display: 'grid', gap: 8 }}>
+        {jobHealth.map((k) => (
+          <div key={k.kind} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 8, background: k.stalled ? '#fef2f2' : '#f9fafb' }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>{KIND_LABELS[k.kind] || k.kind}</span>
+            <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#6b7280' }}>
+              <span>Pending: <strong style={{ color: k.pendingCount > 0 ? '#111827' : '#9ca3af' }}>{k.pendingCount}</strong></span>
+              <span>Oldest: <strong style={{ color: k.stalled ? '#dc2626' : '#111827' }}>{formatAge(k.oldestPendingAgeMinutes)}</strong></span>
+              <span>Failed: <strong style={{ color: k.failedCount > 0 ? '#dc2626' : '#9ca3af' }}>{k.failedCount}</strong></span>
+              {k.stalled && <span style={{ color: '#dc2626', fontWeight: 700 }}>STALLED</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const DEFAULT_CHART_DATA = [
   { name: 'Jan', views: 10, articles: 50 }, { name: 'Feb', views: 30, articles: 60 },
@@ -10,7 +56,7 @@ const DEFAULT_CHART_DATA = [
   { name: 'May', views: 16, articles: 65 }, { name: 'Jun', views: 12, articles: 45 },
 ];
 
-export function DashboardView({ analytics, loading }) {
+export function DashboardView({ analytics, jobHealth, loading }) {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 300 }}>
@@ -33,6 +79,8 @@ export function DashboardView({ analytics, loading }) {
   return (
     <div style={{ padding: 24 }}>
       <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+
+      <JobQueueHealthCard jobHealth={jobHealth} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 16, marginBottom: 24 }}>
         {stats.map(({ label, value, icon: Icon, color, bg }) => (
