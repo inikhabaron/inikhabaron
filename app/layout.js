@@ -142,11 +142,9 @@ export default function RootLayout({ children }) {
           injected it client-side only after hydration, so it never appeared in
           the initial markup at all despite sitting inside <head> here.
         */}
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1008647598112103"
-          crossOrigin="anonymous"
-        />
+        
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5750046427641908"
+     crossorigin="anonymous"/>
       </head>
       <body>
         <GoogleAnalytics />
