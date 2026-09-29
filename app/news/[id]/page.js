@@ -18,7 +18,6 @@ import {
 import {
   newsArticleSchema,
   breadcrumbSchema,
-  faqSchema,
 } from '@/lib/seo/jsonld';
 import { getCatLabel } from '@/lib/news-utils';
 import { getArticleAuthors, joinAuthorNames } from '@/lib/news/authors';
@@ -38,7 +37,10 @@ export async function generateMetadata({ params }) {
   const { id } = await params;
   const article = await getArticle(id);
 
-  if (!article) {
+  const notLive = !article
+    || article.status !== 'published'
+    || (article.publishedAt && new Date(article.publishedAt) > new Date());
+  if (notLive) {
     return {
       title: `${SITE.name} - Latest News`,
       description: SITE.description,
@@ -47,7 +49,9 @@ export async function generateMetadata({ params }) {
     };
   }
 
-  const title = optimizeTitle(article.seoTitle || article.title);
+  // Brand suffix comes from the root layout's title.template; adding it here
+  // too produced "Story | INI KhabarON | INI KhabarON".
+  const title = optimizeTitle(article.seoTitle || article.title, { withSuffix: false });
   const description = optimizeDescription(
     article.seoDescription || article.excerpt,
     article.content,
@@ -91,7 +95,7 @@ export async function generateMetadata({ params }) {
       authors: authorNames,
       section: article.category,
       tags: Array.isArray(article.tags) ? article.tags : [],
-      images: [{ url: image, width: 1200, height: 630, alt: article.title }],
+      images: [{ url: image, alt: article.title }],
     },
     twitter: {
       card: 'summary_large_image',
@@ -149,7 +153,12 @@ export default async function Page({ params }) {
     getLatestArticles({ limit: 8, projection: LATEST_NEWS_CARD_PROJECTION }),
   ]);
 
-  if (!article || article.status !== 'published') {
+  // Scheduled stories carry status 'published' with a future publishedAt; they
+  // must not be served (or dated) before their time, same as the listings.
+  const isLive = article
+    && article.status === 'published'
+    && (!article.publishedAt || new Date(article.publishedAt) <= new Date());
+  if (!isLive) {
     notFound();
   }
 
@@ -158,13 +167,12 @@ export default async function Page({ params }) {
 
   // Build the structured-data graph for this story.
   const jsonLd = [
-    newsArticleSchema(article, { faqs }),
+    newsArticleSchema(article),
     breadcrumbSchema([
       { name: 'Home', url: SITE_URL },
       { name: categoryLabel, url: categoryUrl(article.category) },
       { name: stripHtml(article.title).slice(0, 90), url: articleUrl(article) },
     ]),
-    faqSchema(faqs),
   ];
 
   return (

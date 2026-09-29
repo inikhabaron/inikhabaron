@@ -5,7 +5,7 @@ import ArticleGrid from '@/components/seo/ArticleGrid';
 import SeoPageShell from '@/components/seo/SeoPageShell';
 import TopicFollowButton from '@/components/topics/TopicFollowButton';
 import { getTag, getArticlesByTag, getCategories } from '@/lib/seo/data';
-import { SITE, SITE_URL, topicUrl } from '@/lib/seo/config';
+import { SITE, SITE_URL, paginatedUrl, topicUrl } from '@/lib/seo/config';
 import { collectionPageSchema, breadcrumbSchema } from '@/lib/seo/jsonld';
 
 export const revalidate = 300;
@@ -13,21 +13,23 @@ export const dynamicParams = true;
 
 const PAGE_SIZE = 12;
 
-export async function generateMetadata({ params }) {
+export async function generateMetadata({ params, searchParams }) {
   const { slug } = await params;
+  const sp = await searchParams;
+  const page = Math.max(1, parseInt(sp?.page || '1', 10) || 1);
   const tag = await getTag(slug);
   const name = tag?.name || slug;
-  const title = `#${name} News`;
+  const title = page > 1 ? `#${name} News - Page ${page}` : `#${name} News`;
   const description = `Latest ${name} news, updates and analysis from ${SITE.name}. Follow the topic to stay updated.`;
   return {
     title,
     description,
-    alternates: { canonical: topicUrl(slug) },
+    alternates: { canonical: paginatedUrl(topicUrl(slug), page) },
     openGraph: {
       type: 'website',
       title: `${title} | ${SITE.name}`,
       description,
-      url: topicUrl(slug),
+      url: paginatedUrl(topicUrl(slug), page),
       siteName: SITE.name,
       images: [{ url: SITE.defaultImage, width: 1200, height: 630, alt: name }],
     },

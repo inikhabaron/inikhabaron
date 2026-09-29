@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import Image from 'next/image';
+import ArticleLink from './ArticleLink';
 import { cloudinaryLoader } from '@/lib/media/cloudinaryLoader';
 import { getCatLabel } from '@/lib/news-utils';
 
@@ -23,7 +24,7 @@ export default function LatestNews({ items, onArticleClick, dark, selectedLangua
         >
           <div className="kn-latest-text">
             <span className="kn-latest-cat">{getCatLabel(item.category, selectedLanguage)}</span>
-            <p className="kn-latest-item-title" style={{ color: dark ? '#d1d5db' : '#333' }}>{item.title}</p>
+            <p className="kn-latest-item-title" style={{ color: dark ? '#d1d5db' : '#333' }}><ArticleLink id={item.id}>{item.title}</ArticleLink></p>
             <span className="kn-latest-date">{formatDate(item.publishedAt)}</span>
           </div>
           <div className="kn-latest-thumb">

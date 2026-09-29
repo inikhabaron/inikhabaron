@@ -1,8 +1,8 @@
 import { SITE, SITE_URL } from '@/lib/seo/config';
 import { getArticlesForSitemap } from '@/lib/seo/data';
 
-// Google News only considers articles from the last 48 hours.
-export const revalidate = 600; // refresh every 10 minutes
+// Google News only considers articles from the last 48 hours. Served fresh;
+// the Cache-Control header below gives a 10-minute CDN cache.
 export const dynamic = 'force-dynamic';
 
 function xmlEscape(str = '') {

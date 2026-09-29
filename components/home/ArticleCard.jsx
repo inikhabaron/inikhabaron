@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useRef, useContext, useEffect } from 'react';
 import Image from 'next/image';
+import ArticleLink from './ArticleLink';
 import { Bookmark, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DarkCtx, FontCtx } from '@/lib/news-contexts';
@@ -68,7 +69,7 @@ function ArticleCard({
         </div>
 
         <h3 className="kn-card-title" style={{ fontSize: `${15 * scale}px`, color: dark ? '#E8ECF0' : '#111827' }}>
-          {item.title}
+          <ArticleLink id={item.id}>{item.title}</ArticleLink>
         </h3>
 
         <div className="kn-card-meta">

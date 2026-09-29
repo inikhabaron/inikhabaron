@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
+import ArticleLink from './ArticleLink';
 import { cloudinaryLoader } from '@/lib/media/cloudinaryLoader';
 import { Share2 } from 'lucide-react';
 import { getCatAccent, getCatLabel, EDITORIAL_RED } from '@/lib/news-utils';
@@ -180,7 +181,7 @@ function HeroCard({ item, onClick, formatDate, selectedLanguage, textScale, sele
             letterSpacing: '-0.015em',
           }}
         >
-          {item.title}
+          <ArticleLink id={item.id}>{item.title}</ArticleLink>
         </h2>
 
         {/* Excerpt */}

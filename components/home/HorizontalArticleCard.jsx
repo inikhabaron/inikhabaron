@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import Image from 'next/image';
+import ArticleLink from './ArticleLink';
 import { cloudinaryLoader } from '@/lib/media/cloudinaryLoader';
 import { getCatAccent, getCatLabel } from '@/lib/news-utils';
 
@@ -22,7 +23,7 @@ function HorizontalArticleCard({
           {catLabel}
         </span>
         <h3 className="kn-horiz-title" style={{ color: T1, fontSize: `${15 * textScale}px`, fontFamily: selectedFont?.value }}>
-          {item.title}
+          <ArticleLink id={item.id}>{item.title}</ArticleLink>
         </h3>
         {item.excerpt && (
           <p className="kn-horiz-excerpt" style={{ color: T2, fontSize: `${13 * textScale}px`, fontFamily: selectedFont?.value }}>

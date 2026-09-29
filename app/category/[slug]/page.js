@@ -4,7 +4,7 @@ import Breadcrumbs from '@/components/seo/Breadcrumbs';
 import ArticleGrid from '@/components/seo/ArticleGrid';
 import SeoPageShell from '@/components/seo/SeoPageShell';
 import { getCategory, getArticlesByCategory, getCategories } from '@/lib/seo/data';
-import { SITE, SITE_URL, categoryUrl } from '@/lib/seo/config';
+import { SITE, SITE_URL, paginatedUrl, categoryUrl } from '@/lib/seo/config';
 import { getCatLabel } from '@/lib/news-utils';
 import { collectionPageSchema, breadcrumbSchema } from '@/lib/seo/jsonld';
 
@@ -17,21 +17,23 @@ function label(slug, category) {
   return category?.name || getCatLabel(slug, 'en') || slug;
 }
 
-export async function generateMetadata({ params }) {
+export async function generateMetadata({ params, searchParams }) {
   const { slug } = await params;
+  const sp = await searchParams;
+  const page = Math.max(1, parseInt(sp?.page || '1', 10) || 1);
   const category = await getCategory(slug);
   const name = label(slug, category);
-  const title = `${name} News`;
+  const title = page > 1 ? `${name} News - Page ${page}` : `${name} News`;
   const description = `Latest ${name} news, updates and analysis from ${SITE.name}. Stay informed with breaking ${name} stories in Hindi and English.`;
   return {
     title,
     description,
-    alternates: { canonical: categoryUrl(slug) },
+    alternates: { canonical: paginatedUrl(categoryUrl(slug), page) },
     openGraph: {
       type: 'website',
       title: `${title} | ${SITE.name}`,
       description,
-      url: categoryUrl(slug),
+      url: paginatedUrl(categoryUrl(slug), page),
       siteName: SITE.name,
       images: [{ url: SITE.defaultImage, width: 1200, height: 630, alt: name }],
     },

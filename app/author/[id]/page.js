@@ -5,7 +5,7 @@ import ArticleGrid from '@/components/seo/ArticleGrid';
 import SeoPageShell from '@/components/seo/SeoPageShell';
 import AuthorFollowButton from '@/components/authors/AuthorFollowButton';
 import { getAuthorWithArticles, getCategories } from '@/lib/seo/data';
-import { SITE, SITE_URL, authorUrl } from '@/lib/seo/config';
+import { SITE, SITE_URL, paginatedUrl, authorUrl } from '@/lib/seo/config';
 import { personSchema, breadcrumbSchema, collectionPageSchema } from '@/lib/seo/jsonld';
 
 export const revalidate = 600;
@@ -29,12 +29,12 @@ export async function generateMetadata({ params, searchParams }) {
   return {
     title,
     description,
-    alternates: { canonical: authorUrl(id) },
+    alternates: { canonical: paginatedUrl(authorUrl(id), page) },
     openGraph: {
       type: 'profile',
       title: `${author.name} | ${SITE.name}`,
       description,
-      url: authorUrl(id),
+      url: paginatedUrl(authorUrl(id), page),
       images: [{ url: author.avatar || SITE.defaultImage, width: 1200, height: 630, alt: author.name }],
     },
   };

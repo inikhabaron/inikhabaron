@@ -47,9 +47,9 @@ import { recordShare } from '@/lib/share';
 const Loader = () => <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}><div className="loader" /></div>;
 
 // ─── HomePage ─────────────────────────────────────────────────────────────────
-export default function HomePage({ initialCategory = 'all' }) {
+export default function HomePage({ initialCategory = 'all', initialFeed = null }) {
   // ── Data state ───────────────────────────────────────────────────────────
-  const [news, setNews] = useState([]);
+  const [news, setNews] = useState(initialFeed?.news || []);
   const [tags, setTags] = useState([]);
 
   // ── UI state ─────────────────────────────────────────────────────────────
@@ -61,9 +61,12 @@ export default function HomePage({ initialCategory = 'all' }) {
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [searchQuery, setSearchQuery] = useState('');
   // const [selectedNews, setSelectedNews] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialFeed);
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(initialFeed ? initialFeed.pages > 1 : true);
+  // The server already rendered page 1 of the initial category, so the first
+  // run of the fetch effect below is skipped (it would just repeat that data).
+  const skipInitialFetch = useRef(!!initialFeed);
 
   // ── Auth state ───────────────────────────────────────────────────────────
   const {
@@ -197,7 +200,14 @@ export default function HomePage({ initialCategory = 'all' }) {
   // mount with the server-provided initialCategory/empty search), so a
   // second "initial" fetchNews() call here would race this one and could
   // briefly show the wrong category's articles.
-  useEffect(() => { setPage(1); fetchNews(selectedCategory, searchQuery, 1); }, [selectedCategory, fetchNews, searchQuery]);
+  useEffect(() => {
+    if (skipInitialFetch.current) {
+      skipInitialFetch.current = false;
+      return;
+    }
+    setPage(1);
+    fetchNews(selectedCategory, searchQuery, 1);
+  }, [selectedCategory, fetchNews, searchQuery]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleSearch = (e) => { e?.preventDefault(); setPage(1); fetchNews(selectedCategory, searchQuery, 1); };

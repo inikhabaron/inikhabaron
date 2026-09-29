@@ -2,6 +2,7 @@ import { getMatchDetail } from '@/lib/services/cricket/cricketService';
 import { MATCH_STATES } from '@/lib/services/cricket/cricketConstants';
 import { formatMatchDateTime } from '@/lib/cricket/matchStatus';
 import MatchDetailClient from './MatchDetailClient';
+import { absoluteUrl } from '@/lib/seo/config';
 
 // Always live data — never statically generated or cached at the route level
 // (the service's own Redis "fresh" tier is what actually absorbs traffic).
@@ -35,6 +36,7 @@ export async function generateMetadata({ params }) {
   return {
     title: `${title} | Live Cricket Score`,
     description: description || `Live score and scorecard for ${teamNames}.`,
+    alternates: { canonical: absoluteUrl(`/cricket/${id}`) },
   };
 }
 

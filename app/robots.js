@@ -63,7 +63,6 @@ export default function robots() {
     sitemap: [
       `${SITE_URL}/sitemap.xml`,
       `${SITE_URL}/news-sitemap.xml`,
-      `${SITE_URL}/image-sitemap.xml`,
     ],
     host: SITE_URL,
   };

@@ -18,10 +18,10 @@ import { SITE, SITE_URL, VERIFICATION } from '@/lib/seo/config';
 
 // Each font exposes a CSS variable so client components can switch at runtime
 const inter         = Inter         ({ subsets: ['latin'],      weight: ['300','400','500','600','700','800'], variable: '--font-inter',         display: 'swap' });
-const poppins       = Poppins       ({ subsets: ['latin'],      weight: ['300','400','500','600','700','800'], variable: '--font-poppins',       display: 'swap' });
-const roboto        = Roboto        ({ subsets: ['latin'],      weight: ['300','400','500','700','900'],       variable: '--font-roboto',        display: 'swap' });
-const dmSans        = DM_Sans       ({ subsets: ['latin'],      weight: ['300','400','500','600','700'],       variable: '--font-dm-sans',       display: 'swap' });
-const plusJakarta   = Plus_Jakarta_Sans({ subsets: ['latin'],   weight: ['300','400','500','600','700'],       variable: '--font-plus-jakarta',  display: 'swap' });
+const poppins       = Poppins       ({ subsets: ['latin'],      weight: ['300','400','500','600','700','800'], variable: '--font-poppins',       display: 'swap', preload: false });
+const roboto        = Roboto        ({ subsets: ['latin'],      weight: ['300','400','500','700','900'],       variable: '--font-roboto',        display: 'swap', preload: false });
+const dmSans        = DM_Sans       ({ subsets: ['latin'],      weight: ['300','400','500','600','700'],       variable: '--font-dm-sans',       display: 'swap', preload: false });
+const plusJakarta   = Plus_Jakarta_Sans({ subsets: ['latin'],   weight: ['300','400','500','600','700'],       variable: '--font-plus-jakarta',  display: 'swap', preload: false });
 
 // Pre-load Hindi script — used when selectedLanguage === 'hi'
 const notoDevanagari = Noto_Sans_Devanagari({
@@ -50,8 +50,10 @@ export const metadata = {
   creator: SITE.name,
   category: 'news',
   manifest: '/site.webmanifest',
+  // No site-wide canonical here: a canonical set on the root layout is
+  // inherited by every page that doesn't define its own, which would tell
+  // Google that page is a duplicate of the homepage. Each page owns its own.
   alternates: {
-    canonical: '/',
     types: {
       'application/rss+xml': [{ url: '/rss.xml', title: `${SITE.name} RSS Feed` }],
     },
@@ -61,7 +63,6 @@ export const metadata = {
     siteName: SITE.name,
     title: `${SITE.name} - Latest Hindi & English News`,
     description: SITE.description,
-    url: SITE_URL,
     locale: SITE.locale,
     alternateLocale: SITE.localeAlt,
     images: [{ url: SITE.defaultImage, width: 1200, height: 630, alt: SITE.name }],
@@ -126,7 +127,6 @@ export default function RootLayout({ children }) {
         {/* Geo signals for regional news relevance */}
         <meta name="geo.region" content={SITE.geo.region} />
         <meta name="geo.placename" content={SITE.geo.placename} />
-        <meta name="og:locale" content={SITE.locale} />
         {/* Site-wide structured data: Organization + WebSite (SearchAction) */}
         <JsonLd data={[organizationGraph(), websiteSchema()]} />
         {/*
