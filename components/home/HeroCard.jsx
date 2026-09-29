@@ -5,6 +5,7 @@ import ArticleLink from './ArticleLink';
 import { cloudinaryLoader } from '@/lib/media/cloudinaryLoader';
 import { Share2 } from 'lucide-react';
 import { getCatAccent, getCatLabel, EDITORIAL_RED } from '@/lib/news-utils';
+import { articlePath } from '@/lib/seo/slug';
 
 function HeroCard({ item, onClick, formatDate, selectedLanguage, textScale, selectedFont, dark, onShareWhatsApp, onShareTwitter, onShareFacebook, toast }) {
   const catColor = getCatAccent(item.category);
@@ -65,7 +66,7 @@ function HeroCard({ item, onClick, formatDate, selectedLanguage, textScale, sele
               {
                 label: 'Copy Link',
                 className: 'share-copy-link',
-                fn: () => navigator.clipboard.writeText(`${window.location.origin}/news/${item.id}`),
+                fn: () => navigator.clipboard.writeText(`${window.location.origin}${articlePath(item)}`),
               },
             ].map((s) => (
               <button key={s.label} onClick={s.fn} className={`kn-share-item ${s.className || ''}`}>
@@ -181,7 +182,7 @@ function HeroCard({ item, onClick, formatDate, selectedLanguage, textScale, sele
             letterSpacing: '-0.015em',
           }}
         >
-          <ArticleLink id={item.id}>{item.title}</ArticleLink>
+          <ArticleLink item={item}>{item.title}</ArticleLink>
         </h2>
 
         {/* Excerpt */}

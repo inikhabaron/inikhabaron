@@ -1,4 +1,4 @@
-import { SITE, SITE_URL } from '@/lib/seo/config';
+import { SITE, SITE_URL, articleUrl } from '@/lib/seo/config';
 import { getLatestArticles } from '@/lib/seo/data';
 import { stripHtml, truncate } from '@/lib/seo/utils';
 import { getArticleAuthors, formatAuthorNames } from '@/lib/news/authors';
@@ -29,7 +29,7 @@ export async function GET() {
 
   const items = articles
     .map((a) => {
-      const link = `${SITE_URL}/news/${a.id}`;
+      const link = articleUrl(a);
       const pub = a.publishedAt ? new Date(a.publishedAt).toUTCString() : new Date().toUTCString();
       const desc = truncate(stripHtml(a.seoDescription || a.excerpt || a.content || ''), 300);
       return `    <item>

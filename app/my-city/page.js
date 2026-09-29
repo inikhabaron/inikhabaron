@@ -10,6 +10,7 @@ import PublicPageLayout from '@/components/layout/PublicPageLayout';
 import { applyFollowChange } from '@/lib/follow/applyFollowChange';
 import useSiteChrome from '@/hooks/useSiteChrome';
 import { ACCENT, ACCENT_H, formatDate } from '@/lib/news-utils';
+import { articlePath } from '@/lib/seo/slug';
 
 function locationBadge(article) {
   const location = article.location || {};
@@ -104,7 +105,7 @@ export default function MyCityPage() {
     }
   }, [meta.scope, meta.stateName, meta.districtName, isHindi]);
 
-  const goToArticle = (item) => router.push(`/news/${item.id}`);
+  const goToArticle = (item) => router.push(articlePath(item));
 
   return (
     <PublicPageLayout chrome={chrome}>

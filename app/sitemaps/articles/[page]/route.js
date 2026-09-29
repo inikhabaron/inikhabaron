@@ -1,4 +1,4 @@
-import { SITE_URL } from '@/lib/seo/config';
+import { articleUrl } from '@/lib/seo/config';
 import { getArticlesForSitemap, SITEMAP_CHUNK_SIZE } from '@/lib/seo/data';
 import { urlsetXml, xmlResponse } from '@/lib/seo/sitemapXml';
 
@@ -25,7 +25,7 @@ export async function GET(_request, { params }) {
   }
 
   const urls = articles.map((a) => ({
-    loc: `${SITE_URL}/news/${a.id}`,
+    loc: articleUrl(a),
     lastmod: a.updatedAt || a.publishedAt,
     images: a.featuredImage ? [a.featuredImage] : [],
   }));

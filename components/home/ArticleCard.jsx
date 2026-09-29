@@ -69,7 +69,7 @@ function ArticleCard({
         </div>
 
         <h3 className="kn-card-title" style={{ fontSize: `${15 * scale}px`, color: dark ? '#E8ECF0' : '#111827' }}>
-          <ArticleLink id={item.id}>{item.title}</ArticleLink>
+          <ArticleLink item={item}>{item.title}</ArticleLink>
         </h3>
 
         <div className="kn-card-meta">

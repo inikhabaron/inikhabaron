@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Newspaper } from 'lucide-react';
 import { CRICKET_SEARCH_TERMS } from '@/lib/cricket/newsRelevance';
 import { event as trackEvent } from '@/lib/gtag';
+import { articlePath } from '@/lib/seo/slug';
 
 // News → Cricket direction of the integration: published articles relevant
 // to cricket, via the existing full-text search on /api/news — no new
@@ -57,7 +58,7 @@ export default function RelatedCricketNews({ match, dark, selectedLanguage }) {
             type="button"
             onClick={() => {
               trackEvent({ action: 'related_news_click', category: 'cricket_match', label: match?.id || 'unknown' });
-              router.push(`/news/${article.id}`);
+              router.push(articlePath(article));
             }}
             style={{ textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}
           >

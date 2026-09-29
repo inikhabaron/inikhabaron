@@ -21,6 +21,7 @@ import ArticleFeedback from '@/components/feedback/ArticleFeedback';
 import ListenToArticle from '@/components/audio/ListenToArticle';
 import RelatedLiveMatchWidget from '@/components/cricket/RelatedLiveMatchWidget';
 import LiveTextUpdatesTicker from '@/components/liveBlogs/LiveTextUpdatesTicker';
+import { articlePath, parseArticleParam } from '@/lib/seo/slug';
 import { getArticleAuthors } from '@/lib/news/authors';
 import { applyFollowChange } from '@/lib/follow/applyFollowChange';
 import { CommentsSection } from '@/components/comments';
@@ -47,7 +48,8 @@ const Loader = () => (
 export default function NewsDetailsPage({ initialArticle = null, initialLatest = [] }) {
   const router = useRouter();
   const params = useParams();
-  const id = params?.id || initialArticle?.id;
+  // The route segment is "<slug>-<uuid>", so prefer the article's own id.
+  const id = initialArticle?.id || parseArticleParam(params?.id).id;
   // Seed state from server-fetched data so the article renders in the initial
   // HTML (SSR) — this is what makes the story crawlable and removes load flicker.
   const [article, setArticle] = useState(initialArticle);
@@ -295,7 +297,7 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
   };
 
   const navigateToArticle = (item) => {
-    router.push(`/news/${item.id}`);
+    router.push(articlePath(item));
   };
 
   const articleTags = useMemo(() => {
@@ -560,7 +562,7 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                               trackEvent({ action: 'share_click', category: 'article', label: 'whatsapp', });
 
                               await recordShare(article.id, 'whatsapp');
-                              window.open(`https://wa.me/?text=${encodeURIComponent('*' + article.title + '*' + '\n\n' + window.location.origin + '/news/' + article.id)}`, '_blank');
+                              window.open(`https://wa.me/?text=${encodeURIComponent('*' + article.title + '*' + '\n\n' + window.location.origin + articlePath(article))}`, '_blank');
                             }}>
                               WhatsApp
                             </button>
@@ -568,7 +570,7 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                               trackEvent({ action: 'share_click', category: 'article', label: 'twitter', });
 
                               await recordShare(article.id, 'twitter');
-                              window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}&url=${encodeURIComponent(window.location.origin + '/news/' + article.id)}`, '_blank');
+                              window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}&url=${encodeURIComponent(window.location.origin + articlePath(article))}`, '_blank');
                             }}>
                               X / Twitter
                             </button>
@@ -576,7 +578,7 @@ export default function NewsDetailsPage({ initialArticle = null, initialLatest =
                               trackEvent({ action: 'share_click', category: 'article', label: 'facebook', });
 
                               await recordShare(article.id, 'facebook');
-                              window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/news/' + article.id)}`, '_blank');
+                              window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + articlePath(article))}`, '_blank');
                             }}>
                               Facebook
                             </button>

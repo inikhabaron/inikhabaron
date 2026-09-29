@@ -1,4 +1,4 @@
-import { SITE, SITE_URL } from '@/lib/seo/config';
+import { SITE, articleUrl } from '@/lib/seo/config';
 import { getArticlesForSitemap } from '@/lib/seo/data';
 
 // Google News only considers articles from the last 48 hours. Served fresh;
@@ -29,7 +29,7 @@ export async function GET() {
 
   const items = articles
     .map((a) => {
-      const loc = `${SITE_URL}/news/${a.id}`;
+      const loc = articleUrl(a);
       const pub = a.publishedAt ? new Date(a.publishedAt).toISOString() : new Date().toISOString();
       const lang = a.language === 'hi' ? 'hi' : 'en';
       const keywords = Array.isArray(a.tags) ? a.tags.slice(0, 10).join(', ') : '';

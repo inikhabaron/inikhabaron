@@ -24,7 +24,13 @@ Register the publication, add the site URL, and submit `/news-sitemap.xml`. Need
 - Corrections policy actually followed; visible "Updated" times when a story changes materially.
 
 ## Deferred / not done
-- **Human-readable article URLs** (`/news/<slug>`): needs a slug field, 301s from `/news/<uuid>`, and share/sitemap updates. Separate project.
 - **Per-article `<html lang>`**: the root layout is shared by all pages; needs a layout split.
 - **Scheduled publishing runs once daily** (`vercel.json` cron `0 4 * * *`). More frequent runs need a Vercel plan that allows it, or an external scheduler hitting `/api/cron/auto-publish`.
 - **Core Web Vitals**: only font preloading was trimmed. Measure with PageSpeed Insights before deeper work (AdSense, GA and client-rendered homepage JS are the likely costs).
+
+## Article URLs (Phase 4)
+Canonical form is `/news/<title-slug>-<uuid>` (`lib/seo/slug.js`). The uuid is the lookup key, so no DB migration or slug field is needed; the slug is derived from the current title. Old `/news/<uuid>` links and stale slugs 308-redirect to the canonical URL. Hindi headlines keep Devanagari in the slug (capped at 40 chars; percent-encoded in sitemaps/canonicals).
+
+After deploying: in Search Console, re-submit `/sitemap.xml` and `/news-sitemap.xml` and use *URL inspection* on one old and one new article URL. Expect Google to re-crawl the old URLs over weeks; keep the redirects permanently.
+
+Not wired: `pingArticle()` (IndexNow / Google Indexing API, `lib/services/seo/searchPing.js`) has no callers in the code, despite `INSTANT_INDEXING_SETUP.md` saying it fires on publish. Wiring IndexNow into the publish routes is a small follow-up.

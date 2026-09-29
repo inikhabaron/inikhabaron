@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import NewsClient from './NewsClient';
 import JsonLd from '@/components/seo/JsonLd';
 import ArticleSeoContent from './ArticleSeoContent';
@@ -19,6 +19,7 @@ import {
   newsArticleSchema,
   breadcrumbSchema,
 } from '@/lib/seo/jsonld';
+import { parseArticleParam, articlePath } from '@/lib/seo/slug';
 import { getCatLabel } from '@/lib/news-utils';
 import { getArticleAuthors, joinAuthorNames } from '@/lib/news/authors';
 
@@ -34,7 +35,9 @@ export const dynamicParams = true;
  * tuned for maximum news/AI visibility.
  */
 export async function generateMetadata({ params }) {
-  const { id } = await params;
+  const { id: rawParam } = await params;
+  // The URL segment is "<slug>-<uuid>"; the uuid is the lookup key.
+  const { id } = parseArticleParam(rawParam);
   const article = await getArticle(id);
 
   const notLive = !article
@@ -136,7 +139,8 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function Page({ params }) {
-  const { id } = await params;
+  const { id: rawParam } = await params;
+  const { id } = parseArticleParam(rawParam);
 
   // Fetch the article + latest stories directly from Mongo on the server so the
   // content is present in the initial HTML (crawlable by Google News + AI bots).
@@ -160,6 +164,17 @@ export default async function Page({ params }) {
     && (!article.publishedAt || new Date(article.publishedAt) <= new Date());
   if (!isLive) {
     notFound();
+  }
+
+  // One URL per story: old /news/<uuid> links and stale slugs (after a
+  // headline edit) 308 to the canonical /news/<slug>-<uuid>, passing their
+  // link equity along.
+  const canonicalPath = articlePath(article);
+  let requested = rawParam;
+  try { requested = decodeURIComponent(rawParam); } catch { /* keep raw */ }
+  if (`/news/${requested}` !== canonicalPath) {
+    // Location headers must be ASCII, so Devanagari slugs are percent-encoded.
+    permanentRedirect(encodeURI(canonicalPath));
   }
 
   const categoryLabel = getCatLabel(article.category, 'en') || article.category || 'News';

@@ -4,6 +4,7 @@ import { AlertCircle, Check, X, Radio, ChevronRight } from 'lucide-react';
 import { DS } from '../design-system';
 import { PaginationBtn } from '../PaginationBtn';
 import { LoadingSpinner } from '../LoadingSpinner';
+import { articlePath } from '@/lib/seo/slug';
 
 const TABS = [
   { id: 'suggested', label: 'Suggested' },
@@ -130,7 +131,7 @@ export function BreakingNewsManagerView({
                         </button>
                       )}
                       {activeTab === 'history' && (
-                        <a href={`/news/${item.id}`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 12, color: '#2563eb', textDecoration: 'none' }}>
+                        <a href={articlePath(item)} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 12, color: '#2563eb', textDecoration: 'none' }}>
                           View<ChevronRight size={12} />
                         </a>
                       )}

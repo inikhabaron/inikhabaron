@@ -31,6 +31,7 @@ import { DarkCtx, FontCtx } from '@/lib/news-contexts';
 import { ACCENT, ACCENT_H, EDITORIAL_RED, FONT_OPTIONS, getCatAccent, getCatLabel, formatDate } from '@/lib/news-utils';
 import { event as trackEvent } from '@/lib/gtag';
 import { recordShare } from '@/lib/share';
+import { articlePath } from '@/lib/seo/slug';
 
 // home.css is imported globally via layout.js — plain kn-* class names used below
 
@@ -102,7 +103,7 @@ export default function HomePage() {
 
   const shareMenuRef = useRef(null);
   const router = useRouter();
-  const goToArticle = (item) => router.push(`/news/${item.id}`);
+  const goToArticle = (item) => router.push(articlePath(item));
 
   // ── Effects ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -195,10 +196,10 @@ export default function HomePage() {
   const loadMore = () => { const n = page + 1; setPage(n); fetchNews(selectedCategory, searchQuery, n); };
 
   // const trackShare = (newsId, platform) => fetch(`/api/news/${newsId}/share`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ platform }) }).catch(console.error);
-  const shareOnWhatsApp = async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'whatsapp', }); await recordShare(item.id, 'whatsapp'); window.open(`https://wa.me/?text=${encodeURIComponent('*' + item.title + '*' + '\n\n' + window.location.origin + '/news/' + item.id)}`, '_blank'); };
-  const shareOnTwitter = async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'twitter', }); await recordShare(item.id, 'twitter'); window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(item.title)}&url=${encodeURIComponent(window.location.origin + '/news/' + item.id)}`, '_blank'); };
-  const shareOnFacebook = async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'facebook', }); await recordShare(item.id, 'facebook'); window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/news/' + item.id)}`, '_blank'); };
-  const copyArticleLink = async (item) => { try { await navigator.clipboard.writeText(`${window.location.origin}/news/${item.id}`); trackEvent({ action: 'share_click', category: 'article', label: 'copy_link', }); toast.success('Link copied!'); } catch (error) { console.error(error); toast.error('Failed to copy link'); }};
+  const shareOnWhatsApp = async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'whatsapp', }); await recordShare(item.id, 'whatsapp'); window.open(`https://wa.me/?text=${encodeURIComponent('*' + item.title + '*' + '\n\n' + window.location.origin + articlePath(item))}`, '_blank'); };
+  const shareOnTwitter = async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'twitter', }); await recordShare(item.id, 'twitter'); window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(item.title)}&url=${encodeURIComponent(window.location.origin + articlePath(item))}`, '_blank'); };
+  const shareOnFacebook = async (item) => { trackEvent({ action: 'share_click', category: 'article', label: 'facebook', }); await recordShare(item.id, 'facebook'); window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + articlePath(item))}`, '_blank'); };
+  const copyArticleLink = async (item) => { try { await navigator.clipboard.writeText(`${window.location.origin}${articlePath(item)}`); trackEvent({ action: 'share_click', category: 'article', label: 'copy_link', }); toast.success('Link copied!'); } catch (error) { console.error(error); toast.error('Failed to copy link'); }};
 
 //   const handleSaveProgress = async (scrollPct) => {
 //     if (!selectedNews || !userId || scrollPct <= 0) return;

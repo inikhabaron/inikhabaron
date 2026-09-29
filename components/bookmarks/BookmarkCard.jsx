@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { BookmarkX, Calendar, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import styles from './BookmarkCard.module.css';
+import { articlePath } from '@/lib/seo/slug';
 
 const TYPE_CONFIG = {
   bookmark: {
@@ -77,7 +78,7 @@ export default function BookmarkCard({
   return (
     <div
       className={`${styles.card} ${dark ? 'dark' : ''}`}
-      onClick={() => router.push(`/news/${article.id}`)}
+      onClick={() => router.push(articlePath(article))}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-2px)';
         e.currentTarget.style.boxShadow =

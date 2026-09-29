@@ -9,6 +9,7 @@ import { getCatAccent, getCatLabel } from '@/lib/news-utils';
 import { ArrowRight, Sparkles, } from 'lucide-react';
 
 import styles from './PersonalizedNewsCard.module.css';
+import { articlePath } from '@/lib/seo/slug';
 
 function getRecommendationReason(article, selectedLanguage) {
   const hi = selectedLanguage === 'hi';
@@ -75,7 +76,7 @@ export default function PersonalizedNewsCard({
   const catLabel = getCatLabel(article.category, selectedLanguage);
   return (
     <Link
-      href={`/news/${article.id}`}
+      href={articlePath(article)}
       className="kn-card"
       style={{ backgroundColor: dark ? '#161B27' : '#FFFFFF', border: dark ? '1px solid #252E40' : 'none' }}
     >

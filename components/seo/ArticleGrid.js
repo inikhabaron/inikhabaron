@@ -5,6 +5,7 @@
  */
 import { SITE } from '@/lib/seo/config';
 import { stripHtml, truncate } from '@/lib/seo/utils';
+import { articlePath } from '@/lib/seo/slug';
 
 function formatDate(d) {
   if (!d) return '';
@@ -32,7 +33,7 @@ export default function ArticleGrid({ articles = [] }) {
     >
       {articles.map((a) => (
         <li key={a.id} style={{ border: '1px solid #E8EAED', borderRadius: '12px', overflow: 'hidden', background: '#fff' }}>
-          <a href={`/news/${a.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+          <a href={articlePath(a)} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
             <img
               src={a.featuredImage || SITE.defaultImage}
               alt={a.title}
