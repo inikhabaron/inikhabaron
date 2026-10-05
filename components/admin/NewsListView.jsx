@@ -9,6 +9,7 @@ import {
 import { DS } from './design-system';
 import { STATUS_LABELS, statusFilterOptionsByRole } from './constants';
 import { MenuBtn } from './MenuBtn';
+import { canEditArticle } from '@/lib/auth/permissions';
 import { PaginationBtn } from './PaginationBtn';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
@@ -210,9 +211,12 @@ export function NewsListView({
                           <DropdownMenu.Content className="dropdown-content" sideOffset={6} collisionPadding={10} align="end" avoidCollisions style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 50, minWidth: 190, overflow: 'hidden' }}>
                             
                             <div style={{ padding: '4px 0' }}>
-                              {((currentUser?.role === 'admin') ||
-                                (currentUser?.role === 'editor' && ['draft', 'needs_revision'].includes(item.status)) ||
-                                (currentUser?.role === 'reporter' && item.status === 'draft' && item.authorId === currentUser?.id)) && (
+                              {/* Same rule the API enforces (canEditArticle): admins and editors
+                                  can edit at any status — including published, to correct a
+                                  mistake — and a reporter only their own draft / needs-revision
+                                  article. This used to be a separate, stricter copy of the rule
+                                  that hid Edit from editors on every non-draft article. */}
+                              {canEditArticle(currentUser, item) && (
                                 <MenuBtn icon={Edit} label="Edit" color="#374151" onClick={() => { onEdit(item); }} />
                               )}
                               {currentUser?.role === 'reporter' && item.status === 'draft' && (

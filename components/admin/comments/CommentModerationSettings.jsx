@@ -161,7 +161,7 @@ export function CommentModerationSettings({
 
       {/* ---------------------------
           Guest commenting
-      ---------------------------- */}
+      ----------------------------- */}
 
       <div className={styles.delaySection}>
 

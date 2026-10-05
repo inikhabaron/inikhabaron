@@ -1,5 +1,6 @@
 import { getCollection } from '@/lib/mongodb';
 import { json, preflight } from '@/lib/api/cors';
+import { INTERNAL_ARTICLE_FIELDS } from '@/lib/seo/data';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -10,7 +11,12 @@ export async function GET(_request, { params }) {
   try {
     const { id: newsId } = await params;
     const newsCollection = await getCollection('news');
-    const news = await newsCollection.findOne({ id: newsId });
+    // Same fields the public lists leave out: edit history (old bodies), review
+    // notes and staff ids are for the admin API only.
+    const news = await newsCollection.findOne(
+      { id: newsId },
+      { projection: Object.fromEntries(INTERNAL_ARTICLE_FIELDS.map((field) => [field, 0])) }
+    );
 
     if (!news) {
       return json({ error: 'News not found' }, { status: 404 });
