@@ -72,15 +72,20 @@ export default function GuestFields({
       )}
 
       {/* Honeypot: off-screen, unfocusable, ignored by assistive tech. Only
-          automated form-fillers populate it. */}
+          automated form-fillers populate it. Deliberately NOT named "website" /
+          "url" / "company": browser autofill and password managers fill fields
+          like that for real people, and a filled honeypot silently drops the
+          comment. */}
       <div className={styles.guestHoneypot} aria-hidden="true">
         <label>
-          Website
+          Leave this field empty
           <input
             type="text"
-            name="website"
+            name="qx_hp_note"
             tabIndex={-1}
             autoComplete="off"
+            data-lpignore="true"
+            data-1p-ignore="true"
             value={website}
             onChange={(e) => onWebsiteChange(e.target.value)}
           />

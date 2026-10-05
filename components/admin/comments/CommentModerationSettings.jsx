@@ -9,6 +9,7 @@ export function CommentModerationSettings({
   saving,
   onSave,
   captchaStatus = null,
+  canEdit = true,
 }) {
   const alertEmailsText =
     settings.alertEmailsText ??
@@ -16,6 +17,13 @@ export function CommentModerationSettings({
 
   return (
     <section className={styles.card}>
+
+      {/* A disabled fieldset turns every input and the Save button read-only for
+          roles that may view but not change these settings (the API enforces it). */}
+      <fieldset
+        disabled={!canEdit}
+        style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
+      >
 
       <div className={styles.header}>
 
@@ -343,6 +351,14 @@ export function CommentModerationSettings({
         </button>
 
       </div>
+
+      </fieldset>
+
+      {!canEdit && (
+        <p className={styles.delayHint}>
+          Only an admin can change these settings.
+        </p>
+      )}
 
     </section>
   );

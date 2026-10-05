@@ -11,7 +11,7 @@ import {
 } from '@/lib/services/settings/commentModerationService';
 import { evaluateGuestSubmission } from '@/lib/services/comments/guestCommentGuard';
 import { issueFormToken } from '@/lib/services/comments/guestFormToken';
-import { getPublicCaptchaConfig } from '@/lib/services/comments/guestCaptcha';
+import { getCaptchaConfig, getPublicCaptchaConfig } from '@/lib/services/comments/guestCaptcha';
 import { COMMENTS_CLOSED_MESSAGE } from '@/lib/services/comments/articleCommentsService';
 import { runGuestCommentAlertCheck } from '@/lib/services/comments/guestCommentAlertService';
 import { getClientIp, getClientFingerprint } from '@/lib/api/clientIdentity';
@@ -78,8 +78,14 @@ export async function GET(request, { params }) {
     const settings =
       await getCommentModerationSettings();
 
+    // With GUEST_CAPTCHA_REQUIRED on and no keys configured, every guest post is
+    // refused (fail closed). Report guests as not allowed in that state so the
+    // page shows the login prompt instead of a form that can only error.
+    const captchaConfig = getCaptchaConfig();
+
     const guestCommentsAllowed =
-      settings.allowGuestComments === true;
+      settings.allowGuestComments === true &&
+      !(captchaConfig.required && !captchaConfig.configured);
 
     // Public comment loads are also the heartbeat for the unreviewed-guest-
     // comment alert (see guestCommentAlertService.js): throttled, time-boxed

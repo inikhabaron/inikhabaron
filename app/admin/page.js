@@ -1434,6 +1434,7 @@ function AdminPageContent() {
             canPurge={currentUser?.role === 'admin'}
             onToggleArticleComments={handleToggleArticleComments}
             captchaStatus={captchaStatus}
+            canEditSettings={currentUser?.role === 'admin'}
             onPreview={(comment)=>{ 
               setSelectedComment(comment);
               setCommentDialogOpen(true);

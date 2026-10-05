@@ -4,6 +4,7 @@ import { getUserFromToken } from '@/lib/auth/admin/token';
 
 import {
   canAccessAdminPanel,
+  checkRole,
 } from '@/lib/auth/permissions';
 
 import {
@@ -98,6 +99,21 @@ export async function POST(request) {
       return json(
         {
           error: 'Unauthorized',
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    // Reading is open to everyone who can use the admin panel; WRITING is
+    // admin-only. These settings switch guest commenting on and off, change how
+    // comments are approved, and choose who internal alerts are emailed to —
+    // none of which a reporter or editor should be able to change.
+    if (!checkRole(admin, ['admin'])) {
+      return json(
+        {
+          error: 'Only an admin can change comment settings',
         },
         {
           status: 403,

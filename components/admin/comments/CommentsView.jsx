@@ -41,6 +41,7 @@ export function CommentsView({
   canPurge = false,
   onToggleArticleComments,
   captchaStatus = null,
+  canEditSettings = true,
 }) {
   if (loading) {
     return (
@@ -107,6 +108,7 @@ export function CommentsView({
           saving={savingModeration}
           onSave={onSaveModeration}
           captchaStatus={captchaStatus}
+          canEdit={canEditSettings}
         />
       </div>
 
