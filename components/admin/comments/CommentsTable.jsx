@@ -9,6 +9,11 @@ export function CommentsTable({
   onReject,
   onHide,
   onDelete,
+  onPreview,
+  onRestore,
+  onPurge,
+  canPurge = false,
+  onToggleArticleComments,
 }) {
   if (loading) {
     return (
@@ -68,7 +73,7 @@ export function CommentsTable({
             <th style={headerStyle}>Status</th>
             <th style={headerStyle}>Reports</th>
             <th style={headerStyle}>Likes</th>
-            <th style={headerStyle}>Created</th>
+            <th style={headerStyle}>Submitted</th>
             <th style={headerStyle}>Actions</th>
           </tr>
         </thead>
@@ -82,6 +87,11 @@ export function CommentsTable({
               onReject={onReject}
               onHide={onHide}
               onDelete={onDelete}
+              onPreview={onPreview}
+              onRestore={onRestore}
+              onPurge={onPurge}
+              canPurge={canPurge}
+              onToggleArticleComments={onToggleArticleComments}
             />
           ))}
         </tbody>

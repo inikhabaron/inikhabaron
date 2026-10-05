@@ -42,7 +42,7 @@ const EMPTY_LOCATION_FORM = {
 const EMPTY_NEWS_FORM = {
   title: '', content: '', excerpt: '', category: '', tags: '', featuredImage: '', images: [],
   status: 'draft', isBreaking: false, breakingSuggested: false, isTrending: false,
-  trendingSuggested: false, isFeatured: false, authorLabel: 'Author',
+  trendingSuggested: false, isFeatured: false, commentsClosed: false, authorLabel: 'Author',
   // Byline lives here now — one entry per journalist, each with its own photo.
   // `authorName` is no longer a form field; it's derived from authors[0] on
   // save so legacy readers of that field keep working (lib/news/authors.js).
@@ -112,11 +112,22 @@ function AdminPageContent() {
     pending: 0, approved: 0, reported: 0, hidden: 0, rejected: 0,
   });
   const [commentFilter, setCommentFilter] = useState('all');
+  // fetchComments reads the filter through a ref so its identity stays stable:
+  // as a useCallback dependency, every filter change re-created it and re-ran
+  // the whole tab loader (full-page spinner, and unsaved moderation-settings
+  // edits overwritten by the settings refetch).
+  const commentFilterRef = useRef(commentFilter);
+  commentFilterRef.current = commentFilter;
+  const [commentSort, setCommentSort] = useState('newest');
+  const commentSortRef = useRef(commentSort);
+  commentSortRef.current = commentSort;
   const [selectedComment, setSelectedComment] = useState(null);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [commentLoading, setCommentLoading] = useState(false);
   const [moderationSettings, setModerationSettings] = useState({ mode: 'auto', delaySeconds: 3, });
   const [moderationSaving, setModerationSaving] = useState(false);
+  // Read-only: whether guest-comment CAPTCHA keys are configured on the server.
+  const [captchaStatus, setCaptchaStatus] = useState(null);
   const [newsletterSubscribers, setNewsletterSubscribers] = useState([]);
   const [newsletterStats, setNewsletterStats] = useState({ total: 0, active: 0, unsubscribed: 0 });
   const [newsletterStatusFilter, setNewsletterStatusFilter] = useState('all');
@@ -141,6 +152,8 @@ function AdminPageContent() {
   const [reporterDetail, setReporterDetail] = useState(null);
   const [reporterDetailLoading, setReporterDetailLoading] = useState(false);
   const [analytics, setAnalytics] = useState(null);
+  // Dashboard cards: pending guest comments / guest comments over 24h.
+  const [commentDashboardStats, setCommentDashboardStats] = useState(null);
   const [jobHealth, setJobHealth] = useState(null);
   const [loading, setLoading] = useState(true);
   const [newsStatusFilter, setNewsStatusFilter] = useState('all');
@@ -425,13 +438,27 @@ function AdminPageContent() {
 
   const fetchComments = useCallback(async () => {
     try {
+      const commentFilter = commentFilterRef.current;
       let url = '/api/admin/comments?limit=100';
-      if (commentFilter !== 'all') { url += `&status=${commentFilter}`; }
+      // 'reported', 'needs_review', 'overdue', 'guest' and 'guest_new' aren't
+      // comment statuses — each maps to its own query params.
+      if (commentFilter === 'reported') { url += '&reported=true'; }
+      else if (commentFilter === 'needs_review') { url += '&review=unreviewed'; }
+      else if (commentFilter === 'overdue') { url += '&overdue=true'; }
+      else if (commentFilter === 'guest') { url += '&source=guest'; }
+      else if (commentFilter === 'guest_new') { url += '&source=guest&newerThanHours=24'; }
+      else if (commentFilter === 'guest_unreviewed') { url += '&source=guest&review=unreviewed'; }
+      else if (commentFilter === 'guest_overdue') { url += '&source=guest&overdue=true'; }
+      else if (commentFilter === 'deleted') { url += '&deleted=true'; }
+      else if (commentFilter !== 'all') { url += `&status=${commentFilter}`; }
+      if (commentSortRef.current !== 'newest') { url += `&sort=${commentSortRef.current}`; }
       const res = await authFetch(url);
       const data = await res.json();
       const items = data.data?.items || [];
       setComments(items);
-      setCommentStats({
+      // Server-side counts, so the cards stay accurate under a filter / past
+      // the 100 loaded rows.
+      setCommentStats(data.data?.stats || {
         pending: items.filter(c => c.status === 'pending').length,
         approved: items.filter(c => c.status === 'approved').length,
         hidden: items.filter(c => c.status === 'hidden').length,
@@ -442,13 +469,13 @@ function AdminPageContent() {
       console.error(error);
       toast.error('Failed to fetch comments');
     }
-  }, [commentFilter]);
+  }, []);
 
   const fetchModerationSettings = useCallback(async () => {
     try {
         const res = await authFetch('/api/admin/settings/comment-moderation');
         const data = await res.json();
-        if (data.success) { setModerationSettings(data.settings); }
+        if (data.success) { setModerationSettings(data.settings); setCaptchaStatus(data.captcha || null); }
     } catch (error) {
         console.error(error);
     }
@@ -503,6 +530,16 @@ function AdminPageContent() {
     } catch (error) { console.error('Error fetching job queue health:', error); }
   }, []);
 
+  // Counts only; a role that can't moderate comments simply gets no cards.
+  const fetchCommentDashboardStats = useCallback(async () => {
+    try {
+      const res = await authFetch('/api/admin/comments/stats', { method: 'GET' });
+      if (!res.ok) { setCommentDashboardStats(null); return; }
+      const data = await res.json();
+      setCommentDashboardStats(data.data || null);
+    } catch (error) { console.error('Error fetching comment stats:', error); }
+  }, []);
+
   const fetchReporterMetrics = useCallback(async () => {
     try {
       const res = await authFetch('/api/admin/reporter-metrics');
@@ -546,7 +583,7 @@ function AdminPageContent() {
     const load = async () => {
       setLoading(true);
       await Promise.all([fetchCategories(), fetchTags()]);
-      if (activeTab === 'dashboard') await Promise.all([fetchAnalytics(), fetchJobHealth()]);
+      if (activeTab === 'dashboard') await Promise.all([fetchAnalytics(), fetchJobHealth(), fetchCommentDashboardStats()]);
       else if (activeTab === 'news') await fetchNews();
       else if (activeTab === 'users' && currentUser?.role === 'admin') await fetchUsers();
       else if (activeTab === 'livestream') await fetchYtConfig();
@@ -560,7 +597,7 @@ function AdminPageContent() {
       setLoading(false);
     };
     load();
-  }, [activeTab, fetchCategories, fetchAnalytics, fetchJobHealth, fetchNews, fetchUsers, fetchComments, fetchYtConfig, fetchNewsletter, fetchNewsletterCampaigns, fetchReporterMetrics, fetchPromotions, fetchPromotionArticleOptions, fetchReels, fetchFeedback, fetchExpertQuestions, currentUser]);
+  }, [activeTab, fetchCategories, fetchAnalytics, fetchJobHealth, fetchCommentDashboardStats, fetchNews, fetchUsers, fetchComments, fetchYtConfig, fetchNewsletter, fetchNewsletterCampaigns, fetchReporterMetrics, fetchPromotions, fetchPromotionArticleOptions, fetchReels, fetchFeedback, fetchExpertQuestions, currentUser]);
 
   useEffect(() => {
     if (activeTab === 'reels') fetchReels();
@@ -591,7 +628,7 @@ function AdminPageContent() {
 
   useEffect(() => {
     if (activeTab === 'comments') { fetchComments(); }
-  }, [activeTab, commentFilter, fetchComments,]);
+  }, [activeTab, commentFilter, commentSort, fetchComments,]);
 
   useEffect(() => {
     if (activeTab === 'newsletter') { fetchNewsletter(); }
@@ -658,6 +695,14 @@ function AdminPageContent() {
         authorName: primaryAuthorName(authors) || currentUser?.name,
         status: newsForm.status,
       };
+      // Comment-thread switch: sent only when it matters — on a new article
+      // only if it is on, on an edit only if it changed. That way saving an
+      // unrelated edit can never reopen a thread an editor closed from the
+      // Posts menu while this form was open.
+      const closedNow = newsForm.commentsClosed === true;
+      if (editingNews ? closedNow === (editingNews.commentsClosed === true) : !closedNow) {
+        delete payload.commentsClosed;
+      }
       const method = editingNews ? 'PUT' : 'POST';
       const url = editingNews ? `/api/admin/news/${editingNews.id}` : '/api/admin/news';
       const res = await authFetch(url, { method, body: JSON.stringify(payload) });
@@ -765,17 +810,25 @@ function AdminPageContent() {
   const saveModerationSettings = async () => {
     try {
         setModerationSaving(true);
-        const res = await authFetch('/api/admin/settings/comment-moderation',{ method: 'POST', body: JSON.stringify( moderationSettings), });
-        if (!res.ok) { throw new Error(); }
+        // The recipients box edits a plain string; the API wants a list.
+        const { alertEmailsText, ...settingsToSave } = moderationSettings;
+        if (alertEmailsText !== undefined) {
+          settingsToSave.alertEmails = alertEmailsText.split(/[,;\s]+/).filter(Boolean);
+        }
+        const res = await authFetch('/api/admin/settings/comment-moderation',{ method: 'POST', body: JSON.stringify(settingsToSave), });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error);
+        }
         toast.success('Comment moderation updated');
-    } catch { toast.error('Failed to save settings');
+    } catch (error) { toast.error(error?.message || 'Failed to save settings');
     } finally { setModerationSaving(false); }
   };
 
   const moderateComment = async (comment, action) => {
     try {
       setCommentLoading(true);
-      const res = await authFetch(`/api/admin/comments/${comment._id}/${action}`, { method: 'POST', body: JSON.stringify({ reason: '', }), });
+      const res = await authFetch(`/api/admin/comments/${comment._id}/${action}`, { method: 'PATCH', body: JSON.stringify({ reason: '', }), });
       if (!res.ok) { throw new Error(); }
       toast.success(`Comment ${action}d`);
       fetchComments();
@@ -817,7 +870,7 @@ function AdminPageContent() {
     images: draft.images || [],
     isBreaking: draft.isBreaking || false, breakingSuggested: draft.breakingSuggested || false,
     isTrending: draft.isTrending || false, trendingSuggested: draft.trendingSuggested || false,
-    isFeatured: draft.isFeatured || false, authorLabel: draft.authorLabel || 'Author',
+    isFeatured: draft.isFeatured || false, commentsClosed: draft.commentsClosed === true, authorLabel: draft.authorLabel || 'Author',
     authors: draft.authors?.length ? draft.authors : [{ name: '', image: '' }],
     source: draft.source || '', sourceUrl: draft.sourceUrl || '',
     seoTitle: draft.seoTitle || '', seoDescription: draft.seoDescription || '',
@@ -836,7 +889,7 @@ function AdminPageContent() {
     images: article.images || [],
     isBreaking: article.isBreaking || false, breakingSuggested: article.breakingSuggested || false,
     isTrending: article.isTrending || false, trendingSuggested: article.trendingSuggested || false,
-    isFeatured: article.isFeatured || false, authorLabel: article.authorLabel || 'Author',
+    isFeatured: article.isFeatured || false, commentsClosed: article.commentsClosed === true, authorLabel: article.authorLabel || 'Author',
     authors: (() => {
       const existing = getArticleAuthors(article);
       return existing.length
@@ -1129,7 +1182,8 @@ function AdminPageContent() {
     try {
       const res = await authFetch(`/api/admin/comments/${comment._id}/approve`, { method: 'PATCH', });
       if (!res.ok) { throw new Error(); }
-      toast.success('Comment approved');
+      // An already-live (guest) comment is only being marked as reviewed.
+      toast.success(comment.status === 'approved' ? 'Comment marked as reviewed' : 'Comment approved');
       fetchComments();
     } catch (error) { toast.error('Failed to approve comment');}
   };
@@ -1152,14 +1206,47 @@ function AdminPageContent() {
     } catch { toast.error('Failed to hide comment'); }
   };
 
+  // "Delete" is a soft delete: gone from the site and the working lists, but
+  // kept and restorable from the Deleted view.
   const handleDeleteComment = async (comment) => {
-    if (!confirm('Delete this comment permanently?')) { return; }
+    if (!confirm('Delete this comment? It is removed from the site and can be restored from the Deleted view.')) { return; }
     try {
       const res = await authFetch( `/api/admin/comments/${comment._id}`, { method: 'DELETE', });
       if (!res.ok) { throw new Error();}
-      toast.success('Comment deleted');
+      toast.success('Comment deleted (restorable from the Deleted view)');
       fetchComments();
     } catch { toast.error('Failed to delete comment'); }
+  };
+
+  const handleRestoreComment = async (comment) => {
+    try {
+      const res = await authFetch(`/api/admin/comments/${comment._id}/restore`, { method: 'PATCH', });
+      if (!res.ok) { throw new Error(); }
+      toast.success('Comment restored');
+      fetchComments();
+      setCommentDialogOpen(false);
+    } catch { toast.error('Failed to restore comment'); }
+  };
+
+  const handlePurgeComment = async (comment) => {
+    if (!confirm('Permanently delete this comment? This cannot be undone.')) { return; }
+    try {
+      const res = await authFetch(`/api/admin/comments/${comment._id}?permanent=true`, { method: 'DELETE', });
+      if (!res.ok) { throw new Error(); }
+      toast.success('Comment permanently deleted');
+      fetchComments();
+    } catch { toast.error('Failed to permanently delete comment'); }
+  };
+
+  // Close/reopen the comment thread on one article (no new comments or replies;
+  // existing ones stay visible).
+  const handleToggleArticleComments = async (articleId, closed) => {
+    try {
+      const res = await authFetch(`/api/admin/news/${articleId}/comments-status`, { method: 'PATCH', body: JSON.stringify({ closed }), });
+      if (!res.ok) { throw new Error(); }
+      toast.success(closed ? 'Comments closed for this article' : 'Comments reopened for this article');
+      if (activeTab === 'comments') { fetchComments(); } else { fetchNews(); }
+    } catch { toast.error('Failed to update comments for this article'); }
   };
 
   const handleToggleNewsletterStatus = async (subscriber) => {
@@ -1259,7 +1346,7 @@ function AdminPageContent() {
   const renderView = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardView analytics={analytics} jobHealth={jobHealth} loading={loading} />;
+        return <DashboardView analytics={analytics} jobHealth={jobHealth} commentStats={commentDashboardStats} onOpenComments={openCommentsQueue} loading={loading} />;
       case 'news':
         return (
           <NewsListView
@@ -1272,6 +1359,7 @@ function AdminPageContent() {
             onWorkflow={handleWorkflowAction}
             onAddNew={openCreateNews}
             onViewVersionHistory={handleViewVersionHistory}
+            onToggleComments={(item) => handleToggleArticleComments(item.id, item.commentsClosed !== true)}
           />
         );
       case 'categories':
@@ -1328,9 +1416,11 @@ function AdminPageContent() {
           <CommentsView
             comments={comments}
             loading={loading}
-            filter={commentFilter}
+            statusFilter={commentFilter}
             stats={commentStats}
-            onFilterChange={ setCommentFilter }
+            onStatusFilterChange={ setCommentFilter }
+            sort={commentSort}
+            onSortChange={ setCommentSort }
             moderationSettings={ moderationSettings }
             setModerationSettings={ setModerationSettings }
             onSaveModeration={ saveModerationSettings }
@@ -1339,6 +1429,11 @@ function AdminPageContent() {
             onReject={handleRejectComment}
             onHide={handleHideComment}
             onDelete={handleDeleteComment}
+            onRestore={handleRestoreComment}
+            onPurge={handlePurgeComment}
+            canPurge={currentUser?.role === 'admin'}
+            onToggleArticleComments={handleToggleArticleComments}
+            captchaStatus={captchaStatus}
             onPreview={(comment)=>{ 
               setSelectedComment(comment);
               setCommentDialogOpen(true);
@@ -1462,6 +1557,13 @@ function AdminPageContent() {
     }
   };
 
+  // Dashboard card -> Comments tab, pre-filtered to the comments it counted.
+  const openCommentsQueue = (filter, sort = 'newest') => {
+    setCommentFilter(filter);
+    setCommentSort(sort);
+    handleTabChange('comments');
+  };
+
   const handleTabChange = (id) => {
     if (id === 'calendar') { router.push('/admin/editorial-calendar'); return; }
     if (id === 'live-blogs') { router.push('/admin/live-blogs'); return; }
@@ -1564,6 +1666,7 @@ function AdminPageContent() {
         onReject={(comment)=> moderateComment(comment, 'reject')}
         onHide={(comment)=> moderateComment(comment, 'hide')}
         onDelete={ deleteComment}
+        onRestore={ handleRestoreComment }
       />
 
       <VersionHistoryDialog

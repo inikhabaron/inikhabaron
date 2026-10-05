@@ -4,6 +4,9 @@ import { useRef, useState } from 'react';
 import { Loader2, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
+import GuestFields from './GuestFields';
+import useGuestIdentity from './useGuestIdentity';
+
 import styles from './Comments.module.css';
 
 const MAX_LENGTH = 1000;
@@ -11,11 +14,20 @@ const WARNING_LENGTH = 900;
 
 export default function CommentForm({
   user,
+  guestAllowed = false,
+  formToken = null,
+  captcha = null,
   disabled = false,
   onSubmit,
   onRequireLogin,
 }) {
   const [content, setContent] = useState('');
+
+  const guestIdentity = useGuestIdentity();
+
+  // Logged-in users always comment as themselves; guests only when an admin
+  // has enabled guest commenting. Otherwise it's login-only, as before.
+  const asGuest = !user && guestAllowed;
 
   const textareaRef = useRef(null);
 
@@ -41,7 +53,7 @@ export default function CommentForm({
   async function handleSubmit(e) {
     e.preventDefault();
 
-    if (!user) {
+    if (!user && !asGuest) {
       onRequireLogin?.();
       return;
     }
@@ -53,9 +65,22 @@ export default function CommentForm({
       return;
     }
 
-    const result = await onSubmit?.(text);
+    if (asGuest && captcha && !guestIdentity.captchaToken) {
+      toast.error('Please complete the verification challenge.');
+      return;
+    }
+
+    const result = await onSubmit?.(
+      text,
+      asGuest ? guestIdentity.buildGuestPayload(formToken) : null
+    );
+
+    // A CAPTCHA token is single-use, whatever the outcome.
+    if (asGuest) guestIdentity.resetCaptcha();
 
     if (result?.success) {
+      if (asGuest) guestIdentity.markSubmitted();
+
       setContent('');
 
       if (textareaRef.current) {
@@ -81,11 +106,25 @@ export default function CommentForm({
       className={styles.commentForm}
       onSubmit={handleSubmit}
     >
+      {asGuest && (
+        <GuestFields
+          name={guestIdentity.name}
+          onNameChange={guestIdentity.setName}
+          website={guestIdentity.website}
+          onWebsiteChange={guestIdentity.setWebsite}
+          disabled={disabled}
+          onRequireLogin={onRequireLogin}
+          captcha={captcha}
+          onCaptchaToken={guestIdentity.setCaptchaToken}
+          captchaResetKey={guestIdentity.captchaResetKey}
+        />
+      )}
+
       <textarea
         ref={textareaRef}
         className={styles.commentTextarea}
         placeholder={
-          user
+          user || asGuest
             ? 'Join the discussion...'
             : 'Login to write a comment...'
         }
@@ -111,7 +150,8 @@ export default function CommentForm({
           type="submit"
           disabled={
             disabled ||
-            !content.trim()
+            !content.trim() ||
+            (asGuest && Boolean(captcha) && !guestIdentity.captchaToken)
           }
           className={styles.submitButton}
         >

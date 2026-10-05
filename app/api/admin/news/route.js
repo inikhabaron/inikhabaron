@@ -186,6 +186,11 @@ export async function POST(request) {
       isTrending: false,
       trendingSuggested: body.trendingSuggested || false,
       isFeatured: body.isFeatured || false,
+      // Sensitive story: open with the comment thread already closed. Only
+      // written when on, so ordinary articles carry no extra fields.
+      ...(body.commentsClosed === true
+        ? { commentsClosed: true, commentsClosedAt: new Date(), commentsClosedBy: user.id }
+        : {}),
       shares: {
         whatsapp: 0,
         twitter: 0,

@@ -45,6 +45,37 @@ export async function GET(request) {
           searchParams.get('reported') ===
           'true',
 
+        // 'guest' | 'authenticated' — anything else means both.
+        source:
+          searchParams.get('source'),
+
+        // 'unreviewed' — nobody on the editorial team has acted on it yet
+        // (see lib/comments/reviewSla.js).
+        review:
+          searchParams.get('review'),
+
+        // Unreviewed and older than the 24h review window.
+        overdue:
+          searchParams.get('overdue') ===
+          'true',
+
+        // The Deleted view: only soft-deleted comments (every other view
+        // excludes them).
+        deleted:
+          searchParams.get('deleted') ===
+          'true',
+
+        // Only comments submitted within the last N hours (e.g. "newest guest
+        // comments"). Ignored unless a positive number.
+        newerThanHours:
+          Number(
+            searchParams.get('newerThanHours')
+          ) || undefined,
+
+        // 'oldest_unreviewed' | 'newest' (default)
+        sort:
+          searchParams.get('sort'),
+
         page: Math.max(
           1,
           Number(

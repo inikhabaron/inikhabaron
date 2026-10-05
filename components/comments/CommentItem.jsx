@@ -19,6 +19,14 @@ export default function CommentItem({
 
   currentUser,
 
+  guestAllowed = false,
+
+  formToken = null,
+
+  captcha = null,
+
+  commentsClosed = false,
+
   onRequireLogin,
 
   refreshComments,
@@ -41,13 +49,22 @@ export default function CommentItem({
 
   const [repliesLoaded, setRepliesLoaded] = useState(false);
 
+  // Kept locally so a reply posted just now (guest replies publish at once) is
+  // reflected without reloading the whole comment list.
+  const [replyCount, setReplyCount] = useState(comment.replyCount || 0);
+
+  const isOwner =
+    Boolean(currentUser?.id) &&
+    Boolean(comment.userId) &&
+    currentUser.id === comment.userId;
+
   const canEdit =
     comment.canEdit ||
-    currentUser?.id === comment.userId;
+    isOwner;
 
   const canDelete =
     comment.canDelete ||
-    currentUser?.id === comment.userId;
+    isOwner;
 
   async function saveEdit() {
     const text = content.trim();
@@ -143,6 +160,32 @@ export default function CommentItem({
     }
   }
 
+  async function fetchReplies() {
+    const res = await fetch(
+      `/api/comments/${comment._id}/replies`,
+      {
+        cache: 'no-store',
+      }
+    );
+
+    const data = await res.json();
+
+    if (!data.success) {
+      toast.error(data.message);
+      return false;
+    }
+
+    setReplies(data.data.items);
+
+    setReplyCount(data.data.total);
+
+    setRepliesLoaded(true);
+
+    setShowReplies(true);
+
+    return true;
+  }
+
   async function loadReplies() {
     if (repliesLoaded) {
         setShowReplies((prev) => !prev);
@@ -152,26 +195,7 @@ export default function CommentItem({
     try {
         setLoadingReplies(true);
 
-        const res = await fetch(
-        `/api/comments/${comment._id}/replies`,
-        {
-            cache: 'no-store',
-        }
-        );
-
-        const data = await res.json();
-
-        if (!data.success) {
-        toast.error(data.message);
-        return;
-        }
-
-        setReplies(data.data.items);
-
-        setRepliesLoaded(true);
-
-        setShowReplies(true);
-
+        await fetchReplies();
     } catch (err) {
         console.error(err);
 
@@ -183,7 +207,7 @@ export default function CommentItem({
     }
   }
 
-  async function submitReply(content) {
+  async function submitReply(content, guest = null) {
     try {
         setReplySubmitting(true);
 
@@ -199,9 +223,10 @@ export default function CommentItem({
                 'application/json',
             },
 
-            body: JSON.stringify({
-            content,
-            }),
+            // `guest` is only set when a logged-out visitor replies.
+            body: JSON.stringify(
+            guest ? { content, guest } : { content }
+            ),
         }
         );
 
@@ -218,6 +243,11 @@ export default function CommentItem({
         toast.success(data.message);
 
         setReplying(false);
+
+        // A reply that went live straight away (guest reply) is shown now.
+        if (data.data?.status === 'approved') {
+          await fetchReplies();
+        }
 
         return {
         success: true,
@@ -243,6 +273,7 @@ export default function CommentItem({
 
   const name =
     comment.user?.name ||
+    comment.guest?.name ||
     'Unknown User';
 
   return (
@@ -292,6 +323,16 @@ export default function CommentItem({
             >
               {name}
             </span>
+
+            {comment.source === 'guest' && (
+              <span
+                className={
+                  styles.guestBadge
+                }
+              >
+                Guest
+              </span>
+            )}
 
             <span
               className={
@@ -433,11 +474,13 @@ export default function CommentItem({
             currentUser={currentUser}
             onRequireLogin={onRequireLogin}
 
-            replyCount={comment.replyCount}
+            replyCount={replyCount}
 
             onReply={() =>
                 setReplying(prev => !prev)
             }
+
+            replyDisabled={commentsClosed}
 
             onEdit={() => setEditing(true)}
 
@@ -464,7 +507,7 @@ export default function CommentItem({
 
                     {showReplies
                     ? 'Hide Replies'
-                    : `View Replies (${comment.replyCount})`}
+                    : `View Replies (${replyCount})`}
                 </>
                 )}
             </button>
@@ -477,9 +520,12 @@ export default function CommentItem({
                 Reply
             </button> */}
 
-            {replying && (
+            {replying && !commentsClosed && (
                 <ReplyForm
                     user={currentUser}
+                    guestAllowed={guestAllowed}
+                    formToken={formToken}
+                    captcha={captcha}
                     disabled={replySubmitting}
                     onRequireLogin={ onRequireLogin }
                     onCancel={() => setReplying(false)}

@@ -7,6 +7,10 @@ import styles from './Comments.module.css';
 export default function CommentList({
   comments = [],
   user,
+  guestAllowed = false,
+  formToken = null,
+  captcha = null,
+  commentsClosed = false,
   onRequireLogin,
 
   refreshComments,
@@ -31,6 +35,14 @@ export default function CommentList({
           comment={comment}
 
           currentUser={user}
+
+          guestAllowed={guestAllowed}
+
+          formToken={formToken}
+
+          captcha={captcha}
+
+          commentsClosed={commentsClosed}
 
           onRequireLogin={onRequireLogin}
 

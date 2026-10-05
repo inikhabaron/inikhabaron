@@ -20,6 +20,9 @@ export default function CommentActions({
 
   onReply,
 
+  // Set when the story's comments are closed: no new replies.
+  replyDisabled = false,
+
   replyCount = 0,
 
   onEdit,
@@ -34,13 +37,18 @@ export default function CommentActions({
 
   onReportUpdate,
 }) {
+  const isOwner =
+    Boolean(currentUser?.id) &&
+    Boolean(comment.userId) &&
+    currentUser.id === comment.userId;
+
   const canEdit =
     comment.canEdit ||
-    currentUser?.id === comment.userId;
+    isOwner;
 
   const canDelete =
     comment.canDelete ||
-    currentUser?.id === comment.userId;
+    isOwner;
 
   return (
     <div className={styles.actions}>
@@ -53,20 +61,22 @@ export default function CommentActions({
         onUpdate={onLikeUpdate}
       />
 
-      <button
-        type="button"
-        className={styles.actionButton}
-        onClick={onReply}
-      >
-        <MessageCircle size={15} />
+      {!replyDisabled && (
+        <button
+          type="button"
+          className={styles.actionButton}
+          onClick={onReply}
+        >
+          <MessageCircle size={15} />
 
-        <span>
-            Reply
+          <span>
+              Reply
 
-            {replyCount > 0 &&
-            ` (${replyCount})`}
-        </span>
-      </button>
+              {replyCount > 0 &&
+              ` (${replyCount})`}
+          </span>
+        </button>
+      )}
 
       <CommentReportButton
         commentId={comment._id}

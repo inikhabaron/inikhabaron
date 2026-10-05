@@ -1,6 +1,7 @@
 import { json } from '@/lib/api/cors';
 import { verifyCronRequest } from '@/lib/auth/cron/verifyCronRequest';
 import { autoPublishScheduledArticles } from '@/lib/services/news';
+import { runGuestCommentAlertCheck } from '@/lib/services/comments/guestCommentAlertService';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,5 +34,15 @@ export async function GET(request) {
 
   const modifiedCount = await autoPublishScheduledArticles();
 
-  return json({ success: true, modifiedCount });
+  // Backstop for the guest-comment review alert (see
+  // guestCommentAlertService.js). That check normally piggybacks on guest
+  // activity; this guarantees it also runs on the schedule when nobody is
+  // posting or loading comments, so an overdue queue can't go unnoticed
+  // overnight. It runs *after* publishing so it can never delay it, and it
+  // cannot throw or take longer than a few seconds. Calling this route from an
+  // external scheduler (see SCHEDULING above) makes the alert check as
+  // frequent as the schedule — it is throttled and cooled down internally.
+  const commentAlert = await runGuestCommentAlertCheck();
+
+  return json({ success: true, modifiedCount, commentAlert });
 }

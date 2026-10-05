@@ -3,8 +3,17 @@ import { getUserFromToken } from '@/lib/auth/admin/token';
 import { canModerateComments, } from '@/lib/auth/permissions';
 import { success, failure, } from '@/lib/api/response';
 import { logApiError, } from '@/lib/api/errors';
-import { deleteCommentAdmin, } from '@/lib/services/comments/commentModerationService';
+import {
+  deleteCommentAdmin,
+  deleteCommentPermanently,
+} from '@/lib/services/comments/commentModerationService';
 
+// DELETE is a soft delete: the comment leaves the site and the working
+// queues, but is kept and can be restored (PATCH .../restore).
+//
+// DELETE ?permanent=true removes it for good. That is admin-only, and only for
+// a comment that is already in the Deleted view — nothing is destroyed in one
+// click from a live list.
 export async function DELETE(request, { params }) {
   try {
     const user = await getUserFromToken(request);
@@ -32,9 +41,45 @@ export async function DELETE(request, { params }) {
       );
     }
 
+    const permanent =
+      new URL(request.url).searchParams.get('permanent') === 'true';
+
+    if (permanent) {
+      if (user.role !== 'admin') {
+        return failure(
+          'Only an admin can permanently delete a comment',
+          403
+        );
+      }
+
+      const purged =
+        await deleteCommentPermanently(
+          new ObjectId(id)
+        );
+
+      if (!purged.success) {
+        return failure(
+          'Only a comment in the Deleted view can be permanently deleted',
+          409
+        );
+      }
+
+      return success(
+        purged,
+        'Comment permanently deleted'
+      );
+    }
+
+    const body =
+      await request.json().catch(
+        () => ({})
+      );
+
     const result =
       await deleteCommentAdmin(
-        new ObjectId(id)
+        new ObjectId(id),
+        user,
+        body.reason || ''
       );
 
     if (!result.success) {

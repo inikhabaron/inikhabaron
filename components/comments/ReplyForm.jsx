@@ -4,18 +4,28 @@ import { useRef, useState } from 'react';
 import { Loader2, Send, X } from 'lucide-react';
 import { toast } from 'sonner';
 
+import GuestFields from './GuestFields';
+import useGuestIdentity from './useGuestIdentity';
+
 import styles from './CommentActions.module.css';
 
 const MAX_LENGTH = 1000;
 
 export default function ReplyForm({
   user,
+  guestAllowed = false,
+  formToken = null,
+  captcha = null,
   disabled = false,
   onSubmit,
   onCancel,
   onRequireLogin,
 }) {
   const [content, setContent] = useState('');
+
+  const guestIdentity = useGuestIdentity();
+
+  const asGuest = !user && guestAllowed;
 
   const textareaRef = useRef(null);
 
@@ -41,7 +51,7 @@ export default function ReplyForm({
   async function handleSubmit(e) {
     e.preventDefault();
 
-    if (!user) {
+    if (!user && !asGuest) {
       onRequireLogin?.();
       return;
     }
@@ -53,9 +63,22 @@ export default function ReplyForm({
       return;
     }
 
-    const result = await onSubmit?.(text);
+    if (asGuest && captcha && !guestIdentity.captchaToken) {
+      toast.error('Please complete the verification challenge.');
+      return;
+    }
+
+    const result = await onSubmit?.(
+      text,
+      asGuest ? guestIdentity.buildGuestPayload(formToken) : null
+    );
+
+    // A CAPTCHA token is single-use, whatever the outcome.
+    if (asGuest) guestIdentity.resetCaptcha();
 
     if (result?.success) {
+      if (asGuest) guestIdentity.markSubmitted();
+
       setContent('');
 
       if (textareaRef.current) {
@@ -78,6 +101,20 @@ export default function ReplyForm({
       className={styles.replyForm}
       onSubmit={handleSubmit}
     >
+      {asGuest && (
+        <GuestFields
+          name={guestIdentity.name}
+          onNameChange={guestIdentity.setName}
+          website={guestIdentity.website}
+          onWebsiteChange={guestIdentity.setWebsite}
+          disabled={disabled}
+          onRequireLogin={onRequireLogin}
+          captcha={captcha}
+          onCaptchaToken={guestIdentity.setCaptchaToken}
+          captchaResetKey={guestIdentity.captchaResetKey}
+        />
+      )}
+
       <textarea
         ref={textareaRef}
         rows={3}
@@ -85,7 +122,7 @@ export default function ReplyForm({
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         placeholder={
-          user
+          user || asGuest
             ? 'Write a reply...'
             : 'Login to reply...'
         }
@@ -107,7 +144,8 @@ export default function ReplyForm({
           type="submit"
           disabled={
             disabled ||
-            !content.trim()
+            !content.trim() ||
+            (asGuest && Boolean(captcha) && !guestIdentity.captchaToken)
           }
           className={styles.replySubmit}
         >

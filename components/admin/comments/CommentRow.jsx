@@ -4,8 +4,66 @@ import {
   CheckCircle2,
   XCircle,
   EyeOff,
+  Eye,
   Trash2,
+  RotateCcw,
+  Eraser,
 } from 'lucide-react';
+
+import { getReviewAge, isUnreviewed } from '@/lib/comments/reviewSla';
+
+function GuestBadge() {
+  return (
+    <span
+      style={{
+        marginLeft: 8,
+        background: '#EEF2FF',
+        color: '#4338CA',
+        padding: '2px 8px',
+        borderRadius: 999,
+        fontSize: 11,
+        fontWeight: 700,
+      }}
+    >
+      Guest
+    </span>
+  );
+}
+
+// How long an unreviewed comment has been waiting. Past the review window it
+// turns into a red "Over 24h" flag; the exact age stays visible underneath.
+function PendingAge({ createdAt }) {
+  const age = getReviewAge(createdAt);
+
+  if (age.overdue) {
+    return (
+      <div style={{ marginTop: 6 }}>
+        <span
+          style={{
+            background: '#FEE2E2',
+            color: '#991B1B',
+            padding: '3px 9px',
+            borderRadius: 999,
+            fontSize: 11,
+            fontWeight: 700,
+          }}
+        >
+          Over 24h
+        </span>
+
+        <div style={{ color: '#991B1B', fontSize: 12, marginTop: 4 }}>
+          Submitted {age.label}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ color: '#92400E', fontSize: 12, marginTop: 6 }}>
+      Submitted {age.label}
+    </div>
+  );
+}
 
 function StatusBadge({ status }) {
   const colors = {
@@ -60,7 +118,15 @@ export function CommentRow({
   onReject,
   onHide,
   onDelete,
+  onPreview,
+  onRestore,
+  onPurge,
+  canPurge = false,
+  onToggleArticleComments,
 }) {
+  const deleted = comment.isDeleted === true;
+  const commentsClosed = comment.article?.commentsClosed === true;
+
   return (
     <tr
       style={{
@@ -82,8 +148,12 @@ export function CommentRow({
             fontWeight: 600,
           }}
         >
-          {comment.user?.name ||
-            'Unknown User'}
+          {comment.source === 'guest'
+            ? comment.guest?.name || 'Guest'
+            : comment.user?.name ||
+              'Unknown User'}
+
+          {comment.source === 'guest' && <GuestBadge />}
         </div>
 
         <div
@@ -93,7 +163,13 @@ export function CommentRow({
             marginTop: 4,
           }}
         >
-          {comment.user?.email || ''}
+          {comment.source === 'guest'
+            ? `Not logged in${
+                comment.guest?.ipRef
+                  ? ` · ref ${comment.guest.ipRef}`
+                  : ''
+              }`
+            : comment.user?.email || ''}
         </div>
       </td>
 
@@ -135,6 +211,58 @@ export function CommentRow({
           {comment.article?.title ||
             'Unknown'}
         </div>
+
+        {comment.article && (
+          <div
+            style={{
+              marginTop: 6,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              flexWrap: 'wrap',
+            }}
+          >
+            {commentsClosed && (
+              <span
+                style={{
+                  background: '#FEE2E2',
+                  color: '#991B1B',
+                  padding: '2px 8px',
+                  borderRadius: 999,
+                  fontSize: 11,
+                  fontWeight: 700,
+                }}
+              >
+                Comments closed
+              </span>
+            )}
+
+            {onToggleArticleComments && (
+              <button
+                onClick={() =>
+                  onToggleArticleComments(
+                    comment.articleId,
+                    !commentsClosed
+                  )
+                }
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  color: '#2563EB',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}
+              >
+                {commentsClosed
+                  ? 'Reopen comments'
+                  : 'Close comments on this article'}
+              </button>
+            )}
+          </div>
+        )}
       </td>
 
       {/* Status */}
@@ -144,9 +272,51 @@ export function CommentRow({
           padding: 18,
         }}
       >
-        <StatusBadge
-          status={comment.status}
-        />
+        {deleted ? (
+          <span
+            style={{
+              background: '#F3F4F6',
+              color: '#4B5563',
+              padding: '5px 10px',
+              borderRadius: 999,
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          >
+            Deleted
+          </span>
+        ) : (
+          <StatusBadge
+            status={comment.status}
+          />
+        )}
+
+        {deleted && comment.deletedByName && (
+          <div
+            style={{
+              marginTop: 6,
+              color: '#6B7280',
+              fontSize: 11,
+            }}
+          >
+            by {comment.deletedByName}
+          </div>
+        )}
+
+        {!deleted &&
+          comment.status === 'approved' &&
+          isUnreviewed(comment) && (
+            <div
+              style={{
+                marginTop: 6,
+                color: '#92400E',
+                fontSize: 11,
+                fontWeight: 700,
+              }}
+            >
+              Live · unreviewed
+            </div>
+          )}
       </td>
 
       {/* Reports */}
@@ -178,9 +348,33 @@ export function CommentRow({
           whiteSpace: 'nowrap',
         }}
       >
-        {new Date(
-          comment.createdAt
-        ).toLocaleDateString()}
+        <div>
+          {new Date(
+            comment.createdAt
+          ).toLocaleString(undefined, {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+          })}
+        </div>
+
+        {!deleted && isUnreviewed(comment) ? (
+          <PendingAge
+            createdAt={comment.createdAt}
+          />
+        ) : (
+          comment.reviewedAt && (
+            <div
+              style={{
+                color: '#6B7280',
+                fontSize: 12,
+                marginTop: 6,
+              }}
+            >
+              Reviewed{' '}
+              {getReviewAge(comment.reviewedAt).label}
+            </div>
+          )
+        )}
       </td>
 
       {/* Actions */}
@@ -197,57 +391,112 @@ export function CommentRow({
             gap: 10,
           }}
         >
-          <button
-            title="Approve"
-            onClick={() =>
-              onApprove(comment)
-            }
-            style={buttonStyle}
-          >
-            <CheckCircle2
-              size={18}
-              color="#16A34A"
-            />
-          </button>
+          {onPreview && (
+            <button
+              title="View details"
+              onClick={() =>
+                onPreview(comment)
+              }
+              style={buttonStyle}
+            >
+              <Eye
+                size={18}
+                color="#2563EB"
+              />
+            </button>
+          )}
 
-          <button
-            title="Reject"
-            onClick={() =>
-              onReject(comment)
-            }
-            style={buttonStyle}
-          >
-            <XCircle
-              size={18}
-              color="#DC2626"
-            />
-          </button>
+          {deleted ? (
+            <>
+              {comment.deletedBy && onRestore && (
+                <button
+                  title="Restore"
+                  onClick={() =>
+                    onRestore(comment)
+                  }
+                  style={buttonStyle}
+                >
+                  <RotateCcw
+                    size={18}
+                    color="#16A34A"
+                  />
+                </button>
+              )}
 
-          <button
-            title="Hide"
-            onClick={() =>
-              onHide(comment)
-            }
-            style={buttonStyle}
-          >
-            <EyeOff
-              size={18}
-              color="#D97706"
-            />
-          </button>
+              {canPurge && onPurge && (
+                <button
+                  title="Delete forever"
+                  onClick={() =>
+                    onPurge(comment)
+                  }
+                  style={buttonStyle}
+                >
+                  <Eraser
+                    size={18}
+                    color="#DC2626"
+                  />
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+            <button
+              title={
+                comment.status === 'approved'
+                  ? 'Mark reviewed (keep published)'
+                  : 'Approve'
+              }
+              onClick={() =>
+                onApprove(comment)
+              }
+              style={buttonStyle}
+            >
+              <CheckCircle2
+                size={18}
+                color="#16A34A"
+              />
+            </button>
 
-          <button
-            title="Delete"
-            onClick={() =>
-              onDelete(comment)
-            }
-            style={buttonStyle}
-          >
-            <Trash2
-              size={18}
-              color="#DC2626"
-            />
-          </button>
+            <button
+              title="Reject"
+              onClick={() =>
+                onReject(comment)
+              }
+              style={buttonStyle}
+            >
+              <XCircle
+                size={18}
+                color="#DC2626"
+              />
+            </button>
+
+            <button
+              title="Hide"
+              onClick={() =>
+                onHide(comment)
+              }
+              style={buttonStyle}
+            >
+              <EyeOff
+                size={18}
+                color="#D97706"
+              />
+            </button>
+
+            <button
+              title="Delete (can be restored)"
+              onClick={() =>
+                onDelete(comment)
+              }
+              style={buttonStyle}
+            >
+              <Trash2
+                size={18}
+                color="#DC2626"
+              />
+            </button>
+            </>
+          )}
         </div>
       </td>
     </tr>

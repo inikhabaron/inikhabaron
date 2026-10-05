@@ -5,13 +5,34 @@ import { CheckCircle2 } from 'lucide-react';
 import { AlertTriangle } from 'lucide-react';
 import { EyeOff } from 'lucide-react';
 import { XCircle } from 'lucide-react';
+import { Clock3 } from 'lucide-react';
+import { User } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 
 import { DS } from '@/components/admin/design-system';
 
 const cards = [
   {
+    key: 'needsReview',
+    label: 'Needs Review',
+    icon: AlertTriangle,
+    color: '#F59E0B',
+  },
+  {
+    key: 'overdue',
+    label: 'Unreviewed Over 24h',
+    icon: Clock3,
+    color: '#DC2626',
+  },
+  {
+    key: 'guest',
+    label: 'Guest Comments',
+    icon: User,
+    color: '#8B5CF6',
+  },
+  {
     key: 'pending',
-    label: 'Pending',
+    label: 'Pending Approval',
     icon: AlertTriangle,
     color: '#F59E0B',
   },
@@ -38,6 +59,12 @@ const cards = [
     label: 'Rejected',
     icon: XCircle,
     color: '#6B7280',
+  },
+  {
+    key: 'deleted',
+    label: 'Deleted',
+    icon: Trash2,
+    color: '#9CA3AF',
   },
 ];
 

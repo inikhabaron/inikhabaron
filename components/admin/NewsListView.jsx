@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import {
   Plus, Edit, Trash2, Check, X, Send, AlertCircle,
   Loader2, ChevronRight, CheckCircle, History, TrendingUp, MoreVertical, Bell,
-  Headphones, Loader,
+  Headphones, Loader, MessageSquareOff, MessageSquare,
 } from 'lucide-react';
 import { DS } from './design-system';
 import { STATUS_LABELS, statusFilterOptionsByRole } from './constants';
@@ -25,7 +25,7 @@ const STATUS_TABS = [
 // worth of articles and the parent owns which page is being shown.
 export function NewsListView({
   news, currentUser, newsStatusFilter, onStatusFilterChange,
-  searchQuery, loading, onEdit, onDelete, onWorkflow, onAddNew, onViewVersionHistory,
+  searchQuery, loading, onEdit, onDelete, onWorkflow, onAddNew, onViewVersionHistory, onToggleComments,
   page, totalPages, total, onPageChange,
 }) {
   const [openTagsId, setOpenTagsId] = useState(null);
@@ -146,6 +146,11 @@ export function NewsListView({
                         {item.isTrending && <span style={{ background: '#dbeafe', color: '#1d4ed8', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4 }}>TRENDING</span>}
                         {item.breakingSuggested && !item.breakingApproved && <span style={{ background: '#ffedd5', color: '#9a3412', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4 }}>BREAKING?</span>}
                         {item.trendingSuggested && !item.isTrending && <span style={{ background: '#f3e8ff', color: '#6d28d9', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4 }}>TRENDING?</span>}
+                        {item.commentsClosed === true && (
+                          <span title="Comments are closed on this article" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, background: '#fee2e2', color: '#991b1b', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4 }}>
+                            <MessageSquareOff size={10} />COMMENTS CLOSED
+                          </span>
+                        )}
                         {item.audio?.status === 'ready' && (
                           <span title="Audio ready" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, background: '#dcfce7', color: '#166534', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4 }}>
                             <Headphones size={10} />AUDIO
@@ -233,6 +238,16 @@ export function NewsListView({
                               )}
                               {(currentUser?.role === 'admin' || currentUser?.role === 'editor') && item.trendingSuggested && !item.isTrending && (
                                 <MenuBtn icon={TrendingUp} label="Approve Trending" color="#7c3aed" onClick={() => { onWorkflow(item.id, 'approve-trending'); }} />
+                              )}
+                              {item.status === 'published' && onToggleComments &&
+                                (currentUser?.role === 'admin' || currentUser?.role === 'editor' ||
+                                  (currentUser?.role === 'reporter' && item.authorId === currentUser?.id)) && (
+                                <MenuBtn
+                                  icon={item.commentsClosed === true ? MessageSquare : MessageSquareOff}
+                                  label={item.commentsClosed === true ? 'Reopen comments' : 'Close comments'}
+                                  color={item.commentsClosed === true ? '#059669' : '#b45309'}
+                                  onClick={() => { onToggleComments(item); }}
+                                />
                               )}
                               {(currentUser?.role === 'admin' || currentUser?.role === 'editor') && (
                                 <MenuBtn icon={History} label="Version History" color="#374151" onClick={() => { onViewVersionHistory?.(item.id); }} />

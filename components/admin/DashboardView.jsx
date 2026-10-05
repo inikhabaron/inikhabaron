@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, FileText, CheckCircle, Clock, Eye, TrendingUp, Users, AlertTriangle, ListChecks } from 'lucide-react';
+import { Loader2, FileText, CheckCircle, Clock, Eye, TrendingUp, Users, AlertTriangle, ListChecks, MessageSquare, Clock3 } from 'lucide-react';
 import { LineChart, Line, BarChart as RBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { DS } from './design-system';
 
@@ -50,13 +50,73 @@ function JobQueueHealthCard({ jobHealth }) {
   );
 }
 
+// Guest comments go live before anyone has read them, so the size and age of
+// that review queue belongs on the page every admin sees first. Each card
+// opens the Comments tab already filtered to the comments it counts.
+function CommentReviewCards({ commentStats, onOpenComments }) {
+  if (!commentStats) return null;
+
+  const pending = commentStats.guestUnreviewed || 0;
+  const overdue = commentStats.guestOverdue || 0;
+
+  const cards = [
+    {
+      key: 'pending',
+      label: 'Pending Guest Comments',
+      hint: 'Live on the site, not yet reviewed',
+      value: pending,
+      icon: MessageSquare,
+      color: '#7c3aed',
+      bg: '#faf5ff',
+      border: '#e5e7eb',
+      filter: 'guest_unreviewed',
+    },
+    {
+      key: 'overdue',
+      label: 'Guest Comments Over 24 Hours',
+      hint: overdue > 0 ? 'Past the 24h review window' : 'Nothing past the review window',
+      value: overdue,
+      icon: Clock3,
+      color: overdue > 0 ? '#dc2626' : '#059669',
+      bg: overdue > 0 ? '#fef2f2' : '#f0fdf4',
+      border: overdue > 0 ? '#fecaca' : '#e5e7eb',
+      filter: 'guest_overdue',
+    },
+  ];
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 16, marginBottom: 24 }}>
+      {cards.map(({ key, label, hint, value, icon: Icon, color, bg, border, filter }) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => onOpenComments?.(filter, 'oldest_unreviewed')}
+          title="Open these comments in the review queue"
+          style={{ ...DS.card, border: `1px solid ${border}`, padding: '20px 22px', textAlign: 'left', cursor: 'pointer', width: '100%' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 6 }}>{label}</div>
+              <div style={{ fontSize: 26, fontWeight: 700, color: key === 'overdue' && overdue > 0 ? '#dc2626' : '#111827' }}>{value}</div>
+              <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>{hint}</div>
+            </div>
+            <div style={{ width: 42, height: 42, background: bg, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon size={19} color={color} />
+            </div>
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 const DEFAULT_CHART_DATA = [
   { name: 'Jan', views: 10, articles: 50 }, { name: 'Feb', views: 30, articles: 60 },
   { name: 'Mar', views: 20, articles: 70 }, { name: 'Apr', views: 25, articles: 50 },
   { name: 'May', views: 16, articles: 65 }, { name: 'Jun', views: 12, articles: 45 },
 ];
 
-export function DashboardView({ analytics, jobHealth, loading }) {
+export function DashboardView({ analytics, jobHealth, commentStats, onOpenComments, loading }) {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 300 }}>
@@ -81,6 +141,8 @@ export function DashboardView({ analytics, jobHealth, loading }) {
       <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
 
       <JobQueueHealthCard jobHealth={jobHealth} />
+
+      <CommentReviewCards commentStats={commentStats} onOpenComments={onOpenComments} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 16, marginBottom: 24 }}>
         {stats.map(({ label, value, icon: Icon, color, bg }) => (

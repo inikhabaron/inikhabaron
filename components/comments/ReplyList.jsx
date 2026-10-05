@@ -17,6 +17,7 @@ export default function ReplyList({
         {replies.map((reply) => {
           const name =
             reply.user?.name ||
+            reply.guest?.name ||
             'Unknown User';
 
           const avatar =
@@ -62,6 +63,16 @@ export default function ReplyList({
                     <strong>
                       {name}
                     </strong>
+
+                    {reply.source === 'guest' && (
+                      <span
+                        className={
+                          styles.guestBadge
+                        }
+                      >
+                        Guest
+                      </span>
+                    )}
 
                     <span
                       className={

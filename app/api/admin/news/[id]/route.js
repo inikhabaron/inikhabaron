@@ -199,6 +199,30 @@ export async function PUT(request, { params }) {
       delete updateData[field];
     }
 
+    // Comment-thread switch. The audit fields are ours to write, never the
+    // client's (the body is spread wholesale above); `commentsClosed` is only
+    // honoured as a boolean, and the editor form sends it only when it
+    // changed, so saving an unrelated edit can't reopen a thread that was
+    // closed from the Posts menu while the form was open. Same switch as
+    // PATCH .../comments-status, which stays the route for published stories.
+    for (const field of ['commentsClosedAt', 'commentsClosedBy', 'commentsReopenedAt', 'commentsReopenedBy']) {
+      delete updateData[field];
+    }
+
+    if (typeof body.commentsClosed === 'boolean') {
+      if (body.commentsClosed !== (article.commentsClosed === true)) {
+        const stamp = new Date();
+        Object.assign(
+          updateData,
+          body.commentsClosed
+            ? { commentsClosedAt: stamp, commentsClosedBy: user.id }
+            : { commentsReopenedAt: stamp, commentsReopenedBy: user.id },
+        );
+      }
+    } else {
+      delete updateData.commentsClosed;
+    }
+
     const result = await newsCollection.updateOne(
       { id: newsId },
       { $set: updateData, $push: { versionHistory: previousVersion } }

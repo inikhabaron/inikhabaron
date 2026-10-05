@@ -1045,3 +1045,148 @@
 :global(.dark) .loading {
   color: #9BA5B4;
 }
+
+/* ==========================================================
+   GUEST COMMENTING (no-login mode)
+========================================================== */
+
+.guestFields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+.guestNameInput {
+  width: 220px;
+  max-width: 100%;
+
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+
+  padding: 9px 12px;
+
+  font-size: .92rem;
+
+  background: #fff;
+  color: #111827;
+
+  outline: none;
+}
+
+.guestNameInput:focus {
+  border-color: #3bafda;
+
+  box-shadow:
+    0 0 0 4px rgba(59,175,218,.12);
+}
+
+.guestNotice {
+  flex: 1 1 260px;
+
+  font-size: .8rem;
+  line-height: 1.5;
+
+  color: #6b7280;
+}
+
+.guestLoginLink {
+  padding: 0;
+
+  border: none;
+  background: transparent;
+
+  color: #0e7aa6;
+
+  font-size: inherit;
+  font-weight: 600;
+
+  text-decoration: underline;
+
+  cursor: pointer;
+}
+
+/* Off-screen rather than display:none — some bots skip hidden fields. */
+.guestHoneypot {
+  position: absolute;
+  left: -10000px;
+
+  width: 1px;
+  height: 1px;
+
+  overflow: hidden;
+}
+
+.guestBadge {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 3px 8px;
+
+  border-radius: 999px;
+
+  background: #eef2ff;
+
+  color: #4338ca;
+
+  font-size: .72rem;
+  font-weight: 600;
+}
+
+:global(.dark) .guestNameInput {
+  background: #0D1117;
+  border-color: #252E40;
+  color: #E8ECF0;
+}
+
+:global(.dark) .guestNameInput:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, .16);
+}
+
+:global(.dark) .guestNotice {
+  color: #9BA5B4;
+}
+
+:global(.dark) .guestLoginLink {
+  color: #38bdf8;
+}
+
+:global(.dark) .guestBadge {
+  background: #1e2547;
+  color: #a5b4fc;
+}
+
+/* ==========================================================
+   CAPTCHA + CLOSED THREAD
+========================================================== */
+
+.captcha {
+  flex: 1 1 100%;
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  min-height: 0;
+}
+
+.closedNotice {
+  padding: 16px 18px;
+
+  border: 1px dashed #d1d5db;
+  border-radius: 14px;
+
+  background: #f9fafb;
+
+  color: #4b5563;
+
+  font-size: .92rem;
+  font-weight: 500;
+}
+
+:global(.dark) .closedNotice {
+  background: #161B27;
+  border-color: #252E40;
+  color: #9BA5B4;
+}

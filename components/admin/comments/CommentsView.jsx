@@ -23,6 +23,9 @@ export function CommentsView({
   statusFilter = 'all',
   onStatusFilterChange,
 
+  sort = 'newest',
+  onSortChange,
+
   searchQuery = '',
   onSearchChange,
 
@@ -33,6 +36,11 @@ export function CommentsView({
   onHide,
   onDelete,
   onPreview,
+  onRestore,
+  onPurge,
+  canPurge = false,
+  onToggleArticleComments,
+  captchaStatus = null,
 }) {
   if (loading) {
     return (
@@ -98,8 +106,103 @@ export function CommentsView({
           setSettings={setModerationSettings}
           saving={savingModeration}
           onSave={onSaveModeration}
+          captchaStatus={captchaStatus}
         />
       </div>
+
+      {/* -----------------------------
+          Review-window alert
+      ------------------------------ */}
+
+      {stats?.overdue > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            flexWrap: 'wrap',
+            marginBottom: 24,
+            padding: '14px 18px',
+            borderRadius: 12,
+            background: '#FEF2F2',
+            border: '1px solid #FECACA',
+            color: '#991B1B',
+            fontSize: 14,
+            fontWeight: 600,
+          }}
+        >
+          <span>
+            {stats.overdue} comment
+            {stats.overdue === 1 ? ' has' : 's have'} been
+            waiting for editorial review for more than 24 hours.
+          </span>
+
+          <button
+            onClick={() => {
+              onStatusFilterChange?.('overdue');
+              onSortChange?.('oldest_unreviewed');
+            }}
+            style={{
+              padding: '8px 14px',
+              borderRadius: 8,
+              border: '1px solid #FCA5A5',
+              background: '#fff',
+              color: '#991B1B',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Show them
+          </button>
+        </div>
+      )}
+
+      {moderationSettings?.alertEnabled &&
+        moderationSettings?.alertThreshold > 0 &&
+        stats?.guestUnreviewed >= moderationSettings.alertThreshold && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              flexWrap: 'wrap',
+              marginBottom: 24,
+              padding: '14px 18px',
+              borderRadius: 12,
+              background: '#FFFBEB',
+              border: '1px solid #FDE68A',
+              color: '#92400E',
+              fontSize: 14,
+              fontWeight: 600,
+            }}
+          >
+            <span>
+              {stats.guestUnreviewed} guest comments are live and
+              unreviewed (alert threshold:{' '}
+              {moderationSettings.alertThreshold}).
+            </span>
+
+            <button
+              onClick={() => {
+                onStatusFilterChange?.('needs_review');
+                onSortChange?.('oldest_unreviewed');
+              }}
+              style={{
+                padding: '8px 14px',
+                borderRadius: 8,
+                border: '1px solid #FCD34D',
+                background: '#fff',
+                color: '#92400E',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Review them
+            </button>
+          </div>
+        )}
 
       {/* -----------------------------
           Statistics
@@ -182,6 +285,8 @@ export function CommentsView({
           <CommentFilters
             statusFilter={statusFilter}
             onStatusFilterChange={onStatusFilterChange}
+            sort={sort}
+            onSortChange={onSortChange}
             searchQuery={searchQuery}
             onSearchChange={onSearchChange}
           />
@@ -202,6 +307,10 @@ export function CommentsView({
             onHide={onHide}
             onDelete={onDelete}
             onPreview={onPreview}
+            onRestore={onRestore}
+            onPurge={onPurge}
+            canPurge={canPurge}
+            onToggleArticleComments={onToggleArticleComments}
           />
         </div>
 

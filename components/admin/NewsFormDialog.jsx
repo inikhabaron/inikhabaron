@@ -259,6 +259,21 @@ export function NewsFormDialog({
               <Switch checked={newsForm.isFeatured} onCheckedChange={v => setNewsForm({ ...newsForm, isFeatured: v })} />
               <Label>Featured Article</Label>
             </div>
+
+            <div className="flex items-start gap-2">
+              <Switch
+                checked={newsForm.commentsClosed === true}
+                onCheckedChange={v => setNewsForm({ ...newsForm, commentsClosed: v })}
+              />
+              <div>
+                <Label>Close comments on this article</Label>
+                <p className="text-xs text-muted-foreground">
+                  For sensitive stories: no one can comment or reply, guests and
+                  logged-in readers alike. Existing comments stay visible. Can be
+                  changed at any time.
+                </p>
+              </div>
+            </div>
           </div>
 
           <Separator />

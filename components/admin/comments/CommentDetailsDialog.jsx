@@ -14,6 +14,8 @@ import {
   FolderOpen,
 } from 'lucide-react';
 
+import { getReviewAge, isUnreviewed } from '@/lib/comments/reviewSla';
+
 import styles from './CommentDetailsDialog.module.css';
 
 export function CommentDetailsDialog({
@@ -25,6 +27,7 @@ export function CommentDetailsDialog({
   onReject,
   onHide,
   onDelete,
+  onRestore,
 }) {
   if (!open || !comment) {
     return null;
@@ -32,6 +35,17 @@ export function CommentDetailsDialog({
 
   const user =
     comment.user || {};
+
+  // Set only for comments submitted without logging in.
+  const guest =
+    comment.source === 'guest'
+      ? comment.guest || {}
+      : null;
+
+  const displayName =
+    guest
+      ? guest.name || 'Guest'
+      : user.name;
 
   const article =
     comment.article || {};
@@ -129,7 +143,7 @@ export function CommentDetailsDialog({
                     styles.avatarPlaceholder
                   }
                 >
-                  {user.name
+                  {displayName
                     ?.charAt(0)
                     ?.toUpperCase() ||
                     'U'}
@@ -142,8 +156,24 @@ export function CommentDetailsDialog({
                 }
               >
                 <h3>
-                  {user.name ||
+                  {displayName ||
                     'Unknown User'}
+
+                  {guest && (
+                    <span
+                      style={{
+                        marginLeft: 8,
+                        background: '#EEF2FF',
+                        color: '#4338CA',
+                        padding: '2px 8px',
+                        borderRadius: 999,
+                        fontSize: 11,
+                        fontWeight: 700,
+                      }}
+                    >
+                      Guest
+                    </span>
+                  )}
                 </h3>
 
                 <div
@@ -156,8 +186,10 @@ export function CommentDetailsDialog({
                   />
 
                   <span>
-                    {user.email ||
-                      'No email'}
+                    {guest
+                      ? 'Not logged in'
+                      : user.email ||
+                        'No email'}
                   </span>
                 </div>
 
@@ -166,7 +198,12 @@ export function CommentDetailsDialog({
                     styles.infoRow
                   }
                 >
-                  {user.isVerified ? (
+                  {guest ? (
+                    <ShieldX
+                      size={15}
+                      color="#D97706"
+                    />
+                  ) : user.isVerified ? (
                     <ShieldCheck
                       size={15}
                       color="#16A34A"
@@ -179,14 +216,30 @@ export function CommentDetailsDialog({
                   )}
 
                   <span>
-                    {user.role ||
-                      'Reader'}
+                    {guest ? (
+                      <>
+                        Guest
+                        {' • '}
+                        unverified
+                        {guest.ipRef
+                          ? ` • network ref ${guest.ipRef}`
+                          : ''}
+                        {guest.deviceRef
+                          ? ` • device ref ${guest.deviceRef}`
+                          : ''}
+                      </>
+                    ) : (
+                      <>
+                        {user.role ||
+                          'Reader'}
 
-                    {' • '}
+                        {' • '}
 
-                    {user.isVerified
-                      ? 'Verified'
-                      : 'Not Verified'}
+                        {user.isVerified
+                          ? 'Verified'
+                          : 'Not Verified'}
+                      </>
+                    )}
                   </span>
                 </div>
               </div>
@@ -277,9 +330,11 @@ export function CommentDetailsDialog({
                     styles[comment.status || 'pending']
                   }`}
                 >
-                  {(comment.status || 'pending')
-                    .replace('_', ' ')
-                    .toUpperCase()}
+                  {comment.isDeleted
+                    ? 'DELETED'
+                    : (comment.status || 'pending')
+                        .replace('_', ' ')
+                        .toUpperCase()}
                 </span>
 
                 {comment.edited && (
@@ -343,6 +398,15 @@ export function CommentDetailsDialog({
                           comment.createdAt
                         ).toLocaleString()
                       : '-'}
+
+                    {isUnreviewed(comment) &&
+                    comment.createdAt
+                      ? ` (${getReviewAge(comment.createdAt).label}, unreviewed${
+                          getReviewAge(comment.createdAt).overdue
+                            ? ' — over 24h'
+                            : ''
+                        })`
+                      : ''}
                   </span>
                 </div>
 
@@ -534,53 +598,72 @@ export function CommentDetailsDialog({
           <div className={styles.footer}>
 
             <div className={styles.footerLeft}>
+              {comment.isDeleted ? (
+                comment.deletedBy && onRestore ? (
+                  <button
+                    className={`${styles.actionButton} ${styles.approveButton}`}
+                    disabled={loading}
+                    onClick={() =>
+                      onRestore(comment)
+                    }
+                  >
+                    Restore
+                  </button>
+                ) : null
+              ) : (
+                <>
 
-              <button
-                className={`${styles.actionButton} ${styles.approveButton}`}
-                disabled={loading}
-                onClick={() =>
-                  onApprove?.(comment)
-                }
-              >
-                Approve
-              </button>
+                  <button
+                    className={`${styles.actionButton} ${styles.approveButton}`}
+                    disabled={loading}
+                    onClick={() =>
+                      onApprove?.(comment)
+                    }
+                  >
+                    {comment.status === 'approved'
+                      ? 'Mark reviewed'
+                      : 'Approve'}
+                  </button>
 
-              <button
-                className={`${styles.actionButton} ${styles.rejectButton}`}
-                disabled={loading}
-                onClick={() =>
-                  onReject?.(comment)
-                }
-              >
-                Reject
-              </button>
+                  <button
+                    className={`${styles.actionButton} ${styles.rejectButton}`}
+                    disabled={loading}
+                    onClick={() =>
+                      onReject?.(comment)
+                    }
+                  >
+                    Reject
+                  </button>
 
-              <button
-                className={`${styles.actionButton} ${styles.hideButton}`}
-                disabled={loading}
-                onClick={() =>
-                  onHide?.(comment)
-                }
-              >
-                Hide
-              </button>
+                  <button
+                    className={`${styles.actionButton} ${styles.hideButton}`}
+                    disabled={loading}
+                    onClick={() =>
+                      onHide?.(comment)
+                    }
+                  >
+                    Hide
+                  </button>
 
-              <button
-                className={`${styles.actionButton} ${styles.deleteButton}`}
-                disabled={loading}
-                onClick={() => {
-                  if (
-                    confirm(
-                      'Delete this comment permanently?'
-                    )
-                  ) {
-                    onDelete?.(comment);
-                  }
-                }}
-              >
-                Delete
-              </button>
+                  <button
+                    className={`${styles.actionButton} ${styles.deleteButton}`}
+                    disabled={loading}
+                    onClick={() => {
+                      if (
+                        confirm(
+                          'Delete this comment? It is removed from the site and can be restored from the Deleted view.'
+                        )
+                      ) {
+                        onDelete?.(comment);
+                      }
+                    }}
+                  >
+                    Delete
+                  </button>
 
+
+                </>
+              )}
             </div>
 
             <div className={styles.footerRight}>

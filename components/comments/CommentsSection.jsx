@@ -32,6 +32,25 @@ export default function CommentsSection({
 
   const [total, setTotal] = useState(0);
 
+  // Whether an admin has enabled commenting without login. Defaults to off, so
+  // the form never offers guest posting before the server has said so.
+  const [guestAllowed, setGuestAllowed] =
+    useState(false);
+
+  // Server-signed "form shown at" stamp a guest post must echo back; refreshed
+  // with every load, so each new comment starts a fresh minimum-fill clock.
+  const [formToken, setFormToken] =
+    useState(null);
+
+  // Turnstile widget config ({ provider, siteKey }) when CAPTCHA is enabled.
+  const [captcha, setCaptcha] =
+    useState(null);
+
+  // An editor closed this story's thread: existing comments stay, new
+  // comments and replies are off.
+  const [commentsClosed, setCommentsClosed] =
+    useState(false);
+
   const loadComments = useCallback(
     async (
       pageNumber = 1,
@@ -72,6 +91,18 @@ export default function CommentsSection({
         setTotal(payload.total);
 
         setHasNext(payload.hasNext);
+
+        setGuestAllowed(
+          payload.guestCommentsAllowed === true
+        );
+
+        setFormToken(payload.formToken ?? null);
+
+        setCaptcha(payload.captcha ?? null);
+
+        setCommentsClosed(
+          payload.commentsClosed === true
+        );
       } catch (error) {
         console.error(error);
 
@@ -92,9 +123,10 @@ export default function CommentsSection({
   }, [articleId, loadComments]);
 
   async function handleCreateComment(
-    content
+    content,
+    guest = null
   ) {
-    if (!user) {
+    if (!user && !(guestAllowed && guest)) {
       onRequireLogin?.();
       return;
     }
@@ -114,9 +146,11 @@ export default function CommentsSection({
               'application/json',
           },
 
-          body: JSON.stringify({
-            content,
-          }),
+          // The guest block is only sent by a logged-out visitor; its presence
+          // is what tells the API this is a guest submission.
+          body: JSON.stringify(
+            user ? { content } : { content, guest }
+          ),
         }
       );
 
@@ -193,16 +227,30 @@ export default function CommentsSection({
         </div>
       </div>
 
-      <CommentForm
-        user={user}
-        disabled={submitting}
-        onSubmit={
-          handleCreateComment
-        }
-        onRequireLogin={
-          onRequireLogin
-        }
-      />
+      {commentsClosed ? (
+        <div
+          className={
+            styles.closedNotice
+          }
+        >
+          Comments are closed for this
+          story.
+        </div>
+      ) : (
+        <CommentForm
+          user={user}
+          guestAllowed={guestAllowed}
+          formToken={formToken}
+          captcha={captcha}
+          disabled={submitting}
+          onSubmit={
+            handleCreateComment
+          }
+          onRequireLogin={
+            onRequireLogin
+          }
+        />
+      )}
 
       {loading ? (
         <div
@@ -247,6 +295,10 @@ export default function CommentsSection({
               comments
             }
             user={user}
+            guestAllowed={guestAllowed}
+            formToken={formToken}
+            captcha={captcha}
+            commentsClosed={commentsClosed}
             onRequireLogin={
               onRequireLogin
             }
