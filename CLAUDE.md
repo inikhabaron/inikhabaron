@@ -75,6 +75,17 @@ Two supporting details:
 
 When adding a new editorial action that should notify: call the Layer 1 queue, never the dispatcher. If you find yourself importing anything from `delivery/` outside a cron route, that is the mistake.
 
+## Editing existing articles (PUT /api/admin/news/[id])
+
+Who can edit is **one rule, `canEditArticle` in `lib/auth/permissions.js`** — admin and editor at any status (including published, to correct a mistake), a reporter only their own draft / needs-revision article. The API enforces it and the Posts list (`NewsListView`) calls the *same function* to decide whether to show Edit; do not re-implement it inline in a component (a stricter inline copy once hid Edit from editors on every published article).
+
+Things the update route does that are easy to break:
+- **Flags are changed-only.** The edit form echoes `breakingSuggested / isBreaking / trendingSuggested / isTrending` back on every save. The route checks permissions and applies side effects (`breakingApproved`, `breakingAt`, un-trending) only when a flag actually *changes*; unchanged echoes are dropped. Checking on mere presence made every editor/reporter save fail with "Only admin can mark articles as breaking news". The form also no longer sends `isBreaking`/`isTrending` (it has no control for them).
+- **A live article's status is admin-only.** Changing the status of a published/scheduled article needs an admin (editors can correct text but not unpublish); the form shows the status read-only for editors.
+- **`versionHistory` is bounded** (`lib/news/versionHistory.js`): max 20 entries and the document kept under 12 MB, oldest dropped first. Each save stores a full copy of the old body, so unbounded it hit MongoDB's 16 MB limit on the 5th edit of a 3 MB article. The Vercel request-body limit (~4.5 MB) is still a hard ceiling for very large bodies — base64 images embedded in content (35 production articles) are the cause; they belong on Cloudinary.
+- **Corrections reach readers immediately.** Despite `export const revalidate = 60`, a production build marks `/news/[id]` (and `/`, `/category/[slug]`, `/author/[id]`, `/topics/[slug]`) as dynamic (`ƒ`) and serves them `Cache-Control: private, no-store` — there is no ISR/CDN copy to go stale, and every view reads MongoDB. No revalidation call is needed after an edit (adding one would be a no-op).
+- **Public article reads must not carry editorial history.** `serialize()` in `lib/seo/data.js` and `GET /api/news/[id]` drop `versionHistory`, `approvalHistory`, `corrections` and `headlineVariants` (`INTERNAL_ARTICLE_FIELDS`), like the public lists already did. Before this, the article page's HTML included every previous body, so a corrected mistake was still readable in the page source.
+
 ## Guest (no-login) commenting — temporary, flag-controlled
 
 Added at the client's request (Oct 2026) so any visitor can comment/reply without Google/Apple login. It is a *mode on top of* the normal login-based flow, not a replacement — all auth code is intact. **Guest comments are published immediately and reviewed by editors afterwards (post-moderation).**

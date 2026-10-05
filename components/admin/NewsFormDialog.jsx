@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { DS } from './design-system';
-import { statusOptionsByRole } from './constants';
+import { statusOptionsByRole, STATUS_LABELS } from './constants';
 import { ImageUpload } from '@/components/upload/ImageUpload';
 import { MultiImageUpload } from '@/components/upload/MultiImageUpload';
 import LocationSelector from '@/components/location/LocationSelector';
@@ -80,6 +80,21 @@ export function NewsFormDialog({
   categories, currentUser, onSave,
   saveStatus, lastSavedAt, conflict,
 }) {
+  // Editors may correct a published/scheduled article but not change its status
+  // (the API enforces it; unpublishing is an admin decision), so the control is
+  // read-only for them rather than offering choices that would be refused.
+  const statusLocked =
+    Boolean(editingNews) &&
+    ['published', 'scheduled'].includes(editingNews.status) &&
+    currentUser?.role !== 'admin';
+
+  // A role's list may not include the article's current status (an editor's has
+  // no "Published"); without it the select renders blank.
+  const roleStatusOptions = statusOptionsByRole[currentUser?.role] || statusOptionsByRole.admin;
+  const statusOptions = roleStatusOptions.some((opt) => opt.value === newsForm.status)
+    ? roleStatusOptions
+    : [...roleStatusOptions, { value: newsForm.status, label: STATUS_LABELS[newsForm.status] || newsForm.status }];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -163,14 +178,19 @@ export function NewsFormDialog({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Status</Label>
-              <Select value={newsForm.status} onValueChange={v => setNewsForm({ ...newsForm, status: v })}>
+              <Select value={newsForm.status} disabled={statusLocked} onValueChange={v => setNewsForm({ ...newsForm, status: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {(statusOptionsByRole[currentUser?.role] || statusOptionsByRole.admin).map(opt => (
+                  {statusOptions.map(opt => (
                     <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {statusLocked && (
+                <p className="text-xs text-muted-foreground">
+                  Only an admin can change the status of a published or scheduled article.
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Author Label</Label>

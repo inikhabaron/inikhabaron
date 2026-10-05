@@ -16,6 +16,7 @@ import {
 } from '@/lib/auth/permissions';
 import { normalizeAuthorsInput, primaryAuthorName } from '@/lib/news/authors';
 import { cleanupImages, authorImageUrls } from '@/lib/services/media/imageCleanupService';
+import { nextVersionHistory } from '@/lib/news/versionHistory';
 
 // Reads the admin token off the request, so it can never be prerendered —
 // same reasoning as the sibling list route.
@@ -121,7 +122,23 @@ export async function PUT(request, { params }) {
       );
     }
 
-    if (body.breakingSuggested !== undefined) {
+    // The edit form loads these four flags from the article and sends them back
+    // on EVERY save, whether or not the editor touched them (and two of them,
+    // isBreaking/isTrending, have no control in the form at all). Checking the
+    // permission on mere presence rejected every save by anyone without the
+    // right: an editor fixing a typo was told "Only admin can mark articles as
+    // breaking news". The permission — and the side effects — now apply only
+    // when a flag actually CHANGES; an unchanged echo is a no-op and is dropped
+    // so it can never write anything (an admin re-saving a breaking article also
+    // no longer resets its place in the ticker).
+    const flagChanged = (field) =>
+      body[field] !== undefined && Boolean(body[field]) !== (article[field] === true);
+
+    for (const field of ['breakingSuggested', 'isBreaking', 'trendingSuggested', 'isTrending']) {
+      if (!flagChanged(field)) delete updateData[field];
+    }
+
+    if (flagChanged('breakingSuggested')) {
       if (!canSuggestBreaking(user)) {
         return json({ error: 'Cannot suggest breaking news' }, { status: 403 });
       }
@@ -129,7 +146,7 @@ export async function PUT(request, { params }) {
       updateData.breakingApproved = false;
     }
 
-    if (body.isBreaking !== undefined) {
+    if (flagChanged('isBreaking')) {
       if (!canMarkBreaking(user)) {
         return json({ error: 'Only admin can mark articles as breaking news' }, { status: 403 });
       }
@@ -141,14 +158,14 @@ export async function PUT(request, { params }) {
       updateData.breakingAt = body.isBreaking ? new Date() : null;
     }
 
-    if (body.trendingSuggested !== undefined) {
+    if (flagChanged('trendingSuggested')) {
       updateData.trendingSuggested = body.trendingSuggested;
       if (body.trendingSuggested && !canApproveTrending(user)) {
         updateData.isTrending = false;
       }
     }
 
-    if (body.isTrending !== undefined) {
+    if (flagChanged('isTrending')) {
       if (!canApproveTrending(user)) {
         return json({ error: 'Cannot approve trending status' }, { status: 403 });
       }
@@ -158,6 +175,12 @@ export async function PUT(request, { params }) {
     const requestedStatus = normalizeStatus(body.status);
     const currentStatus = normalizeStatus(article.status);
     if (requestedStatus && requestedStatus !== currentStatus) {
+      // Editors may correct a published or scheduled article, but taking it off
+      // its status (e.g. back to draft = unpublishing) is an admin decision.
+      if (['published', 'scheduled'].includes(currentStatus) && !checkRole(user, ['admin'])) {
+        return json({ error: 'Only an admin can change the status of a published or scheduled article' }, { status: 403 });
+      }
+
       if (requestedStatus === 'pending_review' && !canSubmitForReview(user, article)) {
         return json({ error: 'Cannot submit for review' }, { status: 403 });
       }
@@ -223,9 +246,13 @@ export async function PUT(request, { params }) {
       delete updateData.commentsClosed;
     }
 
+    // Bounded history (see lib/news/versionHistory.js): an unbounded $push made
+    // large articles unsaveable after a few edits (MongoDB's 16 MB limit).
+    updateData.versionHistory = nextVersionHistory(article, previousVersion, updateData);
+
     const result = await newsCollection.updateOne(
       { id: newsId },
-      { $set: updateData, $push: { versionHistory: previousVersion } }
+      { $set: updateData }
     );
 
     if (result.matchedCount === 0) {

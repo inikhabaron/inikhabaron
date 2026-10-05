@@ -695,6 +695,12 @@ function AdminPageContent() {
         authorName: primaryAuthorName(authors) || currentUser?.name,
         status: newsForm.status,
       };
+      // isBreaking / isTrending are approvals made through the workflow routes;
+      // the form has no control for them, it only carries the loaded values.
+      // Sending them back made the API treat every save as an attempt to change
+      // them (refused for editors and reporters), so they are not sent.
+      delete payload.isBreaking;
+      delete payload.isTrending;
       // Comment-thread switch: sent only when it matters — on a new article
       // only if it is on, on an edit only if it changed. That way saving an
       // unrelated edit can never reopen a thread an editor closed from the
